@@ -20,35 +20,11 @@
           <gva-card title="内容数据">
             <gva-chart :type="4" />
           </gva-card>
-
-          <div class="grid grid-cols-1 gap-4">
-            <gva-card title="最新插件">
-              <gva-plugin-table />
-            </gva-card>
-          </div>
-
-          <div class="grid grid-cols-1 gap-4">
-            <gva-card title="最新更新">
-              <gva-table />
-            </gva-card>
-          </div>
         </div>
 
         <div class="grid grid-cols-1 gap-4 xl:col-span-4 self-start content-start">
-          <gva-card title="快捷功能" show-action>
+          <gva-card title="快捷功能">
             <gva-quick-link />
-          </gva-card>
-          <gva-card title="公告" show-action>
-            <gva-notice />
-          </gva-card>
-          <gva-card title="文档" show-action>
-            <gva-wiki />
-          </gva-card>
-          <gva-card
-            without-padding
-            custom-class="overflow-hidden"
-          >
-            <gva-banner />
           </gva-card>
         </div>
       </div>
@@ -59,14 +35,9 @@
 <script setup>
   import { computed } from 'vue'
   import {
-    GvaPluginTable,
-    GvaTable,
     GvaChart,
-    GvaWiki,
-    GvaNotice,
     GvaQuickLink,
-    GvaCard,
-    GvaBanner
+    GvaCard
   } from './components'
 
   const today = computed(() => {

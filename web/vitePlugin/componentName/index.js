@@ -38,7 +38,7 @@ const vueFilePathPlugin = (outputFilePath) => {
   const generatePathNameMap = () => {
     const vueFiles = [
       ...getAllVueFiles(path.join(root, 'src/view')),
-      ...getAllVueFiles(path.join(root, 'src/plugin'))
+      // ...getAllVueFiles(path.join(root, 'src/plugin'))
     ]
     const pathNameMap = vueFiles.reduce((acc, filePath) => {
       const content = fs.readFileSync(filePath, 'utf-8')
@@ -55,7 +55,7 @@ const vueFilePathPlugin = (outputFilePath) => {
   const watchDirectoryChanges = () => {
     const watchDirectories = [
       path.join(root, 'src/view'),
-      path.join(root, 'src/plugin')
+      // path.join(root, 'src/plugin')
     ]
     const watcher = chokidar.watch(watchDirectories, {
       persistent: true,

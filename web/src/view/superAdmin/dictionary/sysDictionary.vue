@@ -44,14 +44,6 @@
                   @click="openImportDialog"
                 />
               </el-tooltip>
-              <el-tooltip content="AI 生成字典" placement="top">
-                <el-button
-                  type="warning"
-                  @click="openAiDialog"
-                >
-                  AI
-                </el-button>
-              </el-tooltip>
               <el-tooltip content="新建字典" placement="top">
                 <el-button
                   type="primary"

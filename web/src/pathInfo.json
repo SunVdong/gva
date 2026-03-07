@@ -1,5 +1,6 @@
 {
   "/src/view/about/index.vue": "About",
+  "/src/view/activityGuide/index.vue": "ActivityGuide",
   "/src/view/dashboard/components/banner.vue": "Banner",
   "/src/view/dashboard/components/card.vue": "Card",
   "/src/view/dashboard/components/charts-content-numbers.vue": "ChartsContentNumbers",
@@ -18,6 +19,7 @@
   "/src/view/example/index.vue": "Example",
   "/src/view/example/upload/scanUpload.vue": "scanUpload",
   "/src/view/example/upload/upload.vue": "Upload",
+  "/src/view/flowerGuide/index.vue": "FlowerGuide",
   "/src/view/init/index.vue": "Init",
   "/src/view/layout/aside/asideComponent/asyncSubmenu.vue": "AsyncSubmenu",
   "/src/view/layout/aside/asideComponent/index.vue": "AsideComponent",
@@ -43,8 +45,10 @@
   "/src/view/layout/setting/modules/layout/index.vue": "LayoutSettings",
   "/src/view/layout/tabs/index.vue": "HistoryComponent",
   "/src/view/login/index.vue": "Login",
+  "/src/view/order/index.vue": "Order",
   "/src/view/person/person.vue": "Person",
   "/src/view/routerHolder.vue": "RouterHolder",
+  "/src/view/scenic/index.vue": "Scenic",
   "/src/view/superAdmin/api/api.vue": "Api",
   "/src/view/superAdmin/authority/authority.vue": "Authority",
   "/src/view/superAdmin/authority/components/apis.vue": "Apis",
@@ -79,7 +83,5 @@
   "/src/view/systemTools/sysError/sysError.vue": "SysError",
   "/src/view/systemTools/system/system.vue": "Config",
   "/src/view/systemTools/version/version.vue": "SysVersion",
-  "/src/plugin/announcement/form/info.vue": "InfoForm",
-  "/src/plugin/announcement/view/info.vue": "Info",
-  "/src/plugin/email/view/index.vue": "Email"
+  "/src/view/tickets/index.vue": "Tickets"
 }

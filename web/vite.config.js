@@ -5,7 +5,6 @@ import * as path from 'path'
 import * as dotenv from 'dotenv'
 import * as fs from 'fs'
 import vuePlugin from '@vitejs/plugin-vue'
-import vueDevTools from 'vite-plugin-vue-devtools'
 import VueFilePathPlugin from './vitePlugin/componentName/index.js'
 import { svgBuilder } from 'vite-auto-import-svg'
 import vueRootValidator from 'vite-check-multiple-dom';
@@ -24,7 +23,7 @@ export default ({ mode }) => {
     }
   }
 
-  viteLogo(process.env)
+  // viteLogo(process.env)
 
   const timestamp = Date.parse(new Date())
 
@@ -75,7 +74,7 @@ export default ({ mode }) => {
         // detail: https://cli.vuejs.org/config/#devserver-proxy
         [process.env.VITE_BASE_API]: {
           // 需要代理的路径   例如 '/api'
-          target: `${process.env.VITE_BASE_PATH}:${process.env.VITE_SERVER_PORT}/`, // 代理到 目标路径
+          target: `${process.env.VITE_BASE_PATH}/api/`, // 代理到 目标路径
           changeOrigin: true,
           rewrite: (path) =>
             path.replace(new RegExp('^' + process.env.VITE_BASE_API), '')
@@ -106,8 +105,6 @@ export default ({ mode }) => {
     esbuild,
     optimizeDeps,
     plugins: [
-      process.env.VITE_POSITION === 'open' &&
-      vueDevTools({ launchEditor: process.env.VITE_EDITOR }),
       legacyPlugin({
         targets: [
           'Android > 39',
@@ -119,7 +116,7 @@ export default ({ mode }) => {
         ]
       }),
       vuePlugin(),
-      svgBuilder(['./src/plugin/', './src/assets/icons/'], base, outDir, 'assets', NODE_ENV),
+      svgBuilder(['./src/assets/icons/'], base, outDir, 'assets', NODE_ENV),
       [Banner(`\n Build based on gin-vue-admin \n Time : ${timestamp}`)],
       VueFilePathPlugin('./src/pathInfo.json'),
       UnoCSS(),
