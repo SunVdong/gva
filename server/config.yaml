@@ -83,8 +83,8 @@ system:
     iplimit-count: 15000
     #  IP限制一个小时
     iplimit-time: 3600
-    #  路由全局前缀
-    router-prefix: ""
+    #  路由全局前缀（前端代理会转发到 target/api/，后端需带 api 前缀才能匹配）
+    router-prefix: api
     #  严格角色模式 打开后权限将会存在上下级关系
     use-strict-auth: false
     #  禁用自动迁移数据库表结构，生产环境建议设为true，手动迁移
