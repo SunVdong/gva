@@ -6,6 +6,7 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/model/example"
 	sysModel "github.com/flipped-aurora/gin-vue-admin/server/model/system"
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/announcement/model"
+	activityGuideModel "github.com/flipped-aurora/gin-vue-admin/server/plugin/activityGuide/model"
 	campingModel "github.com/flipped-aurora/gin-vue-admin/server/plugin/camping/model"
 	"github.com/flipped-aurora/gin-vue-admin/server/service/system"
 	"gorm.io/gorm"
@@ -67,6 +68,7 @@ func (e *ensureTables) MigrateTable(ctx context.Context) (context.Context, error
 		example.ExaAttachmentCategory{},
 
 		model.Info{},
+		activityGuideModel.ActivityGuide{},
 		campingModel.CampingSite{},
 		campingModel.CampingTimeSlot{},
 		campingModel.CampingReservation{},
@@ -111,6 +113,7 @@ func (e *ensureTables) TableCreated(ctx context.Context) bool {
 		example.ExaAttachmentCategory{},
 
 		model.Info{},
+		activityGuideModel.ActivityGuide{},
 		campingModel.CampingSite{},
 		campingModel.CampingTimeSlot{},
 		campingModel.CampingReservation{},
