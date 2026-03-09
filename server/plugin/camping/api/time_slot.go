@@ -25,7 +25,7 @@ func (a *timeSlotApi) CreateTimeSlot(c *gin.Context) {
 		return
 	}
 	if err := serviceVenueTimeslot.CreateVenueTimeslot(&m); err != nil {
-		response.FailWithMessage("创建失败", c)
+		response.FailWithMessage(err.Error(), c)
 		return
 	}
 	response.OkWithMessage("创建成功", c)
@@ -87,7 +87,7 @@ func (a *timeSlotApi) UpdateTimeSlot(c *gin.Context) {
 		return
 	}
 	if err := serviceVenueTimeslot.UpdateVenueTimeslot(m); err != nil {
-		response.FailWithMessage("更新失败", c)
+		response.FailWithMessage(err.Error(), c)
 		return
 	}
 	response.OkWithMessage("更新成功", c)

@@ -1,6 +1,8 @@
 package service
 
 import (
+	"errors"
+
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/camping/model"
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/camping/model/request"
@@ -9,6 +11,9 @@ import (
 type venueTimeslot struct{}
 
 func (s *venueTimeslot) CreateVenueTimeslot(m *model.VenueTimeslot) error {
+	if err := validateTimeRange(m.StartTime, m.EndTime); err != nil {
+		return err
+	}
 	return global.GVA_DB.Create(m).Error
 }
 
@@ -21,6 +26,9 @@ func (s *venueTimeslot) DeleteVenueTimeslotByIds(ids []uint) error {
 }
 
 func (s *venueTimeslot) UpdateVenueTimeslot(m model.VenueTimeslot) error {
+	if err := validateTimeRange(m.StartTime, m.EndTime); err != nil {
+		return err
+	}
 	return global.GVA_DB.Model(&model.VenueTimeslot{}).Where("id = ?", m.ID).Updates(&m).Error
 }
 
@@ -51,4 +59,16 @@ func (s *venueTimeslot) GetVenueTimeslotList(req request.VenueTimeslotSearch) (l
 func (s *venueTimeslot) GetVenueTimeslotsByVenue(venueID uint) (list []model.VenueTimeslot, err error) {
 	err = global.GVA_DB.Where("venue_id = ?", venueID).Order("start_time ASC").Find(&list).Error
 	return
+}
+
+// validateTimeRange 校验开始时间必须小于结束时间（格式 HH:mm 或 HH:mm:ss 可直接字符串比较）
+func validateTimeRange(start, end model.TimeOnly) error {
+	s, e := string(start), string(end)
+	if s == "" || e == "" {
+		return nil
+	}
+	if s >= e {
+		return errors.New("开始时间必须小于结束时间")
+	}
+	return nil
 }

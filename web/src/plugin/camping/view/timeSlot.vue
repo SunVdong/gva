@@ -105,7 +105,18 @@ const formData = ref({
 const rules = reactive({
   venueId: [{ required: true, message: '请选择场地', trigger: 'change' }],
   startTime: [{ required: true, message: '请选择开始时间', trigger: 'change' }],
-  endTime: [{ required: true, message: '请选择结束时间', trigger: 'change' }]
+  endTime: [
+    { required: true, message: '请选择结束时间', trigger: 'change' },
+    {
+      validator: (rule, value, callback) => {
+        const start = formData.value.startTime
+        if (!value || !start) return callback()
+        if (value <= start) return callback(new Error('结束时间须大于开始时间'))
+        callback()
+      },
+      trigger: 'change'
+    }
+  ]
 })
 
 function venueName(id) {
