@@ -39,8 +39,8 @@ func (s *venueOpenTime) SaveVenueOpenTimes(venueID uint, list []request.VenueOpe
 		m := model.VenueOpenTime{
 			VenueID:   venueID,
 			WeekDay:   item.WeekDay,
-			OpenTime:  item.OpenTime,
-			CloseTime: item.CloseTime,
+			OpenTime:  model.TimeOnly(item.OpenTime),
+			CloseTime: model.TimeOnly(item.CloseTime),
 		}
 		if err := global.GVA_DB.Create(&m).Error; err != nil {
 			return err
