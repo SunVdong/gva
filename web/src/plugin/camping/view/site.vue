@@ -260,17 +260,42 @@ const updateFunc = async (row) => {
 }
 
 function addOpenTimeRow() {
-  openTimeList.value.push({ weekDay: 1, openTime: '09:00', closeTime: '18:00' })
+  const used = openTimeList.value.map((r) => r.weekDay)
+  if (used.length >= 7) {
+    ElMessage.warning('周一至周日已全部添加，无需再增加')
+    return
+  }
+  let nextWeekDay = 1
+  for (let d = 1; d <= 7; d++) {
+    if (!used.includes(d)) {
+      nextWeekDay = d
+      break
+    }
+  }
+  openTimeList.value.push({ weekDay: nextWeekDay, openTime: '09:00', closeTime: '18:00' })
 }
 
 const saveOpenTime = async () => {
-  const list = openTimeList.value.map((x) => ({
+  const list = openTimeList.value
+  const weekDays = list.map((x) => x.weekDay)
+  const seen = new Set()
+  const dup = weekDays.find((d) => {
+    if (seen.has(d)) return true
+    seen.add(d)
+    return false
+  })
+  if (dup !== undefined) {
+    const dayNames = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日']
+    ElMessage.warning(`星期不能重复，请修改「${dayNames[dup]}」`)
+    return
+  }
+  const payload = list.map((x) => ({
     venueId: formData.value.ID,
     weekDay: x.weekDay,
     openTime: x.openTime,
     closeTime: x.closeTime
   }))
-  const res = await saveVenueOpenTime({ venueId: formData.value.ID, list })
+  const res = await saveVenueOpenTime({ venueId: formData.value.ID, list: payload })
   if (res.code === 0) {
     ElMessage.success('开放时间已保存')
   } else {
