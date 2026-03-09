@@ -9,7 +9,7 @@ import (
 )
 
 func Menu(ctx context.Context) {
-	// 一级菜单：露营预约（parentId=0），下挂 4 个子菜单
+	// 一级菜单：露营预约（parentId=0），下挂 5 个子菜单
 	entities := []model.SysBaseMenu{
 		// 父菜单：露营预约（一级）
 		{
@@ -39,11 +39,19 @@ func Menu(ctx context.Context) {
 			Meta:      model.Meta{Title: "预约时段管理", Icon: "timer"},
 		},
 		{
+			Path:      "campingVenueCalendar",
+			Name:      "campingVenueCalendar",
+			Hidden:    false,
+			Component: "plugin/camping/view/venueCalendar.vue",
+			Sort:      3,
+			Meta:      model.Meta{Title: "场地日历", Icon: "calendar"},
+		},
+		{
 			Path:      "campingReservation",
 			Name:      "campingReservation",
 			Hidden:    false,
 			Component: "plugin/camping/view/reservation.vue",
-			Sort:      3,
+			Sort:      4,
 			Meta:      model.Meta{Title: "预约列表", Icon: "list"},
 		},
 		{
@@ -51,16 +59,16 @@ func Menu(ctx context.Context) {
 			Name:      "campingVerify",
 			Hidden:    false,
 			Component: "plugin/camping/view/verify.vue",
-			Sort:      4,
+			Sort:      5,
 			Meta:      model.Meta{Title: "核销", Icon: "check"},
 		},
 	}
 	utils.RegisterMenus(entities...)
-	// 将已存在的 4 个子菜单的父级统一改为「露营预约」（RegisterMenus 里 FirstOrCreate 不会改已有记录的 parent_id）
+	// 将已存在的子菜单的父级统一改为「露营预约」
 	var campingMenu model.SysBaseMenu
 	if err := global.GVA_DB.Where("name = ?", "camping").First(&campingMenu).Error; err == nil && campingMenu.ID > 0 {
 		global.GVA_DB.Model(&model.SysBaseMenu{}).
-			Where("name IN ?", []string{"campingSite", "campingTimeSlot", "campingReservation", "campingVerify"}).
+			Where("name IN ?", []string{"campingSite", "campingTimeSlot", "campingVenueCalendar", "campingReservation", "campingVerify"}).
 			Update("parent_id", campingMenu.ID)
 	}
 }

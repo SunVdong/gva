@@ -16,18 +16,22 @@ type reservationApi struct{}
 // CreateReservation 创建预约（公开接口，前台提交预约）
 // @Tags CampingReservation
 // @Summary 提交预约(公开)
-// @accept application/json
-// @Produce application/json
-// @Param data body request.CreateCampingReservationRequest true "预约信息"
-// @Success 200 {object} response.Response{data=model.CampingReservation,msg=string} "预约成功"
+// @Param data body request.CreateVenueReservationRequest true "预约信息"
+// @Success 200 {object} response.Response{data=model.VenueReservation,msg=string} "预约成功"
 // @Router /camping/reservation/createReservation [post]
 func (a *reservationApi) CreateReservation(c *gin.Context) {
-	var req campingRequest.CreateCampingReservationRequest
+	var req campingRequest.CreateVenueReservationRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	res, err := serviceResv.CreateReservation(req)
+	userID := uint(0)
+	if uid, exists := c.Get("x-user-id"); exists {
+		if u, ok := uid.(uint); ok {
+			userID = u
+		}
+	}
+	res, err := serviceResv.CreateReservation(req, userID)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
@@ -40,7 +44,7 @@ func (a *reservationApi) CreateReservation(c *gin.Context) {
 // @Summary 根据ID查询预约
 // @Security ApiKeyAuth
 // @Param id query int true "预约ID"
-// @Success 200 {object} response.Response{data=model.CampingReservation,msg=string} "查询成功"
+// @Success 200 {object} response.Response{data=model.VenueReservation,msg=string} "查询成功"
 // @Router /camping/reservation/getReservation [get]
 func (a *reservationApi) GetReservation(c *gin.Context) {
 	var idReq struct {
@@ -58,11 +62,11 @@ func (a *reservationApi) GetReservation(c *gin.Context) {
 	response.OkWithData(res, c)
 }
 
-// GetReservationByVerifyCodePublic 公开：根据核销码查询预约详情（用于展示二维码信息）
+// GetReservationByVerifyCodePublic 公开：根据核销码查询预约详情
 // @Tags CampingReservation
 // @Summary 根据核销码查询预约(公开)
 // @Param code query string true "核销码"
-// @Success 200 {object} response.Response{data=model.CampingReservation,msg=string} "查询成功"
+// @Success 200 {object} response.Response{data=model.VenueReservation,msg=string} "查询成功"
 // @Router /camping/reservation/getReservationByVerifyCodePublic [get]
 func (a *reservationApi) GetReservationByVerifyCodePublic(c *gin.Context) {
 	code := c.Query("code")
@@ -82,11 +86,11 @@ func (a *reservationApi) GetReservationByVerifyCodePublic(c *gin.Context) {
 // @Tags CampingReservation
 // @Summary 分页获取预约列表
 // @Security ApiKeyAuth
-// @Param data query request.CampingReservationSearch true "查询参数"
+// @Param data query request.VenueReservationSearch true "查询参数"
 // @Success 200 {object} response.Response{data=response.PageResult,msg=string} "获取成功"
 // @Router /camping/reservation/getReservationList [get]
 func (a *reservationApi) GetReservationList(c *gin.Context) {
-	var req campingRequest.CampingReservationSearch
+	var req campingRequest.VenueReservationSearch
 	if err := c.ShouldBindQuery(&req); err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
@@ -168,33 +172,31 @@ func (a *reservationApi) CancelReservation(c *gin.Context) {
 	response.OkWithMessage("取消成功", c)
 }
 
-// GetReservedSlotIdsPublic 公开：获取某场地某日已预约的时段ID列表
+// GetReservedSlotIdsPublic 公开：获取某场地某日已约满的时段ID列表
 // @Tags CampingReservation
-// @Summary 获取已预约时段(公开)
-// @Param siteId query int true "场地ID"
+// @Summary 获取已约满时段(公开)
+// @Param venueId query int true "场地ID"
 // @Param reserveDate query string true "日期 2006-01-02"
 // @Success 200 {object} response.Response{data=[]uint,msg=string} "获取成功"
 // @Router /camping/reservation/getReservedSlotIdsPublic [get]
 func (a *reservationApi) GetReservedSlotIdsPublic(c *gin.Context) {
-	siteIDStr := c.Query("siteId")
+	venueIDStr := c.Query("venueId")
 	reserveDateStr := c.Query("reserveDate")
-	if siteIDStr == "" || reserveDateStr == "" {
+	if venueIDStr == "" || reserveDateStr == "" {
 		response.FailWithMessage("场地ID和预约日期不能为空", c)
 		return
 	}
-	var siteID uint
-	if id, err := strconv.ParseUint(siteIDStr, 10, 32); err != nil {
+	venueID, err := strconv.ParseUint(venueIDStr, 10, 32)
+	if err != nil {
 		response.FailWithMessage("场地ID格式错误", c)
 		return
-	} else {
-		siteID = uint(id)
 	}
 	reserveDate, err := time.ParseInLocation("2006-01-02", reserveDateStr, time.Local)
 	if err != nil {
 		response.FailWithMessage("日期格式错误，请使用 2006-01-02", c)
 		return
 	}
-	ids, err := serviceResv.GetReservedSlotIds(siteID, reserveDate)
+	ids, err := serviceResv.GetReservedTimeslotIds(uint(venueID), reserveDate)
 	if err != nil {
 		response.FailWithMessage("获取失败", c)
 		return

@@ -6,32 +6,32 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/camping/model/request"
 )
 
-type site struct{}
+type venue struct{}
 
-func (s *site) CreateSite(m *model.CampingSite) error {
+func (s *venue) CreateVenue(m *model.Venue) error {
 	return global.GVA_DB.Create(m).Error
 }
 
-func (s *site) DeleteSite(id uint) error {
-	return global.GVA_DB.Delete(&model.CampingSite{}, "id = ?", id).Error
+func (s *venue) DeleteVenue(id uint) error {
+	return global.GVA_DB.Delete(&model.Venue{}, "id = ?", id).Error
 }
 
-func (s *site) DeleteSiteByIds(ids []uint) error {
-	return global.GVA_DB.Delete(&[]model.CampingSite{}, "id in ?", ids).Error
+func (s *venue) DeleteVenueByIds(ids []uint) error {
+	return global.GVA_DB.Delete(&[]model.Venue{}, "id in ?", ids).Error
 }
 
-func (s *site) UpdateSite(m model.CampingSite) error {
-	return global.GVA_DB.Model(&model.CampingSite{}).Where("id = ?", m.ID).Updates(&m).Error
+func (s *venue) UpdateVenue(m model.Venue) error {
+	return global.GVA_DB.Model(&model.Venue{}).Where("id = ?", m.ID).Updates(&m).Error
 }
 
-func (s *site) GetSite(id uint) (model.CampingSite, error) {
-	var res model.CampingSite
+func (s *venue) GetVenue(id uint) (model.Venue, error) {
+	var res model.Venue
 	err := global.GVA_DB.Where("id = ?", id).First(&res).Error
 	return res, err
 }
 
-func (s *site) GetSiteList(req request.CampingSiteSearch) (list []model.CampingSite, total int64, err error) {
-	db := global.GVA_DB.Model(&model.CampingSite{})
+func (s *venue) GetVenueList(req request.VenueSearch) (list []model.Venue, total int64, err error) {
+	db := global.GVA_DB.Model(&model.Venue{})
 	if req.Name != "" {
 		db = db.Where("name LIKE ?", "%"+req.Name+"%")
 	}

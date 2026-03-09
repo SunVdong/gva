@@ -26,7 +26,18 @@
         <el-table-column type="selection" width="55" />
         <el-table-column align="left" label="ID" prop="ID" width="80" />
         <el-table-column align="left" label="场地名称" prop="name" min-width="120" />
-        <el-table-column align="left" label="开放时间" prop="openTimeDesc" show-overflow-tooltip />
+        <el-table-column align="left" label="轮播图" width="80">
+          <template #default="{ row }">
+            <el-image
+              v-if="firstCarouselUrl(row)"
+              :src="firstCarouselUrl(row)"
+              style="width:48px;height:48px"
+              fit="cover"
+            />
+            <span v-else class="text-gray-400">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column align="left" label="可退改(小时)" prop="refundChangeHours" width="110" />
         <el-table-column align="left" label="状态" width="80">
           <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : 'info'">{{ row.status === 1 ? '启用' : '禁用' }}</el-tag>
@@ -68,14 +79,15 @@
         <el-form-item label="轮播图" prop="carouselImages">
           <SelectImage v-model="formData.carouselImages" :multiple="true" :max-update-count="10" />
         </el-form-item>
-        <el-form-item label="场地介绍（富文本）" prop="introduction">
-          <RichEdit v-model="formData.introduction" />
+        <el-form-item label="场地介绍（富文本）" prop="description">
+          <RichEdit v-model="formData.description" />
         </el-form-item>
-        <el-form-item label="预约规则介绍（富文本）" prop="reserveRules">
+        <el-form-item label="预约规则（富文本）" prop="reserveRules">
           <RichEdit v-model="formData.reserveRules" />
         </el-form-item>
-        <el-form-item label="开放时间说明" prop="openTimeDesc">
-          <el-input v-model="formData.openTimeDesc" type="textarea" :rows="3" placeholder="如：周一至周日 8:00-18:00" />
+        <el-form-item label="可退改时间" prop="refundChangeHours">
+          <el-input-number v-model="formData.refundChangeHours" :min="0" placeholder="预约前多少小时可退改，0表示不可退改" style="width: 100%" />
+          <div class="text-gray-500 text-xs mt-1">单位：小时。预约开始前 N 小时内可退改，0 表示不可退改</div>
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="formData.status">
@@ -83,13 +95,48 @@
             <el-radio :value="0">禁用</el-radio>
           </el-radio-group>
         </el-form-item>
+        <template v-if="type === 'update' && formData.ID">
+          <el-divider content-position="left">开放时间（按星期）</el-divider>
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-gray-500 text-sm">设置每周开放时段，保存场地后生效</span>
+            <el-button type="primary" size="small" @click="addOpenTimeRow">添加</el-button>
+          </div>
+          <el-table :data="openTimeList" border size="small">
+            <el-table-column label="星期" width="120">
+              <template #default="{ row }">
+                <el-select v-model="row.weekDay" placeholder="星期" size="small" style="width:100%">
+                  <el-option label="周一" :value="1" />
+                  <el-option label="周二" :value="2" />
+                  <el-option label="周三" :value="3" />
+                  <el-option label="周四" :value="4" />
+                  <el-option label="周五" :value="5" />
+                  <el-option label="周六" :value="6" />
+                  <el-option label="周日" :value="7" />
+                </el-select>
+              </template>
+            </el-table-column>
+            <el-table-column label="开放时间">
+              <template #default="{ row }">
+                <el-time-select v-model="row.openTime" start="00:00" step="00:30" end="23:30" placeholder="开始" size="small" style="width:48%" />
+                <span class="px-1">-</span>
+                <el-time-select v-model="row.closeTime" start="00:00" step="00:30" end="23:30" placeholder="结束" size="small" style="width:48%" />
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="80">
+              <template #default="{ $index }">
+                <el-button type="danger" link size="small" @click="openTimeList.splice($index, 1)">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+          <el-button v-if="openTimeList.length" type="primary" class="mt-2" @click="saveOpenTime">保存开放时间</el-button>
+        </template>
       </el-form>
     </el-drawer>
   </div>
 </template>
 
 <script setup>
-import { createSite, deleteSite, deleteSiteByIds, updateSite, findSite, getSiteList } from '@/plugin/camping/api/site'
+import { createSite, deleteSite, deleteSiteByIds, updateSite, findSite, getSiteList, getVenueOpenTimeByVenue, saveVenueOpenTime } from '@/plugin/camping/api/site'
 import RichEdit from '@/components/richtext/rich-edit.vue'
 import SelectImage from '@/components/selectImage/selectImage.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -107,19 +154,27 @@ const pageSize = ref(10)
 const tableData = ref([])
 const multipleSelection = ref([])
 const searchInfo = ref({})
+const openTimeList = ref([])
 
 const formData = ref({
   name: '',
   carouselImages: [],
-  introduction: '',
+  description: '',
   reserveRules: '',
-  openTimeDesc: '',
+  refundChangeHours: 0,
   status: 1
 })
 
 const rules = reactive({
   name: [{ required: true, message: '请输入场地名称', trigger: 'blur' }]
 })
+
+function firstCarouselUrl(row) {
+  const v = row.carouselImages
+  if (!v || !Array.isArray(v)) return ''
+  const first = v[0]
+  return typeof first === 'string' ? first : (first?.url || '')
+}
 
 function toCarouselForSubmit(v) {
   if (!v || !Array.isArray(v)) return []
@@ -165,11 +220,12 @@ const openDialog = () => {
   formData.value = {
     name: '',
     carouselImages: [],
-    introduction: '',
+    description: '',
     reserveRules: '',
-    openTimeDesc: '',
+    refundChangeHours: 0,
     status: 1
   }
+  openTimeList.value = []
   dialogVisible.value = true
 }
 
@@ -180,14 +236,45 @@ const updateFunc = async (row) => {
     formData.value = {
       ID: d.ID,
       name: d.name || '',
-      carouselImages: Array.isArray(d.carouselImages) ? d.carouselImages.map((u) => (typeof u === 'string' ? u : u?.url)).filter(Boolean) : [],
-      introduction: d.introduction || '',
+      carouselImages: Array.isArray(d.carouselImages)
+        ? d.carouselImages.map((u) => (typeof u === 'string' ? u : u?.url)).filter(Boolean)
+        : [],
+      description: d.description || '',
       reserveRules: d.reserveRules || '',
-      openTimeDesc: d.openTimeDesc || '',
+      refundChangeHours: d.refundChangeHours ?? 0,
       status: d.status ?? 1
     }
     type.value = 'update'
     dialogVisible.value = true
+    const openRes = await getVenueOpenTimeByVenue({ venueId: d.ID })
+    if (openRes.code === 0 && openRes.data && openRes.data.length) {
+      openTimeList.value = openRes.data.map((x) => ({
+        weekDay: x.weekDay,
+        openTime: x.openTime?.slice(0, 5) || '09:00',
+        closeTime: x.closeTime?.slice(0, 5) || '18:00'
+      }))
+    } else {
+      openTimeList.value = []
+    }
+  }
+}
+
+function addOpenTimeRow() {
+  openTimeList.value.push({ weekDay: 1, openTime: '09:00', closeTime: '18:00' })
+}
+
+const saveOpenTime = async () => {
+  const list = openTimeList.value.map((x) => ({
+    venueId: formData.value.ID,
+    weekDay: x.weekDay,
+    openTime: x.openTime,
+    closeTime: x.closeTime
+  }))
+  const res = await saveVenueOpenTime({ venueId: formData.value.ID, list })
+  if (res.code === 0) {
+    ElMessage.success('开放时间已保存')
+  } else {
+    ElMessage.warning(res.msg || '保存失败')
   }
 }
 

@@ -11,22 +11,20 @@ var TimeSlot = new(timeSlotApi)
 
 type timeSlotApi struct{}
 
-// CreateTimeSlot 创建时段
+// CreateTimeSlot 创建场地时间段
 // @Tags CampingTimeSlot
-// @Summary 创建预约时段
+// @Summary 创建预约时段（需指定场地ID）
 // @Security ApiKeyAuth
-// @accept application/json
-// @Produce application/json
-// @Param data body model.CampingTimeSlot true "时段信息"
+// @Param data body model.VenueTimeslot true "时段信息"
 // @Success 200 {object} response.Response{msg=string} "创建成功"
 // @Router /camping/timeSlot/createTimeSlot [post]
 func (a *timeSlotApi) CreateTimeSlot(c *gin.Context) {
-	var m model.CampingTimeSlot
+	var m model.VenueTimeslot
 	if err := c.ShouldBindJSON(&m); err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	if err := serviceSlot.CreateTimeSlot(&m); err != nil {
+	if err := serviceVenueTimeslot.CreateVenueTimeslot(&m); err != nil {
 		response.FailWithMessage("创建失败", c)
 		return
 	}
@@ -48,7 +46,7 @@ func (a *timeSlotApi) DeleteTimeSlot(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	if err := serviceSlot.DeleteTimeSlot(idReq.ID); err != nil {
+	if err := serviceVenueTimeslot.DeleteVenueTimeslot(idReq.ID); err != nil {
 		response.FailWithMessage("删除失败", c)
 		return
 	}
@@ -68,7 +66,7 @@ func (a *timeSlotApi) DeleteTimeSlotByIds(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	if err := serviceSlot.DeleteTimeSlotByIds(ids); err != nil {
+	if err := serviceVenueTimeslot.DeleteVenueTimeslotByIds(ids); err != nil {
 		response.FailWithMessage("删除失败", c)
 		return
 	}
@@ -79,16 +77,16 @@ func (a *timeSlotApi) DeleteTimeSlotByIds(c *gin.Context) {
 // @Tags CampingTimeSlot
 // @Summary 更新时段
 // @Security ApiKeyAuth
-// @Param data body model.CampingTimeSlot true "时段信息"
+// @Param data body model.VenueTimeslot true "时段信息"
 // @Success 200 {object} response.Response{msg=string} "更新成功"
 // @Router /camping/timeSlot/updateTimeSlot [put]
 func (a *timeSlotApi) UpdateTimeSlot(c *gin.Context) {
-	var m model.CampingTimeSlot
+	var m model.VenueTimeslot
 	if err := c.ShouldBindJSON(&m); err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	if err := serviceSlot.UpdateTimeSlot(m); err != nil {
+	if err := serviceVenueTimeslot.UpdateVenueTimeslot(m); err != nil {
 		response.FailWithMessage("更新失败", c)
 		return
 	}
@@ -100,7 +98,7 @@ func (a *timeSlotApi) UpdateTimeSlot(c *gin.Context) {
 // @Summary 根据ID查询时段
 // @Security ApiKeyAuth
 // @Param id query int true "时段ID"
-// @Success 200 {object} response.Response{data=model.CampingTimeSlot,msg=string} "查询成功"
+// @Success 200 {object} response.Response{data=model.VenueTimeslot,msg=string} "查询成功"
 // @Router /camping/timeSlot/findTimeSlot [get]
 func (a *timeSlotApi) FindTimeSlot(c *gin.Context) {
 	var idReq struct {
@@ -110,7 +108,7 @@ func (a *timeSlotApi) FindTimeSlot(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	res, err := serviceSlot.GetTimeSlot(idReq.ID)
+	res, err := serviceVenueTimeslot.GetVenueTimeslot(idReq.ID)
 	if err != nil {
 		response.FailWithMessage("查询失败", c)
 		return
@@ -118,20 +116,20 @@ func (a *timeSlotApi) FindTimeSlot(c *gin.Context) {
 	response.OkWithData(res, c)
 }
 
-// GetTimeSlotList 分页获取时段列表
+// GetTimeSlotList 分页获取时段列表（可按场地ID筛选）
 // @Tags CampingTimeSlot
 // @Summary 分页获取时段列表
 // @Security ApiKeyAuth
-// @Param data query request.CampingTimeSlotSearch true "查询参数"
+// @Param data query request.VenueTimeslotSearch true "查询参数"
 // @Success 200 {object} response.Response{data=response.PageResult,msg=string} "获取成功"
 // @Router /camping/timeSlot/getTimeSlotList [get]
 func (a *timeSlotApi) GetTimeSlotList(c *gin.Context) {
-	var req campingRequest.CampingTimeSlotSearch
+	var req campingRequest.VenueTimeslotSearch
 	if err := c.ShouldBindQuery(&req); err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	list, total, err := serviceSlot.GetTimeSlotList(req)
+	list, total, err := serviceVenueTimeslot.GetVenueTimeslotList(req)
 	if err != nil {
 		response.FailWithMessage("获取失败", c)
 		return
@@ -144,13 +142,48 @@ func (a *timeSlotApi) GetTimeSlotList(c *gin.Context) {
 	}, "获取成功", c)
 }
 
-// GetAllTimeSlotsPublic 公开：获取全部时段
+// GetAllTimeSlotsPublic 公开：获取某场地的全部时间段（兼容旧接口，无 venueId 时返回空）
 // @Tags CampingTimeSlot
-// @Summary 获取全部时段(公开)
-// @Success 200 {object} response.Response{data=[]model.CampingTimeSlot,msg=string} "获取成功"
+// @Summary 获取场地时间段列表(公开)
+// @Param venueId query int false "场地ID，不传则返回空"
+// @Success 200 {object} response.Response{data=[]model.VenueTimeslot,msg=string} "获取成功"
 // @Router /camping/timeSlot/getAllTimeSlotsPublic [get]
 func (a *timeSlotApi) GetAllTimeSlotsPublic(c *gin.Context) {
-	list, err := serviceSlot.GetAllTimeSlots()
+	venueIDStr := c.Query("venueId")
+	if venueIDStr == "" {
+		response.OkWithData([]model.VenueTimeslot{}, c)
+		return
+	}
+	var idReq struct {
+		VenueID uint `form:"venueId"`
+	}
+	if err := c.ShouldBindQuery(&idReq); err != nil || idReq.VenueID == 0 {
+		response.OkWithData([]model.VenueTimeslot{}, c)
+		return
+	}
+	list, err := serviceVenueTimeslot.GetVenueTimeslotsByVenue(idReq.VenueID)
+	if err != nil {
+		response.FailWithMessage("获取失败", c)
+		return
+	}
+	response.OkWithData(list, c)
+}
+
+// GetTimeSlotsByVenuePublic 公开：获取某场地的全部时间段
+// @Tags CampingTimeSlot
+// @Summary 获取某场地时间段列表(公开)
+// @Param venueId query int true "场地ID"
+// @Success 200 {object} response.Response{data=[]model.VenueTimeslot,msg=string} "获取成功"
+// @Router /camping/timeSlot/getTimeSlotsByVenuePublic [get]
+func (a *timeSlotApi) GetTimeSlotsByVenuePublic(c *gin.Context) {
+	var idReq struct {
+		VenueID uint `form:"venueId" binding:"required"`
+	}
+	if err := c.ShouldBindQuery(&idReq); err != nil {
+		response.FailWithMessage("场地ID不能为空", c)
+		return
+	}
+	list, err := serviceVenueTimeslot.GetVenueTimeslotsByVenue(idReq.VenueID)
 	if err != nil {
 		response.FailWithMessage("获取失败", c)
 		return

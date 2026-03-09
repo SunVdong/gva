@@ -7,14 +7,18 @@ import (
 )
 
 var (
-	apiSite = api.Api.Site
-	apiSlot = api.Api.TimeSlot
-	apiResv = api.Api.Reservation
+	apiSite          = api.Api.Site
+	apiSlot          = api.Api.TimeSlot
+	apiResv          = api.Api.Reservation
+	apiVenueOpenTime = api.Api.VenueOpenTime
+	apiVenueCalendar = api.Api.VenueCalendar
 )
 
 type siteRouter struct{}
 type timeSlotRouter struct{}
 type reservationRouter struct{}
+type venueOpenTimeRouter struct{}
+type venueCalendarRouter struct{}
 
 // InitSite 场地路由
 func (r *siteRouter) Init(public, private *gin.RouterGroup) {
@@ -40,6 +44,7 @@ func (r *timeSlotRouter) Init(public, private *gin.RouterGroup) {
 	slot.GET("findTimeSlot", apiSlot.FindTimeSlot)
 	slot.GET("getTimeSlotList", apiSlot.GetTimeSlotList)
 	public.Group("camping").Group("timeSlot").GET("getAllTimeSlotsPublic", apiSlot.GetAllTimeSlotsPublic)
+	public.Group("camping").Group("timeSlot").GET("getTimeSlotsByVenuePublic", apiSlot.GetTimeSlotsByVenuePublic)
 }
 
 // InitReservation 预约路由
@@ -53,4 +58,18 @@ func (r *reservationRouter) Init(public, private *gin.RouterGroup) {
 	resv.Use(middleware.OperationRecord()).POST("verifyReservation", apiResv.VerifyReservation)
 	resv.Use(middleware.OperationRecord()).POST("verifyReservationByCode", apiResv.VerifyReservationByCode)
 	resv.Use(middleware.OperationRecord()).POST("cancelReservation", apiResv.CancelReservation)
+}
+
+// InitVenueOpenTime 场地开放时间路由
+func (r *venueOpenTimeRouter) Init(public, private *gin.RouterGroup) {
+	g := private.Group("camping").Group("venueOpenTime")
+	g.GET("getByVenue", apiVenueOpenTime.GetByVenue)
+	g.Use(middleware.OperationRecord()).POST("save", apiVenueOpenTime.Save)
+}
+
+// InitVenueCalendar 场地日历路由
+func (r *venueCalendarRouter) Init(public, private *gin.RouterGroup) {
+	g := private.Group("camping").Group("venueCalendar")
+	g.GET("getByVenue", apiVenueCalendar.GetByVenue)
+	g.Use(middleware.OperationRecord()).POST("set", apiVenueCalendar.Set)
 }

@@ -69,9 +69,11 @@ func (e *ensureTables) MigrateTable(ctx context.Context) (context.Context, error
 
 		model.Info{},
 		activityGuideModel.ActivityGuide{},
-		campingModel.CampingSite{},
-		campingModel.CampingTimeSlot{},
-		campingModel.CampingReservation{},
+		campingModel.Venue{},
+		campingModel.VenueOpenTime{},
+		campingModel.VenueTimeslot{},
+		campingModel.VenueCalendar{},
+		campingModel.VenueReservation{},
 	}
 	for _, t := range tables {
 		_ = db.AutoMigrate(&t)
@@ -114,9 +116,11 @@ func (e *ensureTables) TableCreated(ctx context.Context) bool {
 
 		model.Info{},
 		activityGuideModel.ActivityGuide{},
-		campingModel.CampingSite{},
-		campingModel.CampingTimeSlot{},
-		campingModel.CampingReservation{},
+		campingModel.Venue{},
+		campingModel.VenueOpenTime{},
+		campingModel.VenueTimeslot{},
+		campingModel.VenueCalendar{},
+		campingModel.VenueReservation{},
 	}
 	yes := true
 	for _, t := range tables {

@@ -1,5 +1,18 @@
 <template>
   <div>
+    <div class="gva-search-box">
+      <el-form :inline="true" :model="searchInfo" class="demo-form-inline">
+        <el-form-item label="场地">
+          <el-select v-model="searchInfo.venueId" placeholder="全部" clearable style="width: 160px">
+            <el-option v-for="v in venueOptions" :key="v.ID" :label="v.name" :value="v.ID" />
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" icon="Search" @click="onSubmit">查询</el-button>
+          <el-button icon="Refresh" @click="onReset">重置</el-button>
+        </el-form-item>
+      </el-form>
+    </div>
     <div class="gva-table-box">
       <div class="gva-btn-list">
         <el-button type="primary" icon="Plus" @click="openDialog">新增时段</el-button>
@@ -8,10 +21,12 @@
       <el-table ref="tableRef" style="width: 100%" :data="tableData" row-key="ID" @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="55" />
         <el-table-column align="left" label="ID" prop="ID" width="80" />
-        <el-table-column align="left" label="时段名称" prop="name" min-width="100" />
+        <el-table-column align="left" label="场地" min-width="100">
+          <template #default="{ row }">{{ venueName(row.venueId) }}</template>
+        </el-table-column>
         <el-table-column align="left" label="开始时间" prop="startTime" width="100" />
         <el-table-column align="left" label="结束时间" prop="endTime" width="100" />
-        <el-table-column align="left" label="排序" prop="sort" width="80" />
+        <el-table-column align="left" label="可预约数" prop="capacity" width="100" />
         <el-table-column align="left" label="操作" fixed="right" min-width="160">
           <template #default="{ row }">
             <el-button type="primary" link icon="Edit" @click="updateFunc(row)">编辑</el-button>
@@ -42,8 +57,10 @@
         </div>
       </template>
       <el-form ref="formRef" :model="formData" label-position="top" :rules="rules" label-width="100px">
-        <el-form-item label="时段名称" prop="name">
-          <el-input v-model="formData.name" placeholder="如：上午" clearable />
+        <el-form-item label="场地" prop="venueId">
+          <el-select v-model="formData.venueId" placeholder="请选择场地" style="width: 100%" filterable :disabled="type === 'update'">
+            <el-option v-for="v in venueOptions" :key="v.ID" :label="v.name" :value="v.ID" />
+          </el-select>
         </el-form-item>
         <el-form-item label="开始时间" prop="startTime">
           <el-time-select v-model="formData.startTime" start="00:00" step="00:30" end="23:30" placeholder="开始时间" style="width: 100%" />
@@ -51,8 +68,8 @@
         <el-form-item label="结束时间" prop="endTime">
           <el-time-select v-model="formData.endTime" start="00:00" step="00:30" end="23:30" placeholder="结束时间" style="width: 100%" />
         </el-form-item>
-        <el-form-item label="排序" prop="sort">
-          <el-input-number v-model="formData.sort" :min="0" />
+        <el-form-item label="可预约数量" prop="capacity">
+          <el-input-number v-model="formData.capacity" :min="1" style="width: 100%" />
         </el-form-item>
       </el-form>
     </el-drawer>
@@ -60,9 +77,10 @@
 </template>
 
 <script setup>
+import { getSiteList } from '@/plugin/camping/api/site'
 import { createTimeSlot, deleteTimeSlot, deleteTimeSlotByIds, updateTimeSlot, findTimeSlot, getTimeSlotList } from '@/plugin/camping/api/timeSlot'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 
 defineOptions({ name: 'CampingTimeSlot' })
 
@@ -74,22 +92,33 @@ const total = ref(0)
 const pageSize = ref(10)
 const tableData = ref([])
 const multipleSelection = ref([])
+const searchInfo = ref({})
+const venueOptions = ref([])
 
 const formData = ref({
-  name: '',
+  venueId: null,
   startTime: '',
   endTime: '',
-  sort: 0
+  capacity: 1
 })
 
 const rules = reactive({
-  name: [{ required: true, message: '请输入时段名称', trigger: 'blur' }],
+  venueId: [{ required: true, message: '请选择场地', trigger: 'change' }],
   startTime: [{ required: true, message: '请选择开始时间', trigger: 'change' }],
   endTime: [{ required: true, message: '请选择结束时间', trigger: 'change' }]
 })
 
+function venueName(id) {
+  const v = venueOptions.value.find((x) => x.ID === id)
+  return v ? v.name : id || '-'
+}
+
 const getTableData = async () => {
-  const res = await getTimeSlotList({ page: page.value, pageSize: pageSize.value })
+  const params = { page: page.value, pageSize: pageSize.value }
+  if (searchInfo.value.venueId != null && searchInfo.value.venueId !== '') {
+    params.venueId = searchInfo.value.venueId
+  }
+  const res = await getTimeSlotList(params)
   if (res.code === 0) {
     tableData.value = res.data.list || []
     total.value = res.data.total || 0
@@ -102,16 +131,26 @@ const handleCurrentChange = (val) => { page.value = val; getTableData() }
 const handleSizeChange = (val) => { pageSize.value = val; getTableData() }
 const handleSelectionChange = (val) => { multipleSelection.value = val }
 
+const onSubmit = () => { page.value = 1; getTableData() }
+const onReset = () => { searchInfo.value = {}; getTableData() }
+
 const openDialog = () => {
   type.value = 'create'
-  formData.value = { name: '', startTime: '', endTime: '', sort: 0 }
+  formData.value = { venueId: null, startTime: '', endTime: '', capacity: 1 }
   dialogVisible.value = true
 }
 
 const updateFunc = async (row) => {
   const res = await findTimeSlot({ id: row.ID })
   if (res.code === 0) {
-    formData.value = { ...res.data }
+    const d = res.data
+    formData.value = {
+      ID: d.ID,
+      venueId: d.venueId,
+      startTime: d.startTime?.slice(0, 5) || d.startTime || '',
+      endTime: d.endTime?.slice(0, 5) || d.endTime || '',
+      capacity: d.capacity ?? 1
+    }
     type.value = 'update'
     dialogVisible.value = true
   }
@@ -122,9 +161,14 @@ const closeDialog = () => { dialogVisible.value = false }
 const enterDialog = async () => {
   await formRef.value?.validate(async (valid) => {
     if (!valid) return
+    const payload = {
+      ...formData.value,
+      startTime: formData.value.startTime?.length === 5 ? formData.value.startTime + ':00' : formData.value.startTime,
+      endTime: formData.value.endTime?.length === 5 ? formData.value.endTime + ':00' : formData.value.endTime
+    }
     let res
-    if (type.value === 'create') res = await createTimeSlot(formData.value)
-    else res = await updateTimeSlot(formData.value)
+    if (type.value === 'create') res = await createTimeSlot(payload)
+    else res = await updateTimeSlot(payload)
     if (res.code === 0) {
       ElMessage.success('操作成功')
       closeDialog()
@@ -151,5 +195,9 @@ const onDelete = async () => {
     })
 }
 
-getTableData()
+onMounted(async () => {
+  const siteRes = await getSiteList({ page: 1, pageSize: 500 })
+  if (siteRes.code === 0) venueOptions.value = siteRes.data.list || []
+  getTableData()
+})
 </script>

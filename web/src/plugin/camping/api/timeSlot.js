@@ -8,4 +8,5 @@ export const updateTimeSlot = (data) => service({ url: '/camping/timeSlot/update
 export const findTimeSlot = (params) => service({ url: '/camping/timeSlot/findTimeSlot', method: 'get', params })
 export const getTimeSlotList = (params) => service({ url: '/camping/timeSlot/getTimeSlotList', method: 'get', params })
 /** 公开 */
-export const getAllTimeSlotsPublic = () => service({ url: '/camping/timeSlot/getAllTimeSlotsPublic', method: 'get' })
+export const getAllTimeSlotsPublic = (params) => service({ url: '/camping/timeSlot/getAllTimeSlotsPublic', method: 'get', params })
+export const getTimeSlotsByVenuePublic = (params) => service({ url: '/camping/timeSlot/getTimeSlotsByVenuePublic', method: 'get', params })
