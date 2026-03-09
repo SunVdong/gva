@@ -68,3 +68,4 @@ go.work.sum
 # Local history (VSCode etc.)
 .history
 
+app-linux
