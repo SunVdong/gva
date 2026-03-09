@@ -180,7 +180,7 @@ const updateFunc = async (row) => {
     formData.value = {
       ID: d.ID,
       name: d.name || '',
-      carouselImages: Array.isArray(d.carouselImages) ? d.carouselImages.map((u) => (typeof u === 'string' ? { url: u } : u)) : [],
+      carouselImages: Array.isArray(d.carouselImages) ? d.carouselImages.map((u) => (typeof u === 'string' ? u : u?.url)).filter(Boolean) : [],
       introduction: d.introduction || '',
       reserveRules: d.reserveRules || '',
       openTimeDesc: d.openTimeDesc || '',

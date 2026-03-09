@@ -5,7 +5,7 @@
       <draggable 
         v-model="model" 
         class="flex flex-wrap gap-4" 
-        item-key="url" 
+        :item-key="(el) => (typeof el === 'string' ? el : el?.url) ?? ''"
         ghost-class="ghost-item" 
         handle=".drag-handle"
         animation="300"
