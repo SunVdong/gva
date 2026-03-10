@@ -14,6 +14,7 @@ type router struct {
 	Calendar       calendarRouter
 	User           userRouter
 	Order          orderRouter
+	Mini           miniRouter
 }
 
 // Init 初始化门票插件路由
@@ -27,4 +28,5 @@ func (r *router) Init(public *gin.RouterGroup, private *gin.RouterGroup) {
 	r.Calendar.Init(public, private)
 	r.User.Init(public, private)
 	r.Order.Init(public, private)
+	r.Mini.Init(public, private)
 }

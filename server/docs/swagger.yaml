@@ -878,6 +878,98 @@ definitions:
         description: 作者
         type: integer
     type: object
+  model.Venue:
+    type: object
+  model.VenueCalendar:
+    properties:
+      ID:
+        description: 主键ID
+        type: integer
+      createdAt:
+        description: 创建时间
+        type: string
+      date:
+        type: string
+      status:
+        type: integer
+      updatedAt:
+        description: 更新时间
+        type: string
+      venueId:
+        type: integer
+    type: object
+  model.VenueOpenTime:
+    properties:
+      ID:
+        description: 主键ID
+        type: integer
+      closeTime:
+        type: string
+      createdAt:
+        description: 创建时间
+        type: string
+      openTime:
+        type: string
+      updatedAt:
+        description: 更新时间
+        type: string
+      venueId:
+        type: integer
+      weekDay:
+        type: integer
+    type: object
+  model.VenueReservation:
+    properties:
+      ID:
+        description: 主键ID
+        type: integer
+      contactCount:
+        type: integer
+      contactName:
+        type: string
+      contactPhone:
+        type: string
+      createdAt:
+        description: 创建时间
+        type: string
+      reservationNo:
+        type: string
+      reserveDate:
+        type: string
+      status:
+        type: integer
+      timeslotId:
+        type: integer
+      updatedAt:
+        description: 更新时间
+        type: string
+      userId:
+        type: integer
+      venueId:
+        type: integer
+      verifyCode:
+        type: string
+    type: object
+  model.VenueTimeslot:
+    properties:
+      ID:
+        description: 主键ID
+        type: integer
+      capacity:
+        type: integer
+      createdAt:
+        description: 创建时间
+        type: string
+      endTime:
+        type: string
+      startTime:
+        type: string
+      updatedAt:
+        description: 更新时间
+        type: string
+      venueId:
+        type: integer
+    type: object
   request.AddMenuAuthorityInfo:
     properties:
       authorityId:
@@ -1115,6 +1207,32 @@ definitions:
       password:
         description: 密码
         type: string
+    type: object
+  request.CreateVenueReservationRequest:
+    properties:
+      contactCount:
+        minimum: 1
+        type: integer
+      contactName:
+        type: string
+      contactPhone:
+        type: string
+      remark:
+        type: string
+      reserveDate:
+        description: "2006-01-02"
+        type: string
+      timeslotId:
+        type: integer
+      venueId:
+        type: integer
+    required:
+    - contactCount
+    - contactName
+    - contactPhone
+    - reserveDate
+    - timeslotId
+    - venueId
     type: object
   request.DataSource:
     properties:
@@ -1433,6 +1551,20 @@ definitions:
       id:
         description: 主键ID
         type: integer
+    type: object
+  request.VenueCalendarSet:
+    properties:
+      date:
+        description: "2006-01-02"
+        type: string
+      status:
+        description: 1可预约 0关闭
+        type: integer
+      venueId:
+        type: integer
+    required:
+    - date
+    - venueId
     type: object
   request.VersionInfo:
     properties:
@@ -3490,6 +3622,745 @@ paths:
       summary: 用户登录
       tags:
       - Base
+  /camping/reservation/cancelReservation:
+    post:
+      parameters:
+      - description: 预约ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: 取消成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 取消预约
+      tags:
+      - CampingReservation
+  /camping/reservation/createReservation:
+    post:
+      parameters:
+      - description: 预约信息
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateVenueReservationRequest'
+      responses:
+        "200":
+          description: 预约成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.VenueReservation'
+                msg:
+                  type: string
+              type: object
+      summary: 提交预约(公开)
+      tags:
+      - CampingReservation
+  /camping/reservation/getReservation:
+    get:
+      parameters:
+      - description: 预约ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: 查询成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.VenueReservation'
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 根据ID查询预约
+      tags:
+      - CampingReservation
+  /camping/reservation/getReservationByVerifyCodePublic:
+    get:
+      parameters:
+      - description: 核销码
+        in: query
+        name: code
+        required: true
+        type: string
+      responses:
+        "200":
+          description: 查询成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.VenueReservation'
+                msg:
+                  type: string
+              type: object
+      summary: 根据核销码查询预约(公开)
+      tags:
+      - CampingReservation
+  /camping/reservation/getReservationList:
+    get:
+      parameters:
+      - description: 关键字
+        in: query
+        name: keyword
+        type: string
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页大小
+        in: query
+        name: pageSize
+        type: integer
+      - in: query
+        name: reserveDate
+        type: string
+      - in: query
+        name: status
+        type: integer
+      - in: query
+        name: venueId
+        type: integer
+      - in: query
+        name: verifyCode
+        type: string
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.PageResult'
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 分页获取预约列表
+      tags:
+      - CampingReservation
+  /camping/reservation/getReservedSlotIdsPublic:
+    get:
+      parameters:
+      - description: 场地ID
+        in: query
+        name: venueId
+        required: true
+        type: integer
+      - description: 日期 2006-01-02
+        in: query
+        name: reserveDate
+        required: true
+        type: string
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    type: integer
+                  type: array
+                msg:
+                  type: string
+              type: object
+      summary: 获取已约满时段(公开)
+      tags:
+      - CampingReservation
+  /camping/reservation/verifyReservation:
+    post:
+      parameters:
+      - description: 预约ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: 核销成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 核销预约
+      tags:
+      - CampingReservation
+  /camping/reservation/verifyReservationByCode:
+    post:
+      parameters:
+      - description: 核销码
+        in: query
+        name: code
+        required: true
+        type: string
+      responses:
+        "200":
+          description: 核销成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 根据核销码核销
+      tags:
+      - CampingReservation
+  /camping/site/createSite:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 场地信息
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/model.Venue'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 创建成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 创建露营场地
+      tags:
+      - CampingSite
+  /camping/site/deleteSite:
+    delete:
+      parameters:
+      - description: 场地ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 删除场地
+      tags:
+      - CampingSite
+  /camping/site/deleteSiteByIds:
+    delete:
+      parameters:
+      - description: ID数组
+        in: body
+        name: data
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 批量删除场地
+      tags:
+      - CampingSite
+  /camping/site/findSite:
+    get:
+      parameters:
+      - description: 场地ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: 查询成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.Venue'
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 根据ID查询场地
+      tags:
+      - CampingSite
+  /camping/site/getSiteDetailPublic:
+    get:
+      parameters:
+      - description: 场地ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.Venue'
+                msg:
+                  type: string
+              type: object
+      summary: 获取场地详情(公开)
+      tags:
+      - CampingSite
+  /camping/site/getSiteList:
+    get:
+      parameters:
+      - description: 关键字
+        in: query
+        name: keyword
+        type: string
+      - in: query
+        name: name
+        type: string
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页大小
+        in: query
+        name: pageSize
+        type: integer
+      - in: query
+        name: status
+        type: integer
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.PageResult'
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 分页获取场地列表
+      tags:
+      - CampingSite
+  /camping/site/getSiteListPublic:
+    get:
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/model.Venue'
+                  type: array
+                msg:
+                  type: string
+              type: object
+      summary: 获取启用场地列表(公开)
+      tags:
+      - CampingSite
+  /camping/site/updateSite:
+    put:
+      parameters:
+      - description: 场地信息
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/model.Venue'
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 更新场地
+      tags:
+      - CampingSite
+  /camping/timeSlot/createTimeSlot:
+    post:
+      parameters:
+      - description: 时段信息
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/model.VenueTimeslot'
+      responses:
+        "200":
+          description: 创建成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 创建预约时段（需指定场地ID）
+      tags:
+      - CampingTimeSlot
+  /camping/timeSlot/deleteTimeSlot:
+    delete:
+      parameters:
+      - description: 时段ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 删除时段
+      tags:
+      - CampingTimeSlot
+  /camping/timeSlot/deleteTimeSlotByIds:
+    delete:
+      parameters:
+      - description: ID数组
+        in: body
+        name: data
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 批量删除时段
+      tags:
+      - CampingTimeSlot
+  /camping/timeSlot/findTimeSlot:
+    get:
+      parameters:
+      - description: 时段ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: 查询成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.VenueTimeslot'
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 根据ID查询时段
+      tags:
+      - CampingTimeSlot
+  /camping/timeSlot/getAllTimeSlotsPublic:
+    get:
+      parameters:
+      - description: 场地ID，不传则返回空
+        in: query
+        name: venueId
+        type: integer
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/model.VenueTimeslot'
+                  type: array
+                msg:
+                  type: string
+              type: object
+      summary: 获取场地时间段列表(公开)
+      tags:
+      - CampingTimeSlot
+  /camping/timeSlot/getTimeSlotList:
+    get:
+      parameters:
+      - description: 关键字
+        in: query
+        name: keyword
+        type: string
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页大小
+        in: query
+        name: pageSize
+        type: integer
+      - in: query
+        name: venueId
+        type: integer
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.PageResult'
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 分页获取时段列表
+      tags:
+      - CampingTimeSlot
+  /camping/timeSlot/getTimeSlotsByVenuePublic:
+    get:
+      parameters:
+      - description: 场地ID
+        in: query
+        name: venueId
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/model.VenueTimeslot'
+                  type: array
+                msg:
+                  type: string
+              type: object
+      summary: 获取某场地时间段列表(公开)
+      tags:
+      - CampingTimeSlot
+  /camping/timeSlot/updateTimeSlot:
+    put:
+      parameters:
+      - description: 时段信息
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/model.VenueTimeslot'
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 更新时段
+      tags:
+      - CampingTimeSlot
+  /camping/venueCalendar/getByVenue:
+    get:
+      parameters:
+      - description: 场地ID
+        in: query
+        name: venueId
+        required: true
+        type: integer
+      - description: 开始日期 2006-01-02
+        in: query
+        name: start
+        required: true
+        type: string
+      - description: 结束日期 2006-01-02
+        in: query
+        name: end
+        required: true
+        type: string
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/model.VenueCalendar'
+                  type: array
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 获取场地日历
+      tags:
+      - VenueCalendar
+  /camping/venueCalendar/set:
+    post:
+      parameters:
+      - description: venueId, date(2006-01-02), status
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.VenueCalendarSet'
+      responses:
+        "200":
+          description: 设置成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 设置场地某日状态
+      tags:
+      - VenueCalendar
+  /camping/venueOpenTime/getByVenue:
+    get:
+      parameters:
+      - description: 场地ID
+        in: query
+        name: venueId
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/model.VenueOpenTime'
+                  type: array
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 获取场地开放时间
+      tags:
+      - VenueOpenTime
+  /camping/venueOpenTime/save:
+    post:
+      parameters:
+      - description: 'body: { venueId, list: [{ weekDay, openTime, closeTime }] }'
+        in: body
+        name: data
+        required: true
+        schema:
+          type: object
+      responses:
+        "200":
+          description: 保存成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 保存场地开放时间
+      tags:
+      - VenueOpenTime
   /casbin/UpdateCasbin:
     post:
       consumes:
