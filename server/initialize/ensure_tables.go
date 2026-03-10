@@ -83,6 +83,9 @@ func (e *ensureTables) MigrateTable(ctx context.Context) (context.Context, error
 		ticketModel.TicketAudience{},
 		ticketModel.TicketRule{},
 		ticketModel.TicketCalendar{},
+		ticketModel.TicketUser{},
+		ticketModel.TicketOrder{},
+		ticketModel.OrderItem{},
 	}
 	for _, t := range tables {
 		_ = db.AutoMigrate(&t)
@@ -137,6 +140,9 @@ func (e *ensureTables) TableCreated(ctx context.Context) bool {
 		ticketModel.TicketAudience{},
 		ticketModel.TicketRule{},
 		ticketModel.TicketCalendar{},
+		ticketModel.TicketUser{},
+		ticketModel.TicketOrder{},
+		ticketModel.OrderItem{},
 	}
 	yes := true
 	for _, t := range tables {

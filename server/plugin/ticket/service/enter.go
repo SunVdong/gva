@@ -10,4 +10,6 @@ type service struct {
 	Audience       ticketAudience
 	Rule           ticketRule
 	Calendar       ticketCalendar
+	User           ticketUser
+	Order          ticketOrder
 }

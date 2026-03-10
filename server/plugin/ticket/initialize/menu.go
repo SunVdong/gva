@@ -43,12 +43,28 @@ func Menu(ctx context.Context) {
 			Sort:      3,
 			Meta:      model.Meta{Title: "日历库存", Icon: "calendar"},
 		},
+		{
+			Path:      "ticketUser",
+			Name:      "ticketUser",
+			Hidden:    false,
+			Component: "plugin/ticket/view/user.vue",
+			Sort:      4,
+			Meta:      model.Meta{Title: "用户管理", Icon: "user"},
+		},
+		{
+			Path:      "ticketOrder",
+			Name:      "ticketOrder",
+			Hidden:    false,
+			Component: "plugin/ticket/view/order.vue",
+			Sort:      5,
+			Meta:      model.Meta{Title: "订单管理", Icon: "list"},
+		},
 	}
 	utils.RegisterMenus(entities...)
 	var ticketMenu model.SysBaseMenu
 	if err := global.GVA_DB.Where("name = ?", "ticket").First(&ticketMenu).Error; err == nil && ticketMenu.ID > 0 {
 		global.GVA_DB.Model(&model.SysBaseMenu{}).
-			Where("name IN ?", []string{"ticketScenic", "ticketProduct", "ticketCalendar"}).
+			Where("name IN ?", []string{"ticketScenic", "ticketProduct", "ticketCalendar", "ticketUser", "ticketOrder"}).
 			Update("parent_id", ticketMenu.ID)
 	}
 }

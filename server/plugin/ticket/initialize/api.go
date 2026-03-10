@@ -34,6 +34,11 @@ func Api(ctx context.Context) {
 		{Path: "/ticket/audience/save", Description: "保存适用人群", ApiGroup: "景点门票", Method: "POST"},
 		{Path: "/ticket/calendar/getBySku", Description: "日历库存", ApiGroup: "景点门票", Method: "GET"},
 		{Path: "/ticket/calendar/set", Description: "设置日历库存", ApiGroup: "景点门票", Method: "POST"},
+		{Path: "/ticket/user/getUserList", Description: "用户列表", ApiGroup: "景点门票", Method: "GET"},
+		{Path: "/ticket/user/findUser", Description: "查询用户", ApiGroup: "景点门票", Method: "GET"},
+		{Path: "/ticket/user/updateUser", Description: "更新用户", ApiGroup: "景点门票", Method: "PUT"},
+		{Path: "/ticket/order/getOrderList", Description: "订单列表", ApiGroup: "景点门票", Method: "GET"},
+		{Path: "/ticket/order/findOrder", Description: "订单详情", ApiGroup: "景点门票", Method: "GET"},
 	}
 	utils.RegisterApis(entities...)
 }

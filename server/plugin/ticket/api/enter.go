@@ -13,6 +13,8 @@ var (
 	serviceAudience      = service.Service.Audience
 	serviceRule          = service.Service.Rule
 	serviceCalendar      = service.Service.Calendar
+	serviceUser          = service.Service.User
+	serviceOrder         = service.Service.Order
 )
 
 type api struct {
@@ -23,4 +25,6 @@ type api struct {
 	Audience       ticketAudienceApi
 	Rule           ticketRuleApi
 	Calendar       ticketCalendarApi
+	User           ticketUserApi
+	Order          ticketOrderApi
 }

@@ -14,6 +14,8 @@ var (
 	apiRule           = api.Api.Rule
 	apiAudience       = api.Api.Audience
 	apiCalendar       = api.Api.Calendar
+	apiUser           = api.Api.User
+	apiOrder          = api.Api.Order
 )
 
 type scenicRouter struct{}
@@ -23,6 +25,8 @@ type skuRouter struct{}
 type ruleRouter struct{}
 type audienceRouter struct{}
 type calendarRouter struct{}
+type userRouter struct{}
+type orderRouter struct{}
 
 func (r *scenicRouter) Init(public, private *gin.RouterGroup) {
 	g := private.Group("ticket").Group("scenic")
@@ -76,4 +80,17 @@ func (r *calendarRouter) Init(public, private *gin.RouterGroup) {
 	g := private.Group("ticket").Group("calendar")
 	g.GET("getBySku", apiCalendar.GetBySku)
 	g.Use(middleware.OperationRecord()).POST("set", apiCalendar.Set)
+}
+
+func (r *userRouter) Init(public, private *gin.RouterGroup) {
+	g := private.Group("ticket").Group("user")
+	g.GET("getUserList", apiUser.GetList)
+	g.GET("findUser", apiUser.Find)
+	g.Use(middleware.OperationRecord()).PUT("updateUser", apiUser.Update)
+}
+
+func (r *orderRouter) Init(public, private *gin.RouterGroup) {
+	g := private.Group("ticket").Group("order")
+	g.GET("getOrderList", apiOrder.GetList)
+	g.GET("findOrder", apiOrder.Find)
 }
