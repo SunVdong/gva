@@ -2378,6 +2378,65 @@ info:
   title: Gin-Vue-Admin Swagger API接口文档
   version: v2.8.9
 paths:
+  /activityGuide/mini/guide/detail:
+    get:
+      consumes:
+      - application/json
+      description: 小程序端获取活动指南详情，仅已上架时返回
+      parameters:
+      - description: 活动指南ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: object
+                msg:
+                  type: string
+              type: object
+      summary: 活动指南详情
+      tags:
+      - 小程序
+  /activityGuide/mini/guide/list:
+    get:
+      consumes:
+      - application/json
+      description: 小程序端获取已上架的活动指南列表，分页
+      parameters:
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页条数
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.PageResult'
+                msg:
+                  type: string
+              type: object
+      summary: 活动指南列表
+      tags:
+      - 小程序
   /api/createApi:
     post:
       consumes:

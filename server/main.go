@@ -4,7 +4,8 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/core"
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/initialize"
-	_ "github.com/flipped-aurora/gin-vue-admin/server/plugin/ticket/api/mini" // 供 swag 扫描门票小程序接口文档
+	_ "github.com/flipped-aurora/gin-vue-admin/server/plugin/activityGuide/api/mini" // 供 swag 扫描活动指南小程序接口文档
+	_ "github.com/flipped-aurora/gin-vue-admin/server/plugin/ticket/api/mini"         // 供 swag 扫描门票小程序接口文档
 	_ "go.uber.org/automaxprocs"
 	"go.uber.org/zap"
 )
