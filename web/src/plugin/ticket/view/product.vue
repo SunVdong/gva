@@ -93,7 +93,7 @@
       </el-form>
     </el-drawer>
 
-    <el-drawer v-model="skuDrawerVisible" destroy-on-close size="900" title="SKU 与规则">
+    <el-drawer v-model="skuDrawerVisible" destroy-on-close size="960" title="SKU 与规则">
       <template #header>
         <div class="flex justify-between items-center">
           <span class="text-lg">「{{ currentProductName }}」SKU 与规则</span>
@@ -107,32 +107,32 @@
       <el-tabs v-model="activeTab">
         <el-tab-pane label="门票 SKU" name="sku">
           <el-table :data="skuList" border size="small">
-            <el-table-column label="SKU 名称" min-width="100">
+            <el-table-column label="SKU 名称" min-width="130">
               <template #default="{ row }">
                 <el-input v-model="row.name" placeholder="如成人票" size="small" />
               </template>
             </el-table-column>
-            <el-table-column label="销售价" width="100">
+            <el-table-column label="销售价" width="118">
               <template #default="{ row }">
                 <el-input-number v-model="row.price" :min="0" :precision="2" size="small" style="width:100%" />
               </template>
             </el-table-column>
-            <el-table-column label="市场价" width="100">
+            <el-table-column label="市场价" width="118">
               <template #default="{ row }">
                 <el-input-number v-model="row.marketPrice" :min="0" :precision="2" size="small" style="width:100%" />
               </template>
             </el-table-column>
-            <el-table-column label="库存" width="80">
+            <el-table-column label="库存" width="118">
               <template #default="{ row }">
                 <el-input-number v-model="row.stock" :min="0" size="small" style="width:100%" />
               </template>
             </el-table-column>
-            <el-table-column label="限购" width="80">
+            <el-table-column label="限购" width="96">
               <template #default="{ row }">
                 <el-input-number v-model="row.limitBuy" :min="0" size="small" style="width:100%" />
               </template>
             </el-table-column>
-            <el-table-column label="状态" width="80">
+            <el-table-column label="状态" width="96">
               <template #default="{ row }">
                 <el-select v-model="row.status" size="small" style="width:100%">
                   <el-option label="启用" :value="1" />
@@ -140,7 +140,21 @@
                 </el-select>
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="80" fixed="right">
+            <el-table-column label="适用人群" min-width="118" align="center">
+              <template #default="{ row }">
+                <el-button
+                  v-if="row.ID"
+                  type="primary"
+                  link
+                  size="small"
+                  @click="openAudienceDialog(row)"
+                >
+                  设置
+                </el-button>
+                <span v-else class="text-gray-400 text-xs">需先保存 SKU</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="90" fixed="right">
               <template #default="{ row, $index }">
                 <el-button v-if="!row.ID" type="danger" link size="small" @click="skuList.splice($index, 1)">删除</el-button>
                 <el-button v-else type="danger" link size="small" @click="deleteSkuRow(row)">删除</el-button>
@@ -178,6 +192,34 @@
         </el-tab-pane>
       </el-tabs>
     </el-drawer>
+
+    <el-dialog
+      v-model="audienceDialogVisible"
+      title="适用人群"
+      width="500"
+      destroy-on-close
+      @open="onAudienceDialogOpen"
+    >
+      <template #header>
+        <span>适用人群 — {{ currentAudienceSku.name || 'SKU' }}</span>
+      </template>
+      <div class="space-y-2">
+        <div
+          v-for="(item, idx) in audienceList"
+          :key="idx"
+          class="flex items-center gap-2"
+        >
+          <el-input v-model="item.audienceType" placeholder="如：成人、儿童" size="small" style="width:140px" />
+          <el-input v-model="item.description" placeholder="说明（选填）" size="small" class="flex-1" />
+          <el-button type="danger" link size="small" icon="Delete" @click="audienceList.splice(idx, 1)" />
+        </div>
+        <el-button type="primary" link size="small" icon="Plus" @click="addAudienceItem">添加一项</el-button>
+      </div>
+      <template #footer>
+        <el-button @click="audienceDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="audienceSaving" @click="saveAudienceDialog">保存</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -195,7 +237,9 @@ import {
   updateSku,
   deleteSku,
   getRuleByProduct,
-  saveRule
+  saveRule,
+  getAudienceBySku,
+  saveAudience
 } from '@/plugin/ticket/api/product'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ref, reactive, onMounted } from 'vue'
@@ -218,6 +262,10 @@ const currentProductName = ref('')
 const skuList = ref([])
 const ruleList = ref([])
 const activeTab = ref('sku')
+const audienceDialogVisible = ref(false)
+const currentAudienceSku = ref({ id: 0, name: '' })
+const audienceList = ref([])
+const audienceSaving = ref(false)
 
 const formData = ref({
   scenicId: undefined,
@@ -330,6 +378,50 @@ async function deleteSkuRow(row) {
   if (res.code === 0) {
     ElMessage.success('已删除')
     skuList.value = skuList.value.filter((s) => s.ID !== row.ID)
+  }
+}
+
+function addAudienceItem() {
+  audienceList.value.push({ audienceType: '', description: '' })
+}
+
+async function openAudienceDialog(row) {
+  currentAudienceSku.value = { id: row.ID, name: row.name }
+  audienceDialogVisible.value = true
+}
+
+async function onAudienceDialogOpen() {
+  const res = await getAudienceBySku({ skuId: currentAudienceSku.value.id })
+  if (res.code === 0 && Array.isArray(res.data)) {
+    audienceList.value = res.data.map((x) => ({
+      audienceType: x.audienceType || '',
+      description: x.description || ''
+    }))
+  } else {
+    audienceList.value = []
+  }
+  if (audienceList.value.length === 0) audienceList.value.push({ audienceType: '', description: '' })
+}
+
+async function saveAudienceDialog() {
+  const list = audienceList.value
+    .filter((x) => x.audienceType && x.audienceType.trim())
+    .map((x) => ({ audienceType: x.audienceType.trim(), description: (x.description || '').trim() }))
+  if (list.length === 0) {
+    ElMessage.warning('请至少填写一项适用人群')
+    return
+  }
+  audienceSaving.value = true
+  try {
+    const res = await saveAudience({ skuId: currentAudienceSku.value.id, list })
+    if (res.code === 0) {
+      ElMessage.success('保存成功')
+      audienceDialogVisible.value = false
+    } else {
+      ElMessage.error(res.msg || '保存失败')
+    }
+  } finally {
+    audienceSaving.value = false
   }
 }
 
