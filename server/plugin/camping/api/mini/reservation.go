@@ -10,26 +10,26 @@ import (
 
 type reservationApi struct{}
 
-// Create 小程序-提交预约
+// Create 小程序-提交预约（需登录，请求头带 x-token）
 // @Tags        小程序-露营
 // @Summary     提交预约
-// @Description 提交露营场地预约（预定人、手机号、日期、时段等）
+// @Description 提交露营场地预约（预定人、手机号、日期、时段等），需先登录，请求头携带 x-token
 // @Accept      json
 // @Produce     json
+// @Param       x-token header string false "小程序登录后返回的 token"
 // @Param       data body request.CreateVenueReservationRequest true "预约信息"
 // @Success     200 {object} response.Response{data=model.VenueReservation,msg=string}
 // @Router      /camping/mini/reservation/create [post]
 func (a *reservationApi) Create(c *gin.Context) {
+	userID, ok := getUserID(c)
+	if !ok {
+		response.FailWithMessage("请先登录", c)
+		return
+	}
 	var req campingRequest.CreateVenueReservationRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
-	}
-	userID := uint(0)
-	if uid, exists := c.Get("x-user-id"); exists {
-		if u, ok := uid.(uint); ok {
-			userID = u
-		}
 	}
 	res, err := svcReservation.CreateReservation(req, userID)
 	if err != nil {
