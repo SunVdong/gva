@@ -21,6 +21,8 @@ import (
 // 也可通过 --generalInfo flag 指定其他文件
 // @Tag.Name        小程序
 // @Tag.Description 小程序端接口（无需后台 JWT，供微信/支付宝等小程序调用）
+// @Tag.Name        小程序-景点
+// @Tag.Description 景点/门票小程序接口（景区、商品、日历、订单）
 // @Tag.Name        小程序-露营
 // @Tag.Description 露营场地预约（场地列表、时段、预约、取消）
 // @Tag.Name        Base

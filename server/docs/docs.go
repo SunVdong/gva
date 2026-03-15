@@ -9360,7 +9360,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "小程序"
+                    "小程序-景点"
                 ],
                 "summary": "日历可售",
                 "parameters": [
@@ -9421,7 +9421,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "小程序"
+                    "小程序-景点"
                 ],
                 "summary": "提交订单",
                 "parameters": [
@@ -9470,7 +9470,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "小程序"
+                    "小程序-景点"
                 ],
                 "summary": "订单详情",
                 "parameters": [
@@ -9517,7 +9517,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "小程序"
+                    "小程序-景点"
                 ],
                 "summary": "我的订单列表",
                 "parameters": [
@@ -9575,7 +9575,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "小程序"
+                    "小程序-景点"
                 ],
                 "summary": "门票商品详情",
                 "parameters": [
@@ -9622,7 +9622,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "小程序"
+                    "小程序-景点"
                 ],
                 "summary": "门票商品列表",
                 "parameters": [
@@ -9681,7 +9681,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "小程序"
+                    "小程序-景点"
                 ],
                 "summary": "景区详情",
                 "parameters": [
@@ -9728,7 +9728,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "小程序"
+                    "小程序-景点"
                 ],
                 "summary": "景区列表",
                 "parameters": [
@@ -13721,6 +13721,10 @@ const docTemplate = `{
         {
             "description": "小程序端接口（无需后台 JWT，供微信/支付宝等小程序调用）",
             "name": "小程序"
+        },
+        {
+            "description": "景点/门票小程序接口（景区、商品、日历、订单）",
+            "name": "小程序-景点"
         },
         {
             "description": "露营场地预约（场地列表、时段、预约、取消）",

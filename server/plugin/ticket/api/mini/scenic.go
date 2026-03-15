@@ -11,7 +11,7 @@ var Scenic = new(miniScenicApi)
 type miniScenicApi struct{}
 
 // List 小程序-景区列表（仅启用）
-// @Tags        小程序
+// @Tags        小程序-景点
 // @Summary     景区列表
 // @Description 小程序端获取已启用的景区列表，分页
 // @Accept      json
@@ -41,7 +41,7 @@ func (a *miniScenicApi) List(c *gin.Context) {
 }
 
 // Detail 小程序-景区详情（仅启用时返回）
-// @Tags        小程序
+// @Tags        小程序-景点
 // @Summary     景区详情
 // @Description 小程序端获取景区详情，仅启用时返回
 // @Accept      json

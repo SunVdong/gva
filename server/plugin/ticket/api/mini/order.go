@@ -11,7 +11,7 @@ var Order = new(miniOrderApi)
 type miniOrderApi struct{}
 
 // Create 小程序-提交订单
-// @Tags        小程序
+// @Tags        小程序-景点
 // @Summary     提交订单
 // @Description 小程序端提交门票订单
 // @Accept      json
@@ -34,7 +34,7 @@ func (a *miniOrderApi) Create(c *gin.Context) {
 }
 
 // MyList 小程序-我的订单列表
-// @Tags        小程序
+// @Tags        小程序-景点
 // @Summary     我的订单列表
 // @Description 小程序端获取当前用户的订单列表，分页
 // @Accept      json
@@ -71,7 +71,7 @@ func (a *miniOrderApi) MyList(c *gin.Context) {
 }
 
 // Detail 小程序-订单详情（含订单项）
-// @Tags        小程序
+// @Tags        小程序-景点
 // @Summary     订单详情
 // @Description 小程序端获取订单详情及订单项
 // @Accept      json

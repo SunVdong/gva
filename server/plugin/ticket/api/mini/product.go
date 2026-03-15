@@ -11,7 +11,7 @@ var Product = new(miniProductApi)
 type miniProductApi struct{}
 
 // ListByScenic 小程序-按景区获取门票商品列表（仅启用）
-// @Tags        小程序
+// @Tags        小程序-景点
 // @Summary     门票商品列表
 // @Description 小程序端按景区获取已启用的门票商品列表，分页
 // @Accept      json
@@ -55,7 +55,7 @@ func (a *miniProductApi) ListByScenic(c *gin.Context) {
 }
 
 // Detail 小程序-商品详情（含 SKU 列表、规则，仅启用）
-// @Tags        小程序
+// @Tags        小程序-景点
 // @Summary     门票商品详情
 // @Description 小程序端获取商品详情，含 SKU 与规则，仅启用时返回
 // @Accept      json
