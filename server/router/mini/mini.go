@@ -15,4 +15,8 @@ func (r *MiniRouter) Init(public, private *gin.RouterGroup) {
 	g.POST("login", authApi.Login)
 	// 本机号一键登录（getPhoneNumber 的 code 换手机号）
 	g.POST("loginByPhone", authApi.LoginByPhone)
+
+	// 微信支付（公共接口，景点/露营等均可复用）
+	g.POST("pay/create", payApi.Create)   // 调起支付，需登录，返回 wx.requestPayment 参数
+	g.POST("pay/notify", payApi.Notify)    // 支付结果回调，由微信服务器调用
 }

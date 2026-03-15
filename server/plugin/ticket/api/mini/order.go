@@ -13,7 +13,7 @@ type miniOrderApi struct{}
 // Create 小程序-提交订单
 // @Tags        小程序-景点
 // @Summary     提交订单
-// @Description 小程序端提交门票订单
+// @Description 小程序端提交门票订单。创建成功后请携带 x-token 调用公共接口 POST /mini/pay/create，body 传 {"orderType":"ticket","orderId": 订单ID}，获取支付参数后调 wx.requestPayment 完成支付。
 // @Accept      json
 // @Produce     json
 // @Param       data body request.MiniOrderCreate true "订单信息"

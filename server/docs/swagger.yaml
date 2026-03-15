@@ -202,6 +202,15 @@ definitions:
       app-secret:
         description: 小程序 AppSecret
         type: string
+      mch-id:
+        description: 微信支付（JSAPI，与小程序同主体）
+        type: string
+      notify-url:
+        description: 支付结果回调地址，如 https://yourdomain.com/api/mini/pay/notify
+        type: string
+      pay-key:
+        description: 支付 API 密钥（v2 密钥）
+        type: string
     type: object
   config.Mongo:
     properties:
@@ -3804,8 +3813,12 @@ paths:
     post:
       consumes:
       - application/json
-      description: 提交露营场地预约（预定人、手机号、日期、时段等）
+      description: 提交露营场地预约（预定人、手机号、日期、时段等），需先登录，请求头携带 x-token
       parameters:
+      - description: 小程序登录后返回的 token
+        in: header
+        name: x-token
+        type: string
       - description: 预约信息
         in: body
         name: data
@@ -5846,6 +5859,35 @@ paths:
       summary: 本机号一键登录
       tags:
       - 小程序
+  /mini/pay/create:
+    post:
+      consumes:
+      - application/json
+      description: 根据订单类型与订单 ID 生成预支付单，返回小程序调起支付所需参数（需登录，Header 带 x-token）
+      parameters:
+      - description: 请求体
+        in: body
+        name: data
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: data 含 timeStamp,nonceStr,package,signType,paySign
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: object
+                msg:
+                  type: string
+              type: object
+      summary: 调起支付
+      tags:
+      - 小程序
   /mini/ping:
     get:
       consumes:
@@ -7861,7 +7903,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: 小程序端提交门票订单
+      description: '小程序端提交门票订单。创建成功后请携带 x-token 调用公共接口 POST /mini/pay/create，body
+        传 {"orderType":"ticket","orderId": 订单ID}，获取支付参数后调 wx.requestPayment 完成支付。'
       parameters:
       - description: 订单信息
         in: body
