@@ -879,6 +879,30 @@ definitions:
         type: integer
     type: object
   model.Venue:
+    properties:
+      ID:
+        description: 主键ID
+        type: integer
+      carouselImages:
+        items:
+          type: integer
+        type: array
+      createdAt:
+        description: 创建时间
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      refundChangeHours:
+        type: integer
+      reserveRules:
+        type: string
+      status:
+        type: integer
+      updatedAt:
+        description: 更新时间
+        type: string
     type: object
   model.VenueCalendar:
     properties:
@@ -1413,6 +1437,34 @@ definitions:
       username:
         description: 用户名
         type: string
+    type: object
+  request.MiniOrderCreate:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/request.MiniOrderItem'
+        minItems: 1
+        type: array
+      userId:
+        type: integer
+    required:
+    - items
+    - userId
+    type: object
+  request.MiniOrderItem:
+    properties:
+      quantity:
+        minimum: 1
+        type: integer
+      skuId:
+        type: integer
+      visitDate:
+        description: YYYY-MM-DD
+        type: string
+    required:
+    - quantity
+    - skuId
+    - visitDate
     type: object
   request.PageInfo:
     properties:
@@ -5425,6 +5477,28 @@ paths:
       summary: 更新菜单
       tags:
       - Menu
+  /mini/ping:
+    get:
+      consumes:
+      - application/json
+      description: 小程序端连通性检测，无需鉴权
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: object
+                msg:
+                  type: string
+              type: object
+      summary: 健康检查
+      tags:
+      - 小程序
   /sysDictionary/createSysDictionary:
     post:
       consumes:
@@ -7376,6 +7450,259 @@ paths:
       summary: 设置配置文件内容
       tags:
       - System
+  /ticket/mini/calendar/sku:
+    get:
+      consumes:
+      - application/json
+      description: 小程序端查询某 SKU 在日期范围内的可售情况
+      parameters:
+      - description: SKU ID
+        in: query
+        name: skuId
+        required: true
+        type: string
+      - description: 开始日期
+        in: query
+        name: startDate
+        required: true
+        type: string
+      - description: 结束日期
+        in: query
+        name: endDate
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: object
+                msg:
+                  type: string
+              type: object
+      summary: 日历可售
+      tags:
+      - 小程序
+  /ticket/mini/order/create:
+    post:
+      consumes:
+      - application/json
+      description: 小程序端提交门票订单
+      parameters:
+      - description: 订单信息
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.MiniOrderCreate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: object
+                msg:
+                  type: string
+              type: object
+      summary: 提交订单
+      tags:
+      - 小程序
+  /ticket/mini/order/detail:
+    get:
+      consumes:
+      - application/json
+      description: 小程序端获取订单详情及订单项
+      parameters:
+      - description: 订单ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: object
+                msg:
+                  type: string
+              type: object
+      summary: 订单详情
+      tags:
+      - 小程序
+  /ticket/mini/order/myList:
+    get:
+      consumes:
+      - application/json
+      description: 小程序端获取当前用户的订单列表，分页
+      parameters:
+      - description: 用户ID（需登录）
+        in: query
+        name: userId
+        type: integer
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页条数
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.PageResult'
+                msg:
+                  type: string
+              type: object
+      summary: 我的订单列表
+      tags:
+      - 小程序
+  /ticket/mini/product/detail:
+    get:
+      consumes:
+      - application/json
+      description: 小程序端获取商品详情，含 SKU 与规则，仅启用时返回
+      parameters:
+      - description: 商品ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: object
+                msg:
+                  type: string
+              type: object
+      summary: 门票商品详情
+      tags:
+      - 小程序
+  /ticket/mini/product/list:
+    get:
+      consumes:
+      - application/json
+      description: 小程序端按景区获取已启用的门票商品列表，分页
+      parameters:
+      - description: 景区ID
+        in: query
+        name: scenicId
+        required: true
+        type: integer
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页条数
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.PageResult'
+                msg:
+                  type: string
+              type: object
+      summary: 门票商品列表
+      tags:
+      - 小程序
+  /ticket/mini/scenic/detail:
+    get:
+      consumes:
+      - application/json
+      description: 小程序端获取景区详情，仅启用时返回
+      parameters:
+      - description: 景区ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: object
+                msg:
+                  type: string
+              type: object
+      summary: 景区详情
+      tags:
+      - 小程序
+  /ticket/mini/scenic/list:
+    get:
+      consumes:
+      - application/json
+      description: 小程序端获取已启用的景区列表，分页
+      parameters:
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页条数
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.PageResult'
+                msg:
+                  type: string
+              type: object
+      summary: 景区列表
+      tags:
+      - 小程序
   /user/SetSelfInfo:
     put:
       consumes:
@@ -7693,6 +8020,8 @@ securityDefinitions:
     type: apiKey
 swagger: "2.0"
 tags:
+- description: 小程序端接口（无需后台 JWT，供微信/支付宝等小程序调用）
+  name: 小程序
 - name: Base
 - description: 用户
   name: SysUser

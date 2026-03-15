@@ -11,6 +11,14 @@ var Order = new(miniOrderApi)
 type miniOrderApi struct{}
 
 // Create 小程序-提交订单
+// @Tags        小程序
+// @Summary     提交订单
+// @Description 小程序端提交门票订单
+// @Accept      json
+// @Produce     json
+// @Param       data body request.MiniOrderCreate true "订单信息"
+// @Success     200  {object} response.Response{data=object,msg=string}
+// @Router      /ticket/mini/order/create [post]
 func (a *miniOrderApi) Create(c *gin.Context) {
 	var req request.MiniOrderCreate
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -26,6 +34,16 @@ func (a *miniOrderApi) Create(c *gin.Context) {
 }
 
 // MyList 小程序-我的订单列表
+// @Tags        小程序
+// @Summary     我的订单列表
+// @Description 小程序端获取当前用户的订单列表，分页
+// @Accept      json
+// @Produce     json
+// @Param       userId   query int false "用户ID（需登录）"
+// @Param       page     query int false "页码"
+// @Param       pageSize query int false "每页条数"
+// @Success     200      {object} response.Response{data=response.PageResult,msg=string}
+// @Router      /ticket/mini/order/myList [get]
 func (a *miniOrderApi) MyList(c *gin.Context) {
 	var req request.TicketOrderSearch
 	if err := c.ShouldBindQuery(&req); err != nil {
@@ -53,6 +71,14 @@ func (a *miniOrderApi) MyList(c *gin.Context) {
 }
 
 // Detail 小程序-订单详情（含订单项）
+// @Tags        小程序
+// @Summary     订单详情
+// @Description 小程序端获取订单详情及订单项
+// @Accept      json
+// @Produce     json
+// @Param       id query int true "订单ID"
+// @Success     200 {object} response.Response{data=object,msg=string}
+// @Router      /ticket/mini/order/detail [get]
 func (a *miniOrderApi) Detail(c *gin.Context) {
 	var idReq struct {
 		ID uint `form:"id" binding:"required"`

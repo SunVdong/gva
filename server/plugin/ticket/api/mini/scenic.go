@@ -11,6 +11,15 @@ var Scenic = new(miniScenicApi)
 type miniScenicApi struct{}
 
 // List 小程序-景区列表（仅启用）
+// @Tags        小程序
+// @Summary     景区列表
+// @Description 小程序端获取已启用的景区列表，分页
+// @Accept      json
+// @Produce     json
+// @Param       page     query    int false "页码"
+// @Param       pageSize query    int false "每页条数"
+// @Success     200      {object} response.Response{data=response.PageResult,msg=string}
+// @Router      /ticket/mini/scenic/list [get]
 func (a *miniScenicApi) List(c *gin.Context) {
 	status := 1
 	req := request.ScenicSearch{Status: &status}
@@ -32,6 +41,14 @@ func (a *miniScenicApi) List(c *gin.Context) {
 }
 
 // Detail 小程序-景区详情（仅启用时返回）
+// @Tags        小程序
+// @Summary     景区详情
+// @Description 小程序端获取景区详情，仅启用时返回
+// @Accept      json
+// @Produce     json
+// @Param       id query int true "景区ID"
+// @Success     200 {object} response.Response{data=object,msg=string}
+// @Router      /ticket/mini/scenic/detail [get]
 func (a *miniScenicApi) Detail(c *gin.Context) {
 	var idReq struct {
 		ID uint `form:"id" binding:"required"`

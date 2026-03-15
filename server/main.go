@@ -4,6 +4,7 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/core"
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/initialize"
+	_ "github.com/flipped-aurora/gin-vue-admin/server/plugin/ticket/api/mini" // 供 swag 扫描门票小程序接口文档
 	_ "go.uber.org/automaxprocs"
 	"go.uber.org/zap"
 )
@@ -16,6 +17,8 @@ import (
 // 这部分 @Tag 设置用于排序, 需要排序的接口请按照下面的格式添加
 // swag init 对 @Tag 只会从入口文件解析, 默认 main.go
 // 也可通过 --generalInfo flag 指定其他文件
+// @Tag.Name        小程序
+// @Tag.Description 小程序端接口（无需后台 JWT，供微信/支付宝等小程序调用）
 // @Tag.Name        Base
 // @Tag.Name        SysUser
 // @Tag.Description 用户

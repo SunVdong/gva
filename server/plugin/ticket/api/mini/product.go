@@ -11,6 +11,16 @@ var Product = new(miniProductApi)
 type miniProductApi struct{}
 
 // ListByScenic 小程序-按景区获取门票商品列表（仅启用）
+// @Tags        小程序
+// @Summary     门票商品列表
+// @Description 小程序端按景区获取已启用的门票商品列表，分页
+// @Accept      json
+// @Produce     json
+// @Param       scenicId query int  true  "景区ID"
+// @Param       page     query int  false "页码"
+// @Param       pageSize query int  false "每页条数"
+// @Success     200      {object} response.Response{data=response.PageResult,msg=string}
+// @Router      /ticket/mini/product/list [get]
 func (a *miniProductApi) ListByScenic(c *gin.Context) {
 	var req struct {
 		ScenicID uint `form:"scenicId" binding:"required"`
@@ -45,6 +55,14 @@ func (a *miniProductApi) ListByScenic(c *gin.Context) {
 }
 
 // Detail 小程序-商品详情（含 SKU 列表、规则，仅启用）
+// @Tags        小程序
+// @Summary     门票商品详情
+// @Description 小程序端获取商品详情，含 SKU 与规则，仅启用时返回
+// @Accept      json
+// @Produce     json
+// @Param       id query int true "商品ID"
+// @Success     200 {object} response.Response{data=object,msg=string}
+// @Router      /ticket/mini/product/detail [get]
 func (a *miniProductApi) Detail(c *gin.Context) {
 	var idReq struct {
 		ID uint `form:"id" binding:"required"`
