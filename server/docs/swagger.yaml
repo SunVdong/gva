@@ -3733,6 +3733,239 @@ paths:
       summary: 用户登录
       tags:
       - Base
+  /camping/mini/reservation/cancel:
+    post:
+      consumes:
+      - application/json
+      description: 用户取消自己的预约
+      parameters:
+      - description: 预约ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      summary: 取消预约
+      tags:
+      - 小程序-露营
+  /camping/mini/reservation/cancelRule:
+    get:
+      consumes:
+      - application/json
+      description: 根据场地返回取消规则文案（用于弹窗提示）
+      parameters:
+      - description: 场地ID
+        in: query
+        name: venueId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: object
+                msg:
+                  type: string
+              type: object
+      summary: 取消规则
+      tags:
+      - 小程序-露营
+  /camping/mini/reservation/create:
+    post:
+      consumes:
+      - application/json
+      description: 提交露营场地预约（预定人、手机号、日期、时段等）
+      parameters:
+      - description: 预约信息
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateVenueReservationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.VenueReservation'
+                msg:
+                  type: string
+              type: object
+      summary: 提交预约
+      tags:
+      - 小程序-露营
+  /camping/mini/reservation/myDetail:
+    get:
+      consumes:
+      - application/json
+      description: 获取预约详情含场地名、时段、核销码，仅限本人
+      parameters:
+      - description: 预约ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: object
+                msg:
+                  type: string
+              type: object
+      summary: 预约详情
+      tags:
+      - 小程序-露营
+  /camping/mini/reservation/myList:
+    get:
+      consumes:
+      - application/json
+      description: 按当前用户获取预约列表，分页
+      parameters:
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页条数
+        in: query
+        name: pageSize
+        type: integer
+      - description: 状态 0待确认 1已预约 2已取消
+        in: query
+        name: status
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.PageResult'
+                msg:
+                  type: string
+              type: object
+      summary: 我的预约列表
+      tags:
+      - 小程序-露营
+  /camping/mini/site/detail:
+    get:
+      consumes:
+      - application/json
+      description: 小程序端获取场地详情，含场地介绍、开放时间、预约规则
+      parameters:
+      - description: 场地ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: object
+                msg:
+                  type: string
+              type: object
+      summary: 场地详情
+      tags:
+      - 小程序-露营
+  /camping/mini/site/list:
+    get:
+      consumes:
+      - application/json
+      description: 小程序端获取可预约的露营场地列表
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/model.Venue'
+                  type: array
+                msg:
+                  type: string
+              type: object
+      summary: 场地列表
+      tags:
+      - 小程序-露营
+  /camping/mini/slot/availableSlots:
+    get:
+      consumes:
+      - application/json
+      description: 按场地与日期返回时段列表，并标记是否可约（未满且当日开放）
+      parameters:
+      - description: 场地ID
+        in: query
+        name: venueId
+        required: true
+        type: integer
+      - description: 预约日期 2006-01-02
+        in: query
+        name: reserveDate
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    type: object
+                  type: array
+                msg:
+                  type: string
+              type: object
+      summary: 某日可预约时段
+      tags:
+      - 小程序-露营
   /camping/reservation/cancelReservation:
     post:
       parameters:
@@ -3848,6 +4081,10 @@ paths:
         type: string
       - in: query
         name: status
+        type: integer
+      - description: 小程序「我的预约」按用户筛选
+        in: query
+        name: userId
         type: integer
       - in: query
         name: venueId
@@ -8081,6 +8318,8 @@ swagger: "2.0"
 tags:
 - description: 小程序端接口（无需后台 JWT，供微信/支付宝等小程序调用）
   name: 小程序
+- description: 露营场地预约（场地列表、时段、预约、取消）
+  name: 小程序-露营
 - name: Base
 - description: 用户
   name: SysUser

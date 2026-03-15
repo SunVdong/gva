@@ -5,6 +5,7 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/initialize"
 	_ "github.com/flipped-aurora/gin-vue-admin/server/plugin/activityGuide/api/mini" // 供 swag 扫描活动指南小程序接口文档
+	_ "github.com/flipped-aurora/gin-vue-admin/server/plugin/camping/api/mini"       // 供 swag 扫描露营预约小程序接口文档
 	_ "github.com/flipped-aurora/gin-vue-admin/server/plugin/ticket/api/mini"         // 供 swag 扫描门票小程序接口文档
 	_ "go.uber.org/automaxprocs"
 	"go.uber.org/zap"
@@ -20,6 +21,8 @@ import (
 // 也可通过 --generalInfo flag 指定其他文件
 // @Tag.Name        小程序
 // @Tag.Description 小程序端接口（无需后台 JWT，供微信/支付宝等小程序调用）
+// @Tag.Name        小程序-露营
+// @Tag.Description 露营场地预约（场地列表、时段、预约、取消）
 // @Tag.Name        Base
 // @Tag.Name        SysUser
 // @Tag.Description 用户

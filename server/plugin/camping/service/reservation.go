@@ -74,6 +74,9 @@ func (s *reservation) GetReservationByVerifyCode(code string) (model.VenueReserv
 
 func (s *reservation) GetReservationList(req request.VenueReservationSearch) (list []model.VenueReservation, total int64, err error) {
 	db := global.GVA_DB.Model(&model.VenueReservation{})
+	if req.UserID != nil {
+		db = db.Where("user_id = ?", *req.UserID)
+	}
 	if req.VenueID != nil {
 		db = db.Where("venue_id = ?", *req.VenueID)
 	}

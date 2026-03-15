@@ -7,6 +7,7 @@ import (
 
 // VenueReservationSearch 预约搜索
 type VenueReservationSearch struct {
+	UserID      *uint      `json:"userId" form:"userId"`           // 小程序「我的预约」按用户筛选
 	VenueID     *uint      `json:"venueId" form:"venueId"`
 	ReserveDate *time.Time `json:"reserveDate" form:"reserveDate"`
 	Status      *int       `json:"status" form:"status"`
