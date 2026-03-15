@@ -11,3 +11,11 @@ type TicketUserSearch struct {
 	Openid   string `json:"openid" form:"openid"`
 	request.PageInfo
 }
+
+// TicketUserUpdate 后台更新 C 端用户（与 server/model/user.User 对应表 users）
+type TicketUserUpdate struct {
+	ID       uint   `json:"id" binding:"required"`
+	Nickname string `json:"nickname"`
+	Avatar   string `json:"avatar"`   // 对应 User.AvatarURL 列 avatar_url
+	Phone    string `json:"phone"`
+}

@@ -86,7 +86,6 @@ func (e *ensureTables) MigrateTable(ctx context.Context) (context.Context, error
 		ticketModel.TicketAudience{},
 		ticketModel.TicketRule{},
 		ticketModel.TicketCalendar{},
-		ticketModel.TicketUser{},
 		ticketModel.TicketOrder{},
 		ticketModel.OrderItem{},
 	}
@@ -143,7 +142,6 @@ func (e *ensureTables) TableCreated(ctx context.Context) bool {
 		ticketModel.TicketAudience{},
 		ticketModel.TicketRule{},
 		ticketModel.TicketCalendar{},
-		ticketModel.TicketUser{},
 		ticketModel.TicketOrder{},
 		ticketModel.OrderItem{},
 	}

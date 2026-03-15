@@ -2,7 +2,6 @@ package api
 
 import (
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
-	"github.com/flipped-aurora/gin-vue-admin/server/plugin/ticket/model"
 	ticketRequest "github.com/flipped-aurora/gin-vue-admin/server/plugin/ticket/model/request"
 	"github.com/gin-gonic/gin"
 )
@@ -47,16 +46,16 @@ func (a *ticketUserApi) Find(c *gin.Context) {
 }
 
 func (a *ticketUserApi) Update(c *gin.Context) {
-	var m model.TicketUser
-	if err := c.ShouldBindJSON(&m); err != nil {
+	var req ticketRequest.TicketUserUpdate
+	if err := c.ShouldBindJSON(&req); err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	if m.ID == 0 {
+	if req.ID == 0 {
 		response.FailWithMessage("用户ID不能为空", c)
 		return
 	}
-	if err := serviceUser.Update(m); err != nil {
+	if err := serviceUser.Update(req); err != nil {
 		response.FailWithMessage("更新失败", c)
 		return
 	}

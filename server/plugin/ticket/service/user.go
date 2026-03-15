@@ -2,14 +2,14 @@ package service
 
 import (
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
-	"github.com/flipped-aurora/gin-vue-admin/server/plugin/ticket/model"
+	userModel "github.com/flipped-aurora/gin-vue-admin/server/model/user"
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/ticket/model/request"
 )
 
 type ticketUser struct{}
 
-func (s *ticketUser) GetList(req request.TicketUserSearch) (list []model.TicketUser, total int64, err error) {
-	db := global.GVA_DB.Model(&model.TicketUser{})
+func (s *ticketUser) GetList(req request.TicketUserSearch) (list []userModel.User, total int64, err error) {
+	db := global.GVA_DB.Model(&userModel.User{})
 	if req.Nickname != "" {
 		db = db.Where("nickname LIKE ?", "%"+req.Nickname+"%")
 	}
@@ -31,16 +31,21 @@ func (s *ticketUser) GetList(req request.TicketUserSearch) (list []model.TicketU
 	return
 }
 
-func (s *ticketUser) Get(id uint) (model.TicketUser, error) {
-	var res model.TicketUser
+func (s *ticketUser) Get(id uint) (userModel.User, error) {
+	var res userModel.User
 	err := global.GVA_DB.Where("id = ?", id).First(&res).Error
 	return res, err
 }
 
-func (s *ticketUser) Update(m model.TicketUser) error {
-	return global.GVA_DB.Model(&model.TicketUser{}).Where("id = ?", m.ID).Updates(map[string]interface{}{
-		"nickname": m.Nickname,
-		"avatar":   m.Avatar,
-		"phone":    m.Phone,
-	}).Error
+func (s *ticketUser) Update(req request.TicketUserUpdate) error {
+	updates := map[string]interface{}{
+		"nickname":   req.Nickname,
+		"avatar_url": req.Avatar,
+	}
+	if req.Phone != "" {
+		updates["phone"] = req.Phone
+	} else {
+		updates["phone"] = nil
+	}
+	return global.GVA_DB.Model(&userModel.User{}).Where("id = ?", req.ID).Updates(updates).Error
 }
