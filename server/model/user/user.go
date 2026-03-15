@@ -10,6 +10,7 @@ type User struct {
 	OpenID     string `json:"openid" gorm:"column:openid;uniqueIndex;comment:微信openid;size:64"`
 	UnionID    string `json:"unionid" gorm:"column:unionid;index;comment:微信unionid;size:64"`
 	SessionKey string `json:"-" gorm:"column:session_key;comment:会话密钥;size:64"`
+	Phone      *string `json:"phone,omitempty" gorm:"column:phone;uniqueIndex;comment:手机号(本机号一键登录);size:20"` // 未绑定时为 NULL，可多行；绑定后唯一
 	Nickname   string `json:"nickname" gorm:"column:nickname;comment:昵称;size:64"`
 	AvatarURL  string `json:"avatarUrl" gorm:"column:avatar_url;comment:头像;size:255"`
 }

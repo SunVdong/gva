@@ -13,4 +13,6 @@ func (r *MiniRouter) Init(public, private *gin.RouterGroup) {
 	g.GET("ping", commonApi.Ping)
 	// 登录（微信 code2session + JWT）
 	g.POST("login", authApi.Login)
+	// 本机号一键登录（getPhoneNumber 的 code 换手机号）
+	g.POST("loginByPhone", authApi.LoginByPhone)
 }

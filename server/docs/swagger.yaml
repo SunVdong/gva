@@ -5816,6 +5816,36 @@ paths:
       summary: 小程序登录
       tags:
       - 小程序
+  /mini/loginByPhone:
+    post:
+      consumes:
+      - application/json
+      description: 前端 wx.getPhoneNumber 用户同意后拿到 code，后端向微信换手机号，在 users 表按手机号查找或创建用户并签发
+        JWT
+      parameters:
+      - description: 请求体
+        in: body
+        name: data
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: data 含 token、user(id,phone,nickname,avatarUrl)
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: object
+                msg:
+                  type: string
+              type: object
+      summary: 本机号一键登录
+      tags:
+      - 小程序
   /mini/ping:
     get:
       consumes:

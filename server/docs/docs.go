@@ -6035,6 +6035,55 @@ const docTemplate = `{
                 }
             }
         },
+        "/mini/loginByPhone": {
+            "post": {
+                "description": "前端 wx.getPhoneNumber 用户同意后拿到 code，后端向微信换手机号，在 users 表按手机号查找或创建用户并签发 JWT",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "小程序"
+                ],
+                "summary": "本机号一键登录",
+                "parameters": [
+                    {
+                        "description": "请求体",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "data 含 token、user(id,phone,nickname,avatarUrl)",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "msg": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/mini/ping": {
             "get": {
                 "description": "小程序端连通性检测，无需鉴权",
