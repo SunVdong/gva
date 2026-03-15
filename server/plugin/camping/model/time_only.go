@@ -81,3 +81,12 @@ func (t *TimeOnly) UnmarshalJSON(data []byte) error {
 	*t = TimeOnly(s)
 	return nil
 }
+
+// FormatHHMM 返回 "HH:mm" 格式，便于展示与拼接（如 "08:30-17:00"）
+func (t TimeOnly) FormatHHMM() string {
+	s := string(t)
+	if len(s) > 5 {
+		return s[:5]
+	}
+	return s
+}

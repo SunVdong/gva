@@ -1,12 +1,11 @@
 package mini
 
 import (
+	"strconv"
 	"time"
 
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
-	"github.com/flipped-aurora/gin-vue-admin/server/plugin/camping/model"
 	"github.com/gin-gonic/gin"
-	"strconv"
 )
 
 type slotApi struct{}
@@ -61,19 +60,11 @@ func (a *slotApi) AvailableSlots(c *gin.Context) {
 	for _, s := range slots {
 		list = append(list, gin.H{
 			"id":         s.ID,
-			"startTime":  formatTimeOnly(s.StartTime),
-			"endTime":    formatTimeOnly(s.EndTime),
+			"startTime":  s.StartTime.FormatHHMM(),
+			"endTime":    s.EndTime.FormatHHMM(),
 			"capacity":   s.Capacity,
 			"available":  !fullMap[s.ID],
 		})
 	}
 	response.OkWithData(list, c)
-}
-
-func formatTimeOnly(t model.TimeOnly) string {
-	s := string(t)
-	if len(s) > 5 {
-		return s[:5]
-	}
-	return s
 }

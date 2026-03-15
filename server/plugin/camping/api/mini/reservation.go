@@ -82,14 +82,7 @@ func (a *reservationApi) MyList(c *gin.Context) {
 			venueName = v.Name
 		}
 		if s, _ := svcVenueTimeslot.GetVenueTimeslot(r.TimeslotID); s.ID != 0 {
-			st, et := string(s.StartTime), string(s.EndTime)
-			if len(st) > 5 {
-				st = st[:5]
-			}
-			if len(et) > 5 {
-				et = et[:5]
-			}
-			timeslotRange = st + "-" + et
+			timeslotRange = s.StartTime.FormatHHMM() + "-" + s.EndTime.FormatHHMM()
 		}
 		items = append(items, gin.H{
 			"id":             r.ID,
@@ -152,14 +145,7 @@ func (a *reservationApi) MyDetail(c *gin.Context) {
 		venueName = v.Name
 	}
 	if s, _ := svcVenueTimeslot.GetVenueTimeslot(res.TimeslotID); s.ID != 0 {
-		st, et := string(s.StartTime), string(s.EndTime)
-		if len(st) > 5 {
-			st = st[:5]
-		}
-		if len(et) > 5 {
-			et = et[:5]
-		}
-		timeslotRange = st + "-" + et
+		timeslotRange = s.StartTime.FormatHHMM() + "-" + s.EndTime.FormatHHMM()
 	}
 	response.OkWithData(gin.H{
 		"id":            res.ID,

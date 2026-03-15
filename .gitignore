@@ -33,7 +33,8 @@ rm_file/
 /server/__debug_bin*
 /server/*.local.yaml
 /server/*.debug.yaml
-server/uploads/
+/server/uploads/
+/server/tmp/
 
 *.iml
 web/.pnpm-debug.log
