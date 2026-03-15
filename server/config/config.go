@@ -37,4 +37,7 @@ type Server struct {
 
 	// MCP配置
 	MCP MCP `mapstructure:"mcp" json:"mcp" yaml:"mcp"`
+
+	// 微信小程序（登录 code2session）
+	Miniprogram Miniprogram `mapstructure:"miniprogram" json:"miniprogram" yaml:"miniprogram"`
 }

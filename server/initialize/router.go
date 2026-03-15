@@ -79,6 +79,7 @@ func Routers() *gin.Engine {
 	PublicGroup := Router.Group(global.GVA_CONFIG.System.RouterPrefix)
 	PrivateGroup := Router.Group(global.GVA_CONFIG.System.RouterPrefix)
 
+	PublicGroup.Use(middleware.OptionalJWTAuth()) // 小程序等带 x-token 时注入 x-user-id
 	PrivateGroup.Use(middleware.JWTAuth()).Use(middleware.CasbinHandler())
 
 	{

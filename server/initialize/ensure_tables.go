@@ -5,6 +5,7 @@ import (
 	adapter "github.com/casbin/gorm-adapter/v3"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/example"
 	sysModel "github.com/flipped-aurora/gin-vue-admin/server/model/system"
+	userModel "github.com/flipped-aurora/gin-vue-admin/server/model/user"
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/announcement/model"
 	activityGuideModel "github.com/flipped-aurora/gin-vue-admin/server/plugin/activityGuide/model"
 	campingModel "github.com/flipped-aurora/gin-vue-admin/server/plugin/camping/model"
@@ -61,6 +62,8 @@ func (e *ensureTables) MigrateTable(ctx context.Context) (context.Context, error
 		sysModel.SysLoginLog{},
 		sysModel.SysApiToken{},
 		adapter.CasbinRule{},
+
+		userModel.User{}, // C 端/小程序用户表 users，与后台 sys_users 分离
 
 		example.ExaFile{},
 		example.ExaCustomer{},

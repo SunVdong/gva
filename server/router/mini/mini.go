@@ -11,7 +11,6 @@ func (r *MiniRouter) Init(public, private *gin.RouterGroup) {
 	g := public.Group("mini")
 	// 通用
 	g.GET("ping", commonApi.Ping)
-	// 后续小程序接口在此追加，例如：
-	// g.GET("config", commonApi.Config)
-	// g.POST("user/login", userApi.Login)
+	// 登录（微信 code2session + JWT）
+	g.POST("login", authApi.Login)
 }

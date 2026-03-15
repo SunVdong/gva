@@ -87,3 +87,26 @@ func isBlacklist(jwt string) bool {
 	_, ok := global.BlackCache.Get(jwt)
 	return ok
 }
+
+// OptionalJWTAuth 可选 JWT：若请求带 x-token 则解析并设置 claims、x-user-id，不拦截请求（供小程序等公开接口按需取用户 ID）
+func OptionalJWTAuth() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		token := c.Request.Header.Get("x-token")
+		if token == "" {
+			token, _ = c.Cookie("x-token")
+		}
+		if token == "" || isBlacklist(token) {
+			c.Next()
+			return
+		}
+		j := utils.NewJWT()
+		claims, err := j.ParseToken(token)
+		if err != nil {
+			c.Next()
+			return
+		}
+		c.Set("claims", claims)
+		c.Set("x-user-id", claims.BaseClaims.ID)
+		c.Next()
+	}
+}

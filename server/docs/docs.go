@@ -2655,7 +2655,7 @@ const docTemplate = `{
         },
         "/camping/mini/site/detail": {
             "get": {
-                "description": "小程序端获取场地详情，含场地介绍、开放时间、预约规则",
+                "description": "小程序端获取场地详情；今日是否开放同时依据 venue_open_time（星期）与 venue_calendar（日期是否可约）",
                 "consumes": [
                     "application/json"
                 ],
@@ -5975,6 +5975,55 @@ const docTemplate = `{
                                 {
                                     "type": "object",
                                     "properties": {
+                                        "msg": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/mini/login": {
+            "post": {
+                "description": "使用 wx.login 获得的 code 换取 openid，在 users 表创建/绑定用户并签发本系统 JWT，请求头带 x-token 后可选注入 x-user-id",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "小程序"
+                ],
+                "summary": "小程序登录",
+                "parameters": [
+                    {
+                        "description": "请求体",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "data 含 token、user(id,openid,nickname,avatarUrl)",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        },
                                         "msg": {
                                             "type": "string"
                                         }
@@ -10610,6 +10659,19 @@ const docTemplate = `{
                 }
             }
         },
+        "config.Miniprogram": {
+            "type": "object",
+            "properties": {
+                "app-id": {
+                    "description": "小程序 AppID",
+                    "type": "string"
+                },
+                "app-secret": {
+                    "description": "小程序 AppSecret",
+                    "type": "string"
+                }
+            }
+        },
         "config.Mongo": {
             "type": "object",
             "properties": {
@@ -11049,6 +11111,14 @@ const docTemplate = `{
                 },
                 "minio": {
                     "$ref": "#/definitions/config.Minio"
+                },
+                "miniprogram": {
+                    "description": "微信小程序（登录 code2session）",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/config.Miniprogram"
+                        }
+                    ]
                 },
                 "mongo": {
                     "$ref": "#/definitions/config.Mongo"

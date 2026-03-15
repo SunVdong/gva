@@ -194,6 +194,15 @@ definitions:
       use-ssl:
         type: boolean
     type: object
+  config.Miniprogram:
+    properties:
+      app-id:
+        description: 小程序 AppID
+        type: string
+      app-secret:
+        description: 小程序 AppSecret
+        type: string
+    type: object
   config.Mongo:
     properties:
       auth-source:
@@ -507,6 +516,10 @@ definitions:
         description: MCP配置
       minio:
         $ref: '#/definitions/config.Minio'
+      miniprogram:
+        allOf:
+        - $ref: '#/definitions/config.Miniprogram'
+        description: 微信小程序（登录 code2session）
       mongo:
         $ref: '#/definitions/config.Mongo'
       mssql:
@@ -3883,7 +3896,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: 小程序端获取场地详情，含场地介绍、开放时间、预约规则
+      description: 小程序端获取场地详情；今日是否开放同时依据 venue_open_time（星期）与 venue_calendar（日期是否可约）
       parameters:
       - description: 场地ID
         in: query
@@ -5773,6 +5786,36 @@ paths:
       summary: 更新菜单
       tags:
       - Menu
+  /mini/login:
+    post:
+      consumes:
+      - application/json
+      description: 使用 wx.login 获得的 code 换取 openid，在 users 表创建/绑定用户并签发本系统 JWT，请求头带
+        x-token 后可选注入 x-user-id
+      parameters:
+      - description: 请求体
+        in: body
+        name: data
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: data 含 token、user(id,openid,nickname,avatarUrl)
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: object
+                msg:
+                  type: string
+              type: object
+      summary: 小程序登录
+      tags:
+      - 小程序
   /mini/ping:
     get:
       consumes:
