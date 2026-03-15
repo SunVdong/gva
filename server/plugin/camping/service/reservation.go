@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"regexp"
 	"time"
 
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
@@ -10,13 +11,20 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 )
 
+// 中国大陆手机号：1 开头，第二位 3-9，共 11 位数字
+var reChineseMobile = regexp.MustCompile(`^1[3-9]\d{9}$`)
+
 type reservation struct{}
 
 func (s *reservation) CreateReservation(req request.CreateVenueReservationRequest, userID uint) (model.VenueReservation, error) {
+	if !reChineseMobile.MatchString(req.ContactPhone) {
+		return model.VenueReservation{}, fmt.Errorf("请输入正确的手机号")
+	}
 	reserveDate, err := time.ParseInLocation("2006-01-02", req.ReserveDate, time.Local)
 	if err != nil {
 		return model.VenueReservation{}, fmt.Errorf("预约日期格式错误")
 	}
+	reserveDate = dateOnly(reserveDate)
 	// 检查日历该日是否可约
 	open, err := Service.VenueCalendar.IsDateOpen(req.VenueID, reserveDate)
 	if err != nil || !open {
@@ -81,7 +89,8 @@ func (s *reservation) GetReservationList(req request.VenueReservationSearch) (li
 		db = db.Where("venue_id = ?", *req.VenueID)
 	}
 	if req.ReserveDate != nil {
-		db = db.Where("reserve_date = ?", *req.ReserveDate)
+		d := dateOnly(*req.ReserveDate)
+		db = db.Where("reserve_date = ?", d)
 	}
 	if req.Status != nil {
 		db = db.Where("status = ?", *req.Status)
@@ -115,6 +124,7 @@ func (s *reservation) CancelReservation(id uint) error {
 
 // GetReservedTimeslotIds 获取某场地某日已约满的时段ID列表（已预约数 >= capacity 的时段）
 func (s *reservation) GetReservedTimeslotIds(venueID uint, reserveDate time.Time) ([]uint, error) {
+	d := dateOnly(reserveDate)
 	var slots []model.VenueTimeslot
 	if err := global.GVA_DB.Where("venue_id = ?", venueID).Find(&slots).Error; err != nil {
 		return nil, err
@@ -123,7 +133,7 @@ func (s *reservation) GetReservedTimeslotIds(venueID uint, reserveDate time.Time
 	for _, slot := range slots {
 		var count int64
 		global.GVA_DB.Model(&model.VenueReservation{}).
-			Where("venue_id = ? AND reserve_date = ? AND timeslot_id = ? AND status IN (0, 1)", venueID, reserveDate, slot.ID).
+			Where("venue_id = ? AND reserve_date = ? AND timeslot_id = ? AND status IN (0, 1)", venueID, d, slot.ID).
 			Count(&count)
 		if int(count) >= slot.Capacity {
 			fullIds = append(fullIds, slot.ID)
