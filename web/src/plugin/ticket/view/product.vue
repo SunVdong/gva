@@ -168,17 +168,17 @@
             <el-button type="primary" size="small" @click="addRuleRow">添加规则</el-button>
           </div>
           <el-table :data="ruleList" border size="small">
-            <el-table-column label="标题" min-width="120">
+            <el-table-column label="标题" min-width="100">
               <template #default="{ row }">
                 <el-input v-model="row.title" placeholder="规则标题" size="small" />
               </template>
             </el-table-column>
-            <el-table-column label="内容" min-width="200">
+            <el-table-column label="内容" min-width="180">
               <template #default="{ row }">
                 <el-input v-model="row.content" type="textarea" :rows="2" placeholder="规则内容" size="small" />
               </template>
             </el-table-column>
-            <el-table-column label="排序" width="80">
+            <el-table-column label="排序" width="100">
               <template #default="{ row }">
                 <el-input-number v-model="row.sort" :min="0" size="small" style="width:100%" />
               </template>
