@@ -89,6 +89,15 @@ func (a *miniProductApi) Detail(c *gin.Context) {
 		response.FailWithMessage("商品已下架", c)
 		return
 	}
+
+	// 所属景区信息（用于返回景区图片等）
+	var scenicCarouselImages any
+	if product.ScenicID != 0 {
+		if scenic, err := svcScenic.Get(product.ScenicID); err == nil {
+			// 与露营场地保持一致，直接透出 JSON 字段，由小程序按需解析
+			scenicCarouselImages = scenic.CarouselImages
+		}
+	}
 	status := 1
 	skuList, _, _ := svcSku.GetList(request.TicketSkuSearch{ProductID: idReq.ID, Status: &status})
 	rules, _ := svcRule.GetByProduct(idReq.ID)
@@ -150,10 +159,11 @@ func (a *miniProductApi) Detail(c *gin.Context) {
 	todayOpen := hasOpenConfig && hasAvailableSku
 
 	response.OkWithData(gin.H{
-		"product":        product,
-		"skus":           skusWithStatus,
-		"rules":          rules,
-		"todayOpen":      todayOpen,
-		"todayOpenTime":  todayOpenTime,
+		"product":              product,
+		"skus":                 skusWithStatus,
+		"rules":                rules,
+		"todayOpen":            todayOpen,
+		"todayOpenTime":        todayOpenTime,
+		"scenicCarouselImages": scenicCarouselImages,
 	}, c)
 }
