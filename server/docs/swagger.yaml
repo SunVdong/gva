@@ -901,30 +901,6 @@ definitions:
         type: integer
     type: object
   model.Venue:
-    properties:
-      ID:
-        description: 主键ID
-        type: integer
-      carouselImages:
-        items:
-          type: integer
-        type: array
-      createdAt:
-        description: 创建时间
-        type: string
-      description:
-        type: string
-      name:
-        type: string
-      refundChangeHours:
-        type: integer
-      reserveRules:
-        type: string
-      status:
-        type: integer
-      updatedAt:
-        description: 更新时间
-        type: string
     type: object
   model.VenueCalendar:
     properties:
@@ -1462,6 +1438,10 @@ definitions:
     type: object
   request.MiniOrderCreate:
     properties:
+      bookerName:
+        type: string
+      bookerPhone:
+        type: string
       items:
         items:
           $ref: '#/definitions/request.MiniOrderItem'
@@ -1470,6 +1450,8 @@ definitions:
       userId:
         type: integer
     required:
+    - bookerName
+    - bookerPhone
     - items
     - userId
     type: object
@@ -3949,7 +3931,7 @@ paths:
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/model.Venue'
+                    type: object
                   type: array
                 msg:
                   type: string
@@ -5799,6 +5781,26 @@ paths:
       summary: 更新菜单
       tags:
       - Menu
+  /mini/genToken:
+    get:
+      description: 生成一个包含测试用户信息的 JWT，用于本地调试，可直接作为 x-token 使用
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: data 含 token
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: object
+                msg:
+                  type: string
+              type: object
+      summary: 生成测试 JWT
+      tags:
+      - 小程序
   /mini/login:
     post:
       consumes:
@@ -7903,9 +7905,13 @@ paths:
     post:
       consumes:
       - application/json
-      description: '小程序端提交门票订单。创建成功后请携带 x-token 调用公共接口 POST /mini/pay/create，body
+      description: '小程序端提交门票订单，需先登录，请求头携带 x-token。创建成功后请携带 x-token 调用公共接口 POST /mini/pay/create，body
         传 {"orderType":"ticket","orderId": 订单ID}，获取支付参数后调 wx.requestPayment 完成支付。'
       parameters:
+      - description: 小程序登录后返回的 token
+        in: header
+        name: x-token
+        type: string
       - description: 订单信息
         in: body
         name: data
@@ -7933,8 +7939,12 @@ paths:
     get:
       consumes:
       - application/json
-      description: 小程序端获取订单详情及订单项
+      description: 小程序端获取订单详情及订单项，仅限当前登录用户自己的订单
       parameters:
+      - description: 小程序登录后返回的 token
+        in: header
+        name: x-token
+        type: string
       - description: 订单ID
         in: query
         name: id
@@ -7961,12 +7971,12 @@ paths:
     get:
       consumes:
       - application/json
-      description: 小程序端获取当前用户的订单列表，分页
+      description: 小程序端获取当前登录用户的订单列表，分页
       parameters:
-      - description: 用户ID（需登录）
-        in: query
-        name: userId
-        type: integer
+      - description: 小程序登录后返回的 token
+        in: header
+        name: x-token
+        type: string
       - description: 页码
         in: query
         name: page

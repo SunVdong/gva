@@ -11,6 +11,7 @@ func (r *MiniRouter) Init(public, private *gin.RouterGroup) {
 	g := public.Group("mini")
 	// 通用
 	g.GET("ping", commonApi.Ping)
+	g.GET("genToken", commonApi.GenToken)
 	// 登录（微信 code2session + JWT）
 	g.POST("login", authApi.Login)
 	// 本机号一键登录（getPhoneNumber 的 code 换手机号）

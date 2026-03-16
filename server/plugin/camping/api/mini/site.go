@@ -17,7 +17,7 @@ type siteApi struct{}
 // @Description 小程序端获取可预约的露营场地列表
 // @Accept      json
 // @Produce     json
-// @Success     200 {object} response.Response{data=[]model.Venue,msg=string}
+// @Success     200 {object} response.Response{data=[]object,msg=string}
 // @Router      /camping/mini/site/list [get]
 func (a *siteApi) List(c *gin.Context) {
 	status := 1

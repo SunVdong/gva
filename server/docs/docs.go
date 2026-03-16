@@ -2733,7 +2733,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/model.Venue"
+                                                "type": "object"
                                             }
                                         },
                                         "msg": {
@@ -5981,6 +5981,41 @@ const docTemplate = `{
                                 {
                                     "type": "object",
                                     "properties": {
+                                        "msg": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/mini/genToken": {
+            "get": {
+                "description": "生成一个包含测试用户信息的 JWT，用于本地调试，可直接作为 x-token 使用",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "小程序"
+                ],
+                "summary": "生成测试 JWT",
+                "responses": {
+                    "200": {
+                        "description": "data 含 token",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        },
                                         "msg": {
                                             "type": "string"
                                         }
@@ -9566,7 +9601,7 @@ const docTemplate = `{
         },
         "/ticket/mini/order/create": {
             "post": {
-                "description": "小程序端提交门票订单。创建成功后请携带 x-token 调用公共接口 POST /mini/pay/create，body 传 {\"orderType\":\"ticket\",\"orderId\": 订单ID}，获取支付参数后调 wx.requestPayment 完成支付。",
+                "description": "小程序端提交门票订单，需先登录，请求头携带 x-token。创建成功后请携带 x-token 调用公共接口 POST /mini/pay/create，body 传 {\"orderType\":\"ticket\",\"orderId\": 订单ID}，获取支付参数后调 wx.requestPayment 完成支付。",
                 "consumes": [
                     "application/json"
                 ],
@@ -9578,6 +9613,12 @@ const docTemplate = `{
                 ],
                 "summary": "提交订单",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "小程序登录后返回的 token",
+                        "name": "x-token",
+                        "in": "header"
+                    },
                     {
                         "description": "订单信息",
                         "name": "data",
@@ -9615,7 +9656,7 @@ const docTemplate = `{
         },
         "/ticket/mini/order/detail": {
             "get": {
-                "description": "小程序端获取订单详情及订单项",
+                "description": "小程序端获取订单详情及订单项，仅限当前登录用户自己的订单",
                 "consumes": [
                     "application/json"
                 ],
@@ -9627,6 +9668,12 @@ const docTemplate = `{
                 ],
                 "summary": "订单详情",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "小程序登录后返回的 token",
+                        "name": "x-token",
+                        "in": "header"
+                    },
                     {
                         "type": "integer",
                         "description": "订单ID",
@@ -9662,7 +9709,7 @@ const docTemplate = `{
         },
         "/ticket/mini/order/myList": {
             "get": {
-                "description": "小程序端获取当前用户的订单列表，分页",
+                "description": "小程序端获取当前登录用户的订单列表，分页",
                 "consumes": [
                     "application/json"
                 ],
@@ -9675,10 +9722,10 @@ const docTemplate = `{
                 "summary": "我的订单列表",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "用户ID（需登录）",
-                        "name": "userId",
-                        "in": "query"
+                        "type": "string",
+                        "description": "小程序登录后返回的 token",
+                        "name": "x-token",
+                        "in": "header"
                     },
                     {
                         "type": "integer",
@@ -11762,42 +11809,7 @@ const docTemplate = `{
             }
         },
         "model.Venue": {
-            "type": "object",
-            "properties": {
-                "ID": {
-                    "description": "主键ID",
-                    "type": "integer"
-                },
-                "carouselImages": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "createdAt": {
-                    "description": "创建时间",
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "refundChangeHours": {
-                    "type": "integer"
-                },
-                "reserveRules": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "integer"
-                },
-                "updatedAt": {
-                    "description": "更新时间",
-                    "type": "string"
-                }
-            }
+            "type": "object"
         },
         "model.VenueCalendar": {
             "type": "object",
@@ -12558,10 +12570,18 @@ const docTemplate = `{
         "request.MiniOrderCreate": {
             "type": "object",
             "required": [
+                "bookerName",
+                "bookerPhone",
                 "items",
                 "userId"
             ],
             "properties": {
+                "bookerName": {
+                    "type": "string"
+                },
+                "bookerPhone": {
+                    "type": "string"
+                },
                 "items": {
                     "type": "array",
                     "minItems": 1,
