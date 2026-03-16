@@ -84,6 +84,14 @@
         <el-form-item label="门票说明" prop="description">
           <el-input v-model="formData.description" type="textarea" :rows="3" placeholder="选填" />
         </el-form-item>
+        <el-form-item label="适用人群" prop="audience">
+          <el-input
+            v-model="formData.audience"
+            type="textarea"
+            :rows="3"
+            placeholder="如：成人、儿童、老人等，选填"
+          />
+        </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="formData.status">
             <el-radio :value="1">启用</el-radio>
@@ -257,6 +265,7 @@ const formData = ref({
   scenicId: undefined,
   name: '',
   description: '',
+  audience: '',
   status: 1
 })
 
@@ -298,7 +307,7 @@ const handleSelectionChange = (val) => { multipleSelection.value = val }
 
 const openDialog = () => {
   type.value = 'create'
-  formData.value = { scenicId: undefined, name: '', description: '', status: 1 }
+  formData.value = { scenicId: undefined, name: '', description: '', audience: '', status: 1 }
   dialogVisible.value = true
 }
 
@@ -311,6 +320,7 @@ const updateFunc = async (row) => {
       scenicId: d.scenicId,
       name: d.name || '',
       description: d.description || '',
+      audience: d.audience || '',
       status: d.status ?? 1
     }
     type.value = 'update'

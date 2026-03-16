@@ -10,6 +10,7 @@ type TicketProduct struct {
 	ScenicID    uint   `json:"scenicId" form:"scenicId" gorm:"column:scenic_id;comment:景区ID;"`
 	Name        string `json:"name" form:"name" gorm:"column:name;comment:门票商品名称;size:100;"`
 	Description string `json:"description" form:"description" gorm:"column:description;comment:门票说明;type:text;"`
+	Audience    string `json:"audience" form:"audience" gorm:"column:audience;comment:适用人群;type:text;"`
 	Status      int    `json:"status" form:"status" gorm:"column:status;comment:状态1启用0禁用;default:1;"`
 	CreatedBy   int    `json:"createdBy" form:"createdBy" gorm:"column:created_by;default:0;"`
 	UpdatedBy   int    `json:"updatedBy" form:"updatedBy" gorm:"column:updated_by;default:0;"`
