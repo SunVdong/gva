@@ -1,7 +1,10 @@
 package mini
 
 import (
+	"time"
+
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
+	"github.com/flipped-aurora/gin-vue-admin/server/plugin/ticket/model"
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/ticket/model/request"
 	"github.com/gin-gonic/gin"
 )
@@ -9,6 +12,12 @@ import (
 var Product = new(miniProductApi)
 
 type miniProductApi struct{}
+
+// miniSkuWithStatus 小程序端 SKU 返回结构，增加今日售罄标记
+type miniSkuWithStatus struct {
+	model.TicketSku
+	SoldOutToday bool `json:"soldOutToday"`
+}
 
 // ListByScenic 小程序-按景区获取门票商品列表（仅启用）
 // @Tags        小程序-景点
@@ -83,9 +92,68 @@ func (a *miniProductApi) Detail(c *gin.Context) {
 	status := 1
 	skuList, _, _ := svcSku.GetList(request.TicketSkuSearch{ProductID: idReq.ID, Status: &status})
 	rules, _ := svcRule.GetByProduct(idReq.ID)
+
+	// 计算今日开放情况与 SKU 是否售罄
+	today := time.Now()
+	weekday := int(today.Weekday())
+	if weekday == 0 {
+		weekday = 7
+	}
+
+	// 今日开放时间（取景区开放时间配置）
+	openTimes, _ := svcOpenTime.GetByScenic(product.ScenicID)
+	var todayOpenTime string
+	hasOpenConfig := false
+	for _, ot := range openTimes {
+		if ot.WeekDay == weekday {
+			openStr := string(ot.OpenTime)
+			closeStr := string(ot.CloseTime)
+			if len(openStr) > 5 {
+				openStr = openStr[:5]
+			}
+			if len(closeStr) > 5 {
+				closeStr = closeStr[:5]
+			}
+			if openStr != "" && closeStr != "" {
+				todayOpenTime = openStr + "-" + closeStr
+				hasOpenConfig = true
+			}
+			break
+		}
+	}
+
+	// 今日日历库存，判断是否有可售 SKU 以及单个 SKU 是否售罄
+	todayStr := today.Format("2006-01-02")
+	skusWithStatus := make([]miniSkuWithStatus, 0, len(skuList))
+	hasAvailableSku := false
+	for _, sku := range skuList {
+		calList, _, _ := svcCalendar.GetBySku(request.TicketCalendarSearch{
+			SkuID:     sku.ID,
+			VisitDate: todayStr,
+		})
+		soldOutToday := false
+		if len(calList) > 0 {
+			cal := calList[0]
+			if cal.Status != 1 || cal.Stock-cal.Sold <= 0 {
+				soldOutToday = true
+			}
+		}
+		if !soldOutToday {
+			hasAvailableSku = true
+		}
+		skusWithStatus = append(skusWithStatus, miniSkuWithStatus{
+			TicketSku:    sku,
+			SoldOutToday: soldOutToday,
+		})
+	}
+
+	todayOpen := hasOpenConfig && hasAvailableSku
+
 	response.OkWithData(gin.H{
-		"product": product,
-		"skus":    skuList,
-		"rules":   rules,
+		"product":        product,
+		"skus":           skusWithStatus,
+		"rules":          rules,
+		"todayOpen":      todayOpen,
+		"todayOpenTime":  todayOpenTime,
 	}, c)
 }
