@@ -80,6 +80,8 @@ func (s *ticketOrder) CreateOrder(req request.MiniOrderCreate) (order model.Tick
 		order = model.TicketOrder{
 			OrderNo:     orderNo,
 			UserID:      req.UserID,
+			BookerName:  req.BookerName,
+			BookerPhone: req.BookerPhone,
 			TotalAmount: totalAmount,
 			PayAmount:   totalAmount,
 			Status:      0,

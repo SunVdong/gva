@@ -9,6 +9,8 @@ type MiniOrderItem struct {
 
 // MiniOrderCreate 小程序-创建订单
 type MiniOrderCreate struct {
-	UserID uint            `json:"userId" binding:"required"`
-	Items  []MiniOrderItem `json:"items" binding:"required,min=1"`
+	UserID      uint            `json:"userId" binding:"required"`
+	BookerName  string          `json:"bookerName" binding:"required"`
+	BookerPhone string          `json:"bookerPhone" binding:"required"`
+	Items       []MiniOrderItem `json:"items" binding:"required,min=1"`
 }
