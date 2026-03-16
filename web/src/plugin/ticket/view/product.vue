@@ -140,20 +140,6 @@
                 </el-select>
               </template>
             </el-table-column>
-            <el-table-column label="适用人群" min-width="118" align="center">
-              <template #default="{ row }">
-                <el-button
-                  v-if="row.ID"
-                  type="primary"
-                  link
-                  size="small"
-                  @click="openAudienceDialog(row)"
-                >
-                  设置
-                </el-button>
-                <span v-else class="text-gray-400 text-xs">需先保存 SKU</span>
-              </template>
-            </el-table-column>
             <el-table-column label="操作" width="90" fixed="right">
               <template #default="{ row, $index }">
                 <el-button v-if="!row.ID" type="danger" link size="small" @click="skuList.splice($index, 1)">删除</el-button>
