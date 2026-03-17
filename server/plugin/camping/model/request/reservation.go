@@ -1,15 +1,16 @@
 package request
 
 import (
-	"github.com/flipped-aurora/gin-vue-admin/server/model/common/request"
 	"time"
+
+	"github.com/flipped-aurora/gin-vue-admin/server/model/common/request"
 )
 
 // VenueReservationSearch 预约搜索
 type VenueReservationSearch struct {
-	UserID      *uint      `json:"userId" form:"userId"`           // 小程序「我的预约」按用户筛选
+	UserID      *uint      `json:"userId" form:"userId"`                                            // 小程序「我的预约」按用户筛选
 	VenueID     *uint      `json:"venueId" form:"venueId"`
-	ReserveDate *time.Time `json:"reserveDate" form:"reserveDate"`
+	ReserveDate *time.Time `json:"reserveDate" form:"reserveDate" time_format:"2006-01-02"`         // 查询参数使用 2006-01-02
 	Status      *int       `json:"status" form:"status"`
 	VerifyCode  string     `json:"verifyCode" form:"verifyCode"`
 	request.PageInfo
