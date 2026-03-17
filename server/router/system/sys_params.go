@@ -11,6 +11,7 @@ type SysParamsRouter struct{}
 func (s *SysParamsRouter) InitSysParamsRouter(Router *gin.RouterGroup, PublicRouter *gin.RouterGroup) {
 	sysParamsRouter := Router.Group("sysParams").Use(middleware.OperationRecord())
 	sysParamsRouterWithoutRecord := Router.Group("sysParams")
+	sysParamsPublicRouter := PublicRouter.Group("sysParams")
 	{
 		sysParamsRouter.POST("createSysParams", sysParamsApi.CreateSysParams)             // 新建参数
 		sysParamsRouter.DELETE("deleteSysParams", sysParamsApi.DeleteSysParams)           // 删除参数
@@ -21,5 +22,9 @@ func (s *SysParamsRouter) InitSysParamsRouter(Router *gin.RouterGroup, PublicRou
 		sysParamsRouterWithoutRecord.GET("findSysParams", sysParamsApi.FindSysParams)       // 根据ID获取参数
 		sysParamsRouterWithoutRecord.GET("getSysParamsList", sysParamsApi.GetSysParamsList) // 获取参数列表
 		sysParamsRouterWithoutRecord.GET("getSysParam", sysParamsApi.GetSysParam)           // 根据Key获取参数
+	}
+	{
+		// 小程序/外部端使用：无需鉴权获取系统参数，路径与内部区分，避免冲突
+		sysParamsPublicRouter.GET("getSysParamPublic", sysParamsApi.GetSysParam)
 	}
 }
