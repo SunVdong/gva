@@ -75,6 +75,8 @@
               fit="cover"
               class="w-12 h-12 rounded border"
               :preview-src-list="[getUrl(scope.row.coverImage)]"
+              :z-index="9999"
+              :preview-teleported="true"
             />
             <span v-else class="text-gray-400">—</span>
           </template>
@@ -361,5 +363,9 @@ const enterDialog = async () => {
 }
 .h-12 {
   height: 3rem;
+}
+
+:deep(.el-image-viewer__wrapper) {
+  z-index: 9999 !important;
 }
 </style>
