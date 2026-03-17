@@ -22,6 +22,7 @@ func (r *miniRouter) Init(public, private *gin.RouterGroup) {
 	g.GET("slot/availableSlots", mini.Slot.AvailableSlots)
 	// 预约
 	g.POST("reservation/create", mini.Reservation.Create)
+	g.POST("reservation/update", mini.Reservation.Update)
 	g.GET("reservation/myList", mini.Reservation.MyList)
 	g.GET("reservation/myDetail", mini.Reservation.MyDetail)
 	g.POST("reservation/cancel", mini.Reservation.Cancel)

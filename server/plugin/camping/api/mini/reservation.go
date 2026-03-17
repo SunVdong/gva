@@ -39,6 +39,35 @@ func (a *reservationApi) Create(c *gin.Context) {
 	response.OkWithData(res, c)
 }
 
+// Update 小程序-修改预约（仅本人）
+// @Tags        小程序-露营
+// @Summary     修改预约
+// @Description 用户修改自己的预约信息（日期、时段、联系人信息等）
+// @Accept      json
+// @Produce     json
+// @Param       x-token header string false "小程序登录后返回的 token"
+// @Param       data body request.UpdateVenueReservationRequest true "修改后的预约信息"
+// @Success     200 {object} response.Response{data=model.VenueReservation,msg=string}
+// @Router      /camping/mini/reservation/update [post]
+func (a *reservationApi) Update(c *gin.Context) {
+	userID, ok := getUserID(c)
+	if !ok {
+		response.FailWithMessage("请先登录", c)
+		return
+	}
+	var req campingRequest.UpdateVenueReservationRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	res, err := svcReservation.UpdateReservation(req, userID)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithData(res, c)
+}
+
 // MyList 小程序-我的预约列表
 // @Tags        小程序-露营
 // @Summary     我的预约列表

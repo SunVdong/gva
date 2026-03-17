@@ -68,6 +68,62 @@ func (s *reservation) CreateReservation(req request.CreateVenueReservationReques
 	return m, global.GVA_DB.Create(&m).Error
 }
 
+// UpdateReservation 修改预约
+// 仅允许修改未取消的预约，且必须属于当前用户；会重新检查日期开放情况、时段有效性与容量。
+func (s *reservation) UpdateReservation(req request.UpdateVenueReservationRequest, userID uint) (model.VenueReservation, error) {
+	if !reChineseMobile.MatchString(req.ContactPhone) {
+		return model.VenueReservation{}, fmt.Errorf("请输入正确的手机号")
+	}
+	// 查询原预约
+	var original model.VenueReservation
+	if err := global.GVA_DB.Where("id = ?", req.ID).First(&original).Error; err != nil {
+		return model.VenueReservation{}, fmt.Errorf("预约不存在")
+	}
+	if original.UserID != userID {
+		return model.VenueReservation{}, fmt.Errorf("无权修改该预约")
+	}
+	if original.Status == 2 {
+		return model.VenueReservation{}, fmt.Errorf("该预约已取消，无法修改")
+	}
+
+	// 解析并规范化预约日期
+	reserveDate, err := time.ParseInLocation("2006-01-02", req.ReserveDate, time.Local)
+	if err != nil {
+		return model.VenueReservation{}, fmt.Errorf("预约日期格式错误")
+	}
+	reserveDate = dateOnly(reserveDate)
+
+	// 检查日历该日是否可约
+	open, err := Service.VenueCalendar.IsDateOpen(original.VenueID, reserveDate)
+	if err != nil || !open {
+		return model.VenueReservation{}, fmt.Errorf("该日期暂不开放预约")
+	}
+
+	// 检查时间段是否存在且属于该场地
+	var slot model.VenueTimeslot
+	if err := global.GVA_DB.Where("id = ? AND venue_id = ?", req.TimeslotID, original.VenueID).First(&slot).Error; err != nil {
+		return model.VenueReservation{}, fmt.Errorf("时间段无效")
+	}
+
+	// 检查已预约数是否已达 capacity（排除当前这条预约）
+	var count int64
+	global.GVA_DB.Model(&model.VenueReservation{}).
+		Where("venue_id = ? AND reserve_date = ? AND timeslot_id = ? AND status IN (0, 1) AND id <> ?", original.VenueID, reserveDate, req.TimeslotID, original.ID).
+		Count(&count)
+	if int(count) >= slot.Capacity {
+		return model.VenueReservation{}, fmt.Errorf("该时段已约满")
+	}
+
+	// 更新字段
+	original.ReserveDate = reserveDate
+	original.TimeslotID = req.TimeslotID
+	original.ContactName = req.ContactName
+	original.ContactPhone = req.ContactPhone
+	original.ContactCount = req.ContactCount
+
+	return original, global.GVA_DB.Save(&original).Error
+}
+
 func (s *reservation) GetReservation(id uint) (model.VenueReservation, error) {
 	var res model.VenueReservation
 	err := global.GVA_DB.Where("id = ?", id).First(&res).Error
