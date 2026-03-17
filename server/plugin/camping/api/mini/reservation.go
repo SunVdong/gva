@@ -79,7 +79,7 @@ func (a *reservationApi) Update(c *gin.Context) {
 // @Produce     json
 // @Param       page     query int false "页码"
 // @Param       pageSize query int false "每页条数"
-// @Param       status   query int false "状态 0待确认 1已预约 2已取消"
+// @Param       status   query int false "状态 0待核销 1已核销 2已取消 3已过期"
 // @Success     200 {object} response.Response{data=response.PageResult,msg=string}
 // @Router      /camping/mini/reservation/myList [get]
 func (a *reservationApi) MyList(c *gin.Context) {

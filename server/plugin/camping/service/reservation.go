@@ -126,8 +126,11 @@ func (s *reservation) UpdateReservation(req request.UpdateVenueReservationReques
 
 func (s *reservation) GetReservation(id uint) (model.VenueReservation, error) {
 	var res model.VenueReservation
-	err := global.GVA_DB.Where("id = ?", id).First(&res).Error
-	return res, err
+	if err := global.GVA_DB.Where("id = ?", id).First(&res).Error; err != nil {
+		return res, err
+	}
+	_ = s.maybeExpireReservation(&res)
+	return res, nil
 }
 
 func (s *reservation) GetReservationByVerifyCode(code string) (model.VenueReservation, error) {
@@ -162,7 +165,12 @@ func (s *reservation) GetReservationList(req request.VenueReservationSearch) (li
 	if limit != 0 {
 		db = db.Limit(limit).Offset(offset)
 	}
-	err = db.Order("reserve_date DESC, timeslot_id ASC").Find(&list).Error
+	if err = db.Order("reserve_date DESC, timeslot_id ASC").Find(&list).Error; err != nil {
+		return
+	}
+	for i := range list {
+		_ = s.maybeExpireReservation(&list[i])
+	}
 	return
 }
 
@@ -200,6 +208,46 @@ func (s *reservation) CancelReservation(id uint) error {
 		}
 	}
 	return global.GVA_DB.Model(&model.VenueReservation{}).Where("id = ?", id).Update("status", 2).Error
+}
+
+// maybeExpireReservation 如果预约为待核销且当前时间已超过该场次结束时间，则将其标记为已过期（status=3）
+func (s *reservation) maybeExpireReservation(res *model.VenueReservation) error {
+	if res == nil {
+		return nil
+	}
+	// 仅对待核销状态进行过期判断
+	if res.Status != 0 {
+		return nil
+	}
+	// 查询时段，优先使用结束时间，若为空则使用开始时间
+	var slot model.VenueTimeslot
+	if err := global.GVA_DB.Where("id = ?", res.TimeslotID).First(&slot).Error; err != nil {
+		return nil
+	}
+	var endBase model.TimeOnly
+	if string(slot.EndTime) != "" {
+		endBase = slot.EndTime
+	} else {
+		endBase = slot.StartTime
+	}
+	// 如果仍然为空，则无法判断
+	if string(endBase) == "" {
+		return nil
+	}
+	endTime, err := combineDateAndTimeOnly(res.ReserveDate, endBase)
+	if err != nil {
+		return nil
+	}
+	if time.Now().After(endTime) {
+		// 更新数据库状态为已过期
+		if e := global.GVA_DB.Model(&model.VenueReservation{}).
+			Where("id = ? AND status = 0", res.ID).
+			Update("status", 3).Error; e != nil {
+			return e
+		}
+		res.Status = 3
+	}
+	return nil
 }
 
 // combineDateAndTimeOnly 将日期与 TimeOnly 拼成当地时区的 time.Time（使用 time.Local 便于与当前时间比较）

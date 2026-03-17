@@ -11,10 +11,11 @@
           <el-date-picker v-model="searchInfo.reserveDate" type="date" value-format="YYYY-MM-DD" placeholder="日期" clearable />
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="searchInfo.status" placeholder="全部" clearable style="width: 100px">
-            <el-option label="待确认" :value="0" />
-            <el-option label="已预约" :value="1" />
+          <el-select v-model="searchInfo.status" placeholder="全部" clearable style="width: 120px">
+            <el-option label="待核销" :value="0" />
+            <el-option label="已核销" :value="1" />
             <el-option label="已取消" :value="2" />
+            <el-option label="已过期" :value="3" />
           </el-select>
         </el-form-item>
         <el-form-item label="核销码">
@@ -46,10 +47,18 @@
         <el-table-column align="left" label="联系电话" prop="contactPhone" width="120" />
         <el-table-column align="left" label="人数" prop="contactCount" width="70" />
         <el-table-column align="left" label="核销码" prop="verifyCode" width="130" />
-        <el-table-column align="left" label="状态" width="90">
+        <el-table-column align="left" label="状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="row.status === 0 ? 'warning' : row.status === 1 ? 'success' : 'info'">
-              {{ row.status === 0 ? '待确认' : row.status === 1 ? '已预约' : '已取消' }}
+            <el-tag :type="row.status === 0 ? 'warning' : row.status === 1 ? 'success' : row.status === 2 ? 'info' : 'danger'">
+              {{
+                row.status === 0
+                  ? '待核销'
+                  : row.status === 1
+                    ? '已核销'
+                    : row.status === 2
+                      ? '已取消'
+                      : '已过期'
+              }}
             </el-tag>
           </template>
         </el-table-column>

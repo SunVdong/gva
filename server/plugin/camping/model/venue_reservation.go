@@ -7,7 +7,7 @@ import (
 )
 
 // VenueReservation 场地预约订单
-// 状态 0待确认 1已预约 2已取消（核销后为已预约）
+// 状态 0待核销 1已核销 2已取消 3已过期（核销后为已核销）
 type VenueReservation struct {
 	global.GVA_MODEL
 	ReservationNo string    `json:"reservationNo" form:"reservationNo" gorm:"column:reservation_no;comment:预约单号;size:64;uniqueIndex;"`
@@ -18,7 +18,7 @@ type VenueReservation struct {
 	ContactName   string    `json:"contactName" form:"contactName" gorm:"column:contact_name;comment:联系人;size:50;"`
 	ContactPhone  string    `json:"contactPhone" form:"contactPhone" gorm:"column:contact_phone;comment:联系电话;size:20;"`
 	ContactCount  int       `json:"contactCount" form:"contactCount" gorm:"column:contact_count;comment:预约人数;"`
-	Status        int       `json:"status" form:"status" gorm:"column:status;comment:0待确认1已预约2已取消;default:0;"`
+	Status        int       `json:"status" form:"status" gorm:"column:status;comment:0待核销1已核销2已取消3已过期;default:0;"`
 	VerifyCode    string    `json:"verifyCode" form:"verifyCode" gorm:"column:verify_code;comment:核销码;size:32;index;"`
 }
 

@@ -2621,7 +2621,7 @@
                     },
                     {
                         "type": "integer",
-                        "description": "状态 0待确认 1已预约 2已取消",
+                        "description": "状态 0待核销 1已核销 2已取消 3已过期",
                         "name": "status",
                         "in": "query"
                     }
