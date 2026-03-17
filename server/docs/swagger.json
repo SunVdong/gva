@@ -2651,6 +2651,166 @@
                 }
             }
         },
+        "/camping/mini/reservation/review/create": {
+            "post": {
+                "description": "对已核销的预约进行评价（评分1-5、50字内内容），每个预约只能评价一次",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "小程序-露营"
+                ],
+                "summary": "发布预约评价",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "小程序登录后返回的 token",
+                        "name": "x-token",
+                        "in": "header"
+                    },
+                    {
+                        "description": "评价内容",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.CreateReservationReviewRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/model.VenueReservationReview"
+                                        },
+                                        "msg": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/camping/mini/reservation/review/delete": {
+            "post": {
+                "description": "删除自己对该预约的评价",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "小程序-露营"
+                ],
+                "summary": "删除预约评价",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "小程序登录后返回的 token",
+                        "name": "x-token",
+                        "in": "header"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "评价ID",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "msg": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/camping/mini/reservation/update": {
+            "post": {
+                "description": "用户修改自己的预约信息（日期、时段、联系人信息等）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "小程序-露营"
+                ],
+                "summary": "修改预约",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "小程序登录后返回的 token",
+                        "name": "x-token",
+                        "in": "header"
+                    },
+                    {
+                        "description": "修改后的预约信息",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.UpdateVenueReservationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/model.VenueReservation"
+                                        },
+                                        "msg": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/camping/mini/site/detail": {
             "get": {
                 "description": "小程序端获取场地详情；今日是否开放同时依据 venue_open_time（星期）与 venue_calendar（日期是否可约）",
@@ -6119,7 +6279,7 @@
         },
         "/mini/pay/create": {
             "post": {
-                "description": "根据订单类型与订单 ID 生成预支付单，返回小程序调起支付所需参数。需登录，请求头必带 x-token（用于识别用户并校验订单归属）。",
+                "description": "根据订单类型与订单 ID 生成预支付单，返回小程序调起支付所需参数。需登录，请求头必带 x-token。未配置微信支付（mch-id/pay-key/notify-url）时返回模拟参数（data.mock=true），订单会直接置为已支付，便于联调；前端可根据 data.mock 或 data.paySign==\\\"MOCK_SIMULATION\\\" 跳过 wx.requestPayment 并提示模拟成功。",
                 "consumes": [
                     "application/json"
                 ],
@@ -11913,6 +12073,35 @@
                 }
             }
         },
+        "model.VenueReservationReview": {
+            "type": "object",
+            "properties": {
+                "ID": {
+                    "description": "主键ID",
+                    "type": "integer"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "description": "创建时间",
+                    "type": "string"
+                },
+                "rating": {
+                    "type": "integer"
+                },
+                "reservationId": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "description": "更新时间",
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "integer"
+                }
+            }
+        },
         "model.VenueTimeslot": {
             "type": "object",
             "properties": {
@@ -12267,6 +12456,30 @@
                 "password": {
                     "description": "密码",
                     "type": "string"
+                }
+            }
+        },
+        "request.CreateReservationReviewRequest": {
+            "type": "object",
+            "required": [
+                "rating",
+                "reservationId"
+            ],
+            "properties": {
+                "content": {
+                    "description": "评价内容，50字内",
+                    "type": "string",
+                    "maxLength": 50
+                },
+                "rating": {
+                    "description": "评分 1-5",
+                    "type": "integer",
+                    "maximum": 5,
+                    "minimum": 1
+                },
+                "reservationId": {
+                    "description": "预约ID",
+                    "type": "integer"
                 }
             }
         },
@@ -12801,6 +13014,44 @@
                 },
                 "id": {
                     "description": "主键ID",
+                    "type": "integer"
+                }
+            }
+        },
+        "request.UpdateVenueReservationRequest": {
+            "type": "object",
+            "required": [
+                "contactCount",
+                "contactName",
+                "contactPhone",
+                "id",
+                "reserveDate",
+                "timeslotId"
+            ],
+            "properties": {
+                "contactCount": {
+                    "description": "预约人数",
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "contactName": {
+                    "description": "联系人",
+                    "type": "string"
+                },
+                "contactPhone": {
+                    "description": "手机号",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "预约ID",
+                    "type": "integer"
+                },
+                "reserveDate": {
+                    "description": "2006-01-02",
+                    "type": "string"
+                },
+                "timeslotId": {
+                    "description": "新的时间段ID",
                     "type": "integer"
                 }
             }

@@ -112,3 +112,19 @@ func (s *ticketOrder) CreateOrder(userID uint, req request.MiniOrderCreate) (ord
 	err = global.GVA_DB.Where("order_no = ?", orderNo).First(&order).Error
 	return
 }
+
+// VerifyOrder 核销订单（仅已支付未核销的订单可核销，由后台或核销端调用）
+func (s *ticketOrder) VerifyOrder(orderID uint) error {
+	var order model.TicketOrder
+	if err := global.GVA_DB.Where("id = ?", orderID).First(&order).Error; err != nil || order.ID == 0 {
+		return fmt.Errorf("订单不存在")
+	}
+	if order.Status != 1 {
+		return fmt.Errorf("仅已支付订单可核销")
+	}
+	if order.VerifiedAt != nil {
+		return fmt.Errorf("该订单已核销")
+	}
+	now := time.Now()
+	return global.GVA_DB.Model(&model.TicketOrder{}).Where("id = ?", orderID).Update("verified_at", now).Error
+}

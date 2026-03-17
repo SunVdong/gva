@@ -972,6 +972,26 @@ definitions:
       verifyCode:
         type: string
     type: object
+  model.VenueReservationReview:
+    properties:
+      ID:
+        description: 主键ID
+        type: integer
+      content:
+        type: string
+      createdAt:
+        description: 创建时间
+        type: string
+      rating:
+        type: integer
+      reservationId:
+        type: integer
+      updatedAt:
+        description: 更新时间
+        type: string
+      userId:
+        type: integer
+    type: object
   model.VenueTimeslot:
     properties:
       ID:
@@ -1229,6 +1249,24 @@ definitions:
       password:
         description: 密码
         type: string
+    type: object
+  request.CreateReservationReviewRequest:
+    properties:
+      content:
+        description: 评价内容，50字内
+        maxLength: 50
+        type: string
+      rating:
+        description: 评分 1-5
+        maximum: 5
+        minimum: 1
+        type: integer
+      reservationId:
+        description: 预约ID
+        type: integer
+    required:
+    - rating
+    - reservationId
     type: object
   request.CreateVenueReservationRequest:
     properties:
@@ -1604,6 +1642,35 @@ definitions:
       id:
         description: 主键ID
         type: integer
+    type: object
+  request.UpdateVenueReservationRequest:
+    properties:
+      contactCount:
+        description: 预约人数
+        minimum: 1
+        type: integer
+      contactName:
+        description: 联系人
+        type: string
+      contactPhone:
+        description: 手机号
+        type: string
+      id:
+        description: 预约ID
+        type: integer
+      reserveDate:
+        description: "2006-01-02"
+        type: string
+      timeslotId:
+        description: 新的时间段ID
+        type: integer
+    required:
+    - contactCount
+    - contactName
+    - contactPhone
+    - id
+    - reserveDate
+    - timeslotId
     type: object
   request.VenueCalendarSet:
     properties:
@@ -3884,6 +3951,102 @@ paths:
       summary: 我的预约列表
       tags:
       - 小程序-露营
+  /camping/mini/reservation/review/create:
+    post:
+      consumes:
+      - application/json
+      description: 对已核销的预约进行评价（评分1-5、50字内内容），每个预约只能评价一次
+      parameters:
+      - description: 小程序登录后返回的 token
+        in: header
+        name: x-token
+        type: string
+      - description: 评价内容
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateReservationReviewRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.VenueReservationReview'
+                msg:
+                  type: string
+              type: object
+      summary: 发布预约评价
+      tags:
+      - 小程序-露营
+  /camping/mini/reservation/review/delete:
+    post:
+      consumes:
+      - application/json
+      description: 删除自己对该预约的评价
+      parameters:
+      - description: 小程序登录后返回的 token
+        in: header
+        name: x-token
+        type: string
+      - description: 评价ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      summary: 删除预约评价
+      tags:
+      - 小程序-露营
+  /camping/mini/reservation/update:
+    post:
+      consumes:
+      - application/json
+      description: 用户修改自己的预约信息（日期、时段、联系人信息等）
+      parameters:
+      - description: 小程序登录后返回的 token
+        in: header
+        name: x-token
+        type: string
+      - description: 修改后的预约信息
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdateVenueReservationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.VenueReservation'
+                msg:
+                  type: string
+              type: object
+      summary: 修改预约
+      tags:
+      - 小程序-露营
   /camping/mini/site/detail:
     get:
       consumes:
@@ -5862,7 +6025,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: 根据订单类型与订单 ID 生成预支付单，返回小程序调起支付所需参数。需登录，请求头必带 x-token（用于识别用户并校验订单归属）。
+      description: 根据订单类型与订单 ID 生成预支付单，返回小程序调起支付所需参数。需登录，请求头必带 x-token。未配置微信支付（mch-id/pay-key/notify-url）时返回模拟参数（data.mock=true），订单会直接置为已支付，便于联调；前端可根据
+        data.mock 或 data.paySign==\"MOCK_SIMULATION\" 跳过 wx.requestPayment 并提示模拟成功。
       parameters:
       - description: 小程序登录后返回的 token（必填）
         in: header

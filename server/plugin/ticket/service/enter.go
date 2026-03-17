@@ -12,4 +12,5 @@ type service struct {
 	Calendar       ticketCalendar
 	User           ticketUser
 	Order          ticketOrder
+	OrderReview    orderReview
 }

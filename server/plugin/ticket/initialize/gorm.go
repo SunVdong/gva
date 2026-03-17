@@ -21,6 +21,7 @@ func Gorm(ctx context.Context) {
 		new(model.TicketCalendar),
 		new(model.TicketOrder),
 		new(model.OrderItem),
+		new(model.OrderReview),
 	)
 	if err != nil {
 		err = errors.Wrap(err, "门票插件表迁移失败")

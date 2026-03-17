@@ -7,6 +7,7 @@ import (
 )
 
 // TicketOrder 订单表
+// 核销后 VerifiedAt 不为空，仅已核销订单可评价
 type TicketOrder struct {
 	global.GVA_MODEL
 	OrderNo     string     `json:"orderNo" gorm:"column:order_no;comment:订单号;size:64;uniqueIndex;"`
@@ -17,6 +18,7 @@ type TicketOrder struct {
 	PayAmount   float64    `json:"payAmount" gorm:"column:pay_amount;type:decimal(10,2);comment:支付金额;"`
 	Status      int        `json:"status" gorm:"column:status;comment:订单状态0待支付1已支付2已退款;default:0;"`
 	PayTime     *time.Time `json:"payTime" gorm:"column:pay_time;comment:支付时间;"`
+	VerifiedAt  *time.Time `json:"verifiedAt" gorm:"column:verified_at;comment:核销时间;"`
 }
 
 // TableName 表名

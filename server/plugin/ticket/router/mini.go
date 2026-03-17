@@ -24,4 +24,7 @@ func (r *miniRouter) Init(public, private *gin.RouterGroup) {
 	g.POST("order/create", mini.Order.Create)
 	g.GET("order/myList", mini.Order.MyList)
 	g.GET("order/detail", mini.Order.Detail)
+	// 订单评价（仅核销后可评价、可删除）
+	g.POST("order/review/create", mini.Order.CreateReview)
+	g.POST("order/review/delete", mini.Order.DeleteReview)
 }

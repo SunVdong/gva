@@ -5,11 +5,12 @@ import (
 )
 
 var (
-	svcScenic   = service.Service.Scenic
-	svcOpenTime = service.Service.ScenicOpenTime
-	svcProduct  = service.Service.Product
-	svcSku      = service.Service.Sku
-	svcRule     = service.Service.Rule
-	svcCalendar = service.Service.Calendar
-	svcOrder    = service.Service.Order
+	svcScenic      = service.Service.Scenic
+	svcOpenTime    = service.Service.ScenicOpenTime
+	svcProduct     = service.Service.Product
+	svcSku         = service.Service.Sku
+	svcRule        = service.Service.Rule
+	svcCalendar    = service.Service.Calendar
+	svcOrder       = service.Service.Order
+	svcOrderReview = service.Service.OrderReview
 )

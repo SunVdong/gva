@@ -110,10 +110,85 @@ func (a *miniOrderApi) Detail(c *gin.Context) {
 		response.FailWithMessage("无权查看该订单", c)
 		return
 	}
-	response.OkWithData(gin.H{
-		"order": order,
-		"items": items,
-	}, c)
+	data := gin.H{"order": order, "items": items}
+	// 已核销时附带评价信息（有则返回，无则 null）
+	if order.Status == 1 && order.VerifiedAt != nil {
+		review, _ := svcOrderReview.GetByOrderID(order.ID)
+		if review.ID != 0 {
+			data["review"] = gin.H{
+				"id":        review.ID,
+				"rating":    review.Rating,
+				"content":   review.Content,
+				"createdAt": review.CreatedAt,
+			}
+		} else {
+			data["review"] = nil
+		}
+	}
+	response.OkWithData(data, c)
+}
+
+// CreateReview 小程序-发布订单评价（仅核销后的订单，一单一评）
+// @Tags        小程序-景点
+// @Summary     发布订单评价
+// @Description 对已核销的门票订单进行评价（评分1-5、50字内内容），每个订单只能评价一次
+// @Accept      json
+// @Produce     json
+// @Param       x-token header string false "小程序登录后返回的 token"
+// @Param       data body request.CreateOrderReviewRequest true "评价内容"
+// @Success     200 {object} response.Response{data=model.OrderReview,msg=string}
+// @Router      /ticket/mini/order/review/create [post]
+func (a *miniOrderApi) CreateReview(c *gin.Context) {
+	userID, ok := getUserID(c)
+	if !ok || userID == 0 {
+		response.FailWithMessage("请先登录", c)
+		return
+	}
+	var req request.CreateOrderReviewRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	review, err := svcOrderReview.CreateReview(req, userID)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithData(review, c)
+}
+
+// DeleteReview 小程序-删除订单评价（仅本人）
+// @Tags        小程序-景点
+// @Summary     删除订单评价
+// @Description 删除自己对该订单的评价
+// @Accept      json
+// @Produce     json
+// @Param       x-token header string false "小程序登录后返回的 token"
+// @Param       id query int true "评价ID"
+// @Success     200 {object} response.Response{msg=string}
+// @Router      /ticket/mini/order/review/delete [post]
+func (a *miniOrderApi) DeleteReview(c *gin.Context) {
+	userID, ok := getUserID(c)
+	if !ok || userID == 0 {
+		response.FailWithMessage("请先登录", c)
+		return
+	}
+	var idReq struct {
+		ID uint `form:"id" json:"id" binding:"required"`
+	}
+	_ = c.ShouldBindJSON(&idReq)
+	if idReq.ID == 0 {
+		_ = c.ShouldBindQuery(&idReq)
+	}
+	if idReq.ID == 0 {
+		response.FailWithMessage("请传入评价 id", c)
+		return
+	}
+	if err := svcOrderReview.DeleteReview(idReq.ID, userID); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithMessage("删除成功", c)
 }
 
 // getUserID 从上下文中获取 OptionalJWTAuth 注入的用户 ID
