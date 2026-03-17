@@ -7,9 +7,10 @@ var (
 	Slot        = new(slotApi)
 	Reservation = new(reservationApi)
 
-	svcVenue         = service.Service.Venue
-	svcVenueOpenTime = service.Service.VenueOpenTime
-	svcVenueTimeslot = service.Service.VenueTimeslot
-	svcVenueCalendar = service.Service.VenueCalendar
-	svcReservation   = service.Service.Reservation
+	svcVenue             = service.Service.Venue
+	svcVenueOpenTime     = service.Service.VenueOpenTime
+	svcVenueTimeslot     = service.Service.VenueTimeslot
+	svcVenueCalendar     = service.Service.VenueCalendar
+	svcReservation       = service.Service.Reservation
+	svcReservationReview = service.Service.ReservationReview
 )

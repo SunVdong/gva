@@ -27,4 +27,7 @@ func (r *miniRouter) Init(public, private *gin.RouterGroup) {
 	g.GET("reservation/myDetail", mini.Reservation.MyDetail)
 	g.POST("reservation/cancel", mini.Reservation.Cancel)
 	g.GET("reservation/cancelRule", mini.Reservation.CancelRule)
+	// 预约评价（仅核销后可评价、可删除）
+	g.POST("reservation/review/create", mini.Reservation.CreateReview)
+	g.POST("reservation/review/delete", mini.Reservation.DeleteReview)
 }

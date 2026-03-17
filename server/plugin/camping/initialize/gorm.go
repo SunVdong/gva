@@ -17,6 +17,7 @@ func Gorm(ctx context.Context) {
 		new(model.VenueTimeslot),
 		new(model.VenueCalendar),
 		new(model.VenueReservation),
+		new(model.VenueReservationReview),
 	)
 	if err != nil {
 		err = errors.Wrap(err, "露营插件表迁移失败")

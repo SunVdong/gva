@@ -176,7 +176,7 @@ func (a *reservationApi) MyDetail(c *gin.Context) {
 	if s, _ := svcVenueTimeslot.GetVenueTimeslot(res.TimeslotID); s.ID != 0 {
 		timeslotRange = s.StartTime.FormatHHMM() + "-" + s.EndTime.FormatHHMM()
 	}
-	response.OkWithData(gin.H{
+	detail := gin.H{
 		"id":            res.ID,
 		"reservationNo": res.ReservationNo,
 		"venueId":       res.VenueID,
@@ -190,7 +190,22 @@ func (a *reservationApi) MyDetail(c *gin.Context) {
 		"status":        res.Status,
 		"verifyCode":    res.VerifyCode,
 		"createdAt":     res.CreatedAt,
-	}, c)
+	}
+	// 已核销时附带评价信息（有则返回，无则 null）
+	if res.Status == 1 {
+		review, _ := svcReservationReview.GetByReservationID(res.ID)
+		if review.ID != 0 {
+			detail["review"] = gin.H{
+				"id":        review.ID,
+				"rating":    review.Rating,
+				"content":   review.Content,
+				"createdAt": review.CreatedAt,
+			}
+		} else {
+			detail["review"] = nil
+		}
+	}
+	response.OkWithData(detail, c)
 }
 
 // Cancel 小程序-取消预约（仅本人）
@@ -268,6 +283,69 @@ func (a *reservationApi) CancelRule(c *gin.Context) {
 		rule = "使用前 " + strconv.Itoa(venue.RefundChangeHours) + " 小时可免费取消，逾期不可取消。"
 	}
 	response.OkWithData(gin.H{"rule": rule, "refundChangeHours": venue.RefundChangeHours}, c)
+}
+
+// CreateReview 小程序-发布预约评价（仅核销后的预约，一单一评）
+// @Tags        小程序-露营
+// @Summary     发布预约评价
+// @Description 对已核销的预约进行评价（评分1-5、50字内内容），每个预约只能评价一次
+// @Accept      json
+// @Produce     json
+// @Param       x-token header string false "小程序登录后返回的 token"
+// @Param       data body request.CreateReservationReviewRequest true "评价内容"
+// @Success     200 {object} response.Response{data=model.VenueReservationReview,msg=string}
+// @Router      /camping/mini/reservation/review/create [post]
+func (a *reservationApi) CreateReview(c *gin.Context) {
+	userID, ok := getUserID(c)
+	if !ok {
+		response.FailWithMessage("请先登录", c)
+		return
+	}
+	var req campingRequest.CreateReservationReviewRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	review, err := svcReservationReview.CreateReview(req, userID)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithData(review, c)
+}
+
+// DeleteReview 小程序-删除预约评价（仅本人）
+// @Tags        小程序-露营
+// @Summary     删除预约评价
+// @Description 删除自己对该预约的评价
+// @Accept      json
+// @Produce     json
+// @Param       x-token header string false "小程序登录后返回的 token"
+// @Param       id query int true "评价ID"
+// @Success     200 {object} response.Response{msg=string}
+// @Router      /camping/mini/reservation/review/delete [post]
+func (a *reservationApi) DeleteReview(c *gin.Context) {
+	userID, ok := getUserID(c)
+	if !ok {
+		response.FailWithMessage("请先登录", c)
+		return
+	}
+	var idReq struct {
+		ID uint `form:"id" json:"id" binding:"required"`
+	}
+	_ = c.ShouldBindJSON(&idReq)
+	if idReq.ID == 0 {
+		_ = c.ShouldBindQuery(&idReq)
+	}
+	if idReq.ID == 0 {
+		response.FailWithMessage("请传入评价 id", c)
+		return
+	}
+	if err := svcReservationReview.DeleteReview(idReq.ID, userID); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithMessage("删除成功", c)
 }
 
 func getUserID(c *gin.Context) (uint, bool) {
