@@ -6127,7 +6127,7 @@ const docTemplate = `{
         },
         "/mini/pay/create": {
             "post": {
-                "description": "根据订单类型与订单 ID 生成预支付单，返回小程序调起支付所需参数（需登录，Header 带 x-token）",
+                "description": "根据订单类型与订单 ID 生成预支付单，返回小程序调起支付所需参数。需登录，请求头必带 x-token（用于识别用户并校验订单归属）。",
                 "consumes": [
                     "application/json"
                 ],
@@ -6139,6 +6139,13 @@ const docTemplate = `{
                 ],
                 "summary": "调起支付",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "小程序登录后返回的 token（必填）",
+                        "name": "x-token",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "description": "请求体",
                         "name": "data",
@@ -9601,7 +9608,7 @@ const docTemplate = `{
         },
         "/ticket/mini/order/create": {
             "post": {
-                "description": "小程序端提交门票订单，需先登录，请求头携带 x-token。创建成功后请携带 x-token 调用公共接口 POST /mini/pay/create，body 传 {\"orderType\":\"ticket\",\"orderId\": 订单ID}，获取支付参数后调 wx.requestPayment 完成支付。",
+                "description": "小程序端提交门票订单，需先登录，请求头携带 x-token。请求体不需传 userId，用户身份由 x-token 解析注入。创建成功后请携带 x-token 调用公共接口 POST /mini/pay/create，body 传 {\"orderType\":\"ticket\",\"orderId\": 订单ID}，获取支付参数后调 wx.requestPayment 完成支付。",
                 "consumes": [
                     "application/json"
                 ],
@@ -9615,12 +9622,13 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "小程序登录后返回的 token",
+                        "description": "小程序登录后返回的 token（必填，用于识别用户）",
                         "name": "x-token",
-                        "in": "header"
+                        "in": "header",
+                        "required": true
                     },
                     {
-                        "description": "订单信息",
+                        "description": "订单信息（bookerName、bookerPhone、items）",
                         "name": "data",
                         "in": "body",
                         "required": true,
@@ -12572,8 +12580,7 @@ const docTemplate = `{
             "required": [
                 "bookerName",
                 "bookerPhone",
-                "items",
-                "userId"
+                "items"
             ],
             "properties": {
                 "bookerName": {
@@ -12588,9 +12595,6 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/request.MiniOrderItem"
                     }
-                },
-                "userId": {
-                    "type": "integer"
                 }
             }
         },

@@ -7,9 +7,8 @@ type MiniOrderItem struct {
 	VisitDate string `json:"visitDate" binding:"required"` // YYYY-MM-DD
 }
 
-// MiniOrderCreate 小程序-创建订单
+// MiniOrderCreate 小程序-创建订单（userId 由 x-token 解析注入，不从前端接收）
 type MiniOrderCreate struct {
-	UserID      uint            `json:"userId" binding:"required"`
 	BookerName  string          `json:"bookerName" binding:"required"`
 	BookerPhone string          `json:"bookerPhone" binding:"required"`
 	Items       []MiniOrderItem `json:"items" binding:"required,min=1"`

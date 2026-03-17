@@ -13,11 +13,11 @@ type miniOrderApi struct{}
 // Create 小程序-提交订单（需登录，请求头带 x-token）
 // @Tags        小程序-景点
 // @Summary     提交订单
-// @Description 小程序端提交门票订单，需先登录，请求头携带 x-token。创建成功后请携带 x-token 调用公共接口 POST /mini/pay/create，body 传 {"orderType":"ticket","orderId": 订单ID}，获取支付参数后调 wx.requestPayment 完成支付。
+// @Description 小程序端提交门票订单，需先登录，请求头携带 x-token。请求体不需传 userId，用户身份由 x-token 解析注入。创建成功后请携带 x-token 调用公共接口 POST /mini/pay/create，body 传 {"orderType":"ticket","orderId": 订单ID}，获取支付参数后调 wx.requestPayment 完成支付。
 // @Accept      json
 // @Produce     json
-// @Param       x-token header string false "小程序登录后返回的 token"
-// @Param       data body request.MiniOrderCreate true "订单信息"
+// @Param       x-token header string true "小程序登录后返回的 token（必填，用于识别用户）"
+// @Param       data body request.MiniOrderCreate true "订单信息（bookerName、bookerPhone、items）"
 // @Success     200  {object} response.Response{data=object,msg=string}
 // @Router      /ticket/mini/order/create [post]
 func (a *miniOrderApi) Create(c *gin.Context) {
@@ -31,9 +31,7 @@ func (a *miniOrderApi) Create(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	// 强制使用登录用户 ID，避免前端伪造 userId
-	req.UserID = userID
-	order, err := svcOrder.CreateOrder(req)
+	order, err := svcOrder.CreateOrder(userID, req)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return

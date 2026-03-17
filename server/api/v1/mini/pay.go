@@ -17,9 +17,10 @@ type PayApi struct{}
 // Create 调起微信支付（JSAPI），获取小程序 wx.requestPayment 所需参数
 // @Tags        小程序
 // @Summary     调起支付
-// @Description 根据订单类型与订单 ID 生成预支付单，返回小程序调起支付所需参数（需登录，Header 带 x-token）
+// @Description 根据订单类型与订单 ID 生成预支付单，返回小程序调起支付所需参数。需登录，请求头必带 x-token。未配置微信支付（mch-id/pay-key/notify-url）时返回模拟参数（data.mock=true），订单会直接置为已支付，便于联调；前端可根据 data.mock 或 data.paySign==\"MOCK_SIMULATION\" 跳过 wx.requestPayment 并提示模拟成功。
 // @Accept      json
 // @Produce     json
+// @Param       x-token header string true "小程序登录后返回的 token（必填）"
 // @Param       data body object true "请求体" example({"orderType":"ticket","orderId":1})
 // @Success     200 {object} response.Response{data=object,msg=string} "data 含 timeStamp,nonceStr,package,signType,paySign"
 // @Router      /mini/pay/create [post]
@@ -74,6 +75,13 @@ func (a *PayApi) Create(c *gin.Context) {
 		params, err := mini.CreateJSAPI(order.OrderNo, fen, "景点门票-"+order.OrderNo, openID, c.ClientIP())
 		if err != nil {
 			response.FailWithMessage(err.Error(), c)
+			return
+		}
+		// 模拟支付：未配置微信支付时返回 mock 参数，并直接将订单置为已支付便于联调
+		if params.PaySign == mini.MockPaySign {
+			global.GVA_DB.Model(&ticketModel.TicketOrder{}).Where("id = ?", order.ID).
+				Updates(map[string]interface{}{"status": 1, "pay_time": time.Now()})
+			response.OkWithData(gin.H{"timeStamp": params.TimeStamp, "nonceStr": params.NonceStr, "package": params.Package, "signType": params.SignType, "paySign": params.PaySign, "mock": true}, c)
 			return
 		}
 		response.OkWithData(params, c)

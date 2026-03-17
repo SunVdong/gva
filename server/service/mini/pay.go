@@ -22,12 +22,23 @@ type JSAPIParams struct {
 	PaySign   string `json:"paySign"`
 }
 
+// MockPaySign 模拟支付时返回的 paySign，前端可据此判断为模拟、不调 wx.requestPayment
+const MockPaySign = "MOCK_SIMULATION"
+
 // CreateJSAPI 创建 JSAPI 预支付，返回小程序调起支付所需参数。
+// 当 miniprogram.mch-id / pay-key / notify-url 未配置时返回模拟参数（PaySign 为 MOCK_SIMULATION），便于本地联调。
 // outTradeNo: 商户订单号（唯一）；totalFeeFen: 金额（分）；body: 商品描述；openID: 用户 openid；clientIP: 用户 IP。
 func CreateJSAPI(outTradeNo string, totalFeeFen int64, body, openID, clientIP string) (*JSAPIParams, error) {
 	cfg := getPayConfig()
 	if cfg == nil {
-		return nil, fmt.Errorf("微信支付未配置（miniprogram.mch-id / pay-key / notify-url）")
+		// 未配置支付时返回模拟参数，前端可根据 PaySign == MockPaySign 提示“模拟支付”并跳过 wx.requestPayment
+		return &JSAPIParams{
+			TimeStamp: "0",
+			NonceStr:  "mock",
+			Package:   "prepay_id=mock",
+			SignType:  "MD5",
+			PaySign:   MockPaySign,
+		}, nil
 	}
 	if totalFeeFen <= 0 {
 		return nil, fmt.Errorf("支付金额必须大于 0")

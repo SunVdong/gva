@@ -50,8 +50,8 @@ func (s *ticketOrder) GetByID(id uint) (order model.TicketOrder, items []model.O
 // validChineseMobile 中国大陆 11 位手机号：1 开头，第二位 3-9
 var validChineseMobile = regexp.MustCompile(`^1[3-9]\d{9}$`)
 
-// CreateOrder 小程序下单：生成订单号、校验 SKU 与库存、创建订单及订单项
-func (s *ticketOrder) CreateOrder(req request.MiniOrderCreate) (order model.TicketOrder, err error) {
+// CreateOrder 小程序下单：生成订单号、校验 SKU 与库存、创建订单及订单项（userID 由 x-token 解析后传入）
+func (s *ticketOrder) CreateOrder(userID uint, req request.MiniOrderCreate) (order model.TicketOrder, err error) {
 	phone := strings.TrimSpace(req.BookerPhone)
 	if !validChineseMobile.MatchString(phone) {
 		return order, fmt.Errorf("预定人手机号格式不正确")
@@ -88,7 +88,7 @@ func (s *ticketOrder) CreateOrder(req request.MiniOrderCreate) (order model.Tick
 		orderNo = "T" + time.Now().Format("20060102150405") + fmt.Sprintf("%04d", rand.Intn(10000))
 		order = model.TicketOrder{
 			OrderNo:     orderNo,
-			UserID:      req.UserID,
+			UserID:      userID,
 			BookerName:  strings.TrimSpace(req.BookerName),
 			BookerPhone: phone,
 			TotalAmount: totalAmount,
