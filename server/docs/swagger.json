@@ -3157,6 +3157,7 @@
                     },
                     {
                         "type": "string",
+                        "description": "查询参数使用 2006-01-02",
                         "name": "reserveDate",
                         "in": "query"
                     },
@@ -9820,7 +9821,7 @@
         },
         "/ticket/mini/order/myList": {
             "get": {
-                "description": "按类型筛选：待支付、待核销、已完成（已完成含已核销/已取消/已过期）；不传 orderType 返回全部。列表中每条订单带 statusLabel 表明状态。",
+                "description": "按类型筛选：待支付、待核销、已完成（已完成含已核销/已取消/已过期/已关闭）；不传 orderType 返回全部。列表中每条订单带 statusLabel 表明状态。",
                 "consumes": [
                     "application/json"
                 ],

@@ -9,10 +9,13 @@
           <el-input-number v-model="searchInfo.userId" :min="0" placeholder="用户ID" clearable style="width: 120px" />
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="searchInfo.status" placeholder="全部" clearable style="width: 110px">
+          <el-select v-model="searchInfo.status" placeholder="全部" clearable style="width: 130px">
             <el-option label="待支付" :value="0" />
-            <el-option label="已支付" :value="1" />
-            <el-option label="已退款" :value="2" />
+            <el-option label="待核销" :value="1" />
+            <el-option label="已核销" :value="2" />
+            <el-option label="已取消" :value="3" />
+            <el-option label="已过期" :value="4" />
+            <el-option label="已关闭" :value="5" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -36,11 +39,14 @@
             ¥{{ (row.payAmount ?? 0).toFixed(2) }}
           </template>
         </el-table-column>
-        <el-table-column align="left" label="状态" width="90">
+        <el-table-column align="left" label="状态" width="100">
           <template #default="{ row }">
             <el-tag v-if="row.status === 0" type="warning">待支付</el-tag>
-            <el-tag v-else-if="row.status === 1" type="success">已支付</el-tag>
-            <el-tag v-else-if="row.status === 2" type="info">已退款</el-tag>
+            <el-tag v-else-if="row.status === 1" type="primary">待核销</el-tag>
+            <el-tag v-else-if="row.status === 2" type="success">已核销</el-tag>
+            <el-tag v-else-if="row.status === 3" type="info">已取消</el-tag>
+            <el-tag v-else-if="row.status === 4" type="danger">已过期</el-tag>
+            <el-tag v-else-if="row.status === 5" type="info">已关闭</el-tag>
             <el-tag v-else>未知</el-tag>
           </template>
         </el-table-column>
@@ -84,8 +90,11 @@
           <el-descriptions-item label="支付金额">¥{{ (detail.order.payAmount ?? 0).toFixed(2) }}</el-descriptions-item>
           <el-descriptions-item label="状态">
             <el-tag v-if="detail.order.status === 0" type="warning">待支付</el-tag>
-            <el-tag v-else-if="detail.order.status === 1" type="success">已支付</el-tag>
-            <el-tag v-else-if="detail.order.status === 2" type="info">已退款</el-tag>
+            <el-tag v-else-if="detail.order.status === 1" type="primary">待核销</el-tag>
+            <el-tag v-else-if="detail.order.status === 2" type="success">已核销</el-tag>
+            <el-tag v-else-if="detail.order.status === 3" type="info">已取消</el-tag>
+            <el-tag v-else-if="detail.order.status === 4" type="danger">已过期</el-tag>
+            <el-tag v-else-if="detail.order.status === 5" type="info">已关闭</el-tag>
             <span v-else>未知</span>
           </el-descriptions-item>
           <el-descriptions-item label="支付时间">{{ detail.order.payTime ? formatDate(detail.order.payTime) : '-' }}</el-descriptions-item>

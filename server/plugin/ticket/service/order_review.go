@@ -19,8 +19,8 @@ func (s *orderReview) CreateReview(req ticketRequest.CreateOrderReviewRequest, u
 	if order.UserID != userID {
 		return model.OrderReview{}, fmt.Errorf("无权对该订单评价")
 	}
-	if order.Status != 1 {
-		return model.OrderReview{}, fmt.Errorf("仅已支付订单可评价")
+	if order.Status != 2 {
+		return model.OrderReview{}, fmt.Errorf("仅已核销订单可评价")
 	}
 	if order.VerifiedAt == nil {
 		return model.OrderReview{}, fmt.Errorf("仅核销后的订单可评价")

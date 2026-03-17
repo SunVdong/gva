@@ -36,13 +36,15 @@ func (s *ticketOrder) GetList(req request.TicketOrderSearch) (list []model.Ticke
 		today := orderListToday()
 		switch *req.OrderType {
 		case "pending_payment", "待支付":
+			// 待支付：状态为0（待支付）
 			db = db.Where("status = ?", 0)
 		case "pending_verify", "待核销":
-			db = db.Where("status = ? AND verified_at IS NULL", 1).
+			// 待核销：状态为1（待核销），且最晚游玩日 >= 今天（尚未过期）
+			db = db.Where("status = ?", 1).
 				Where("(SELECT COALESCE(MAX(visit_date),'1970-01-01') FROM order_items WHERE order_items.order_id = orders.id) >= ?", today)
 		case "completed", "已完成":
-			db = db.Where("(status = ? AND verified_at IS NOT NULL) OR (status = ?) OR (status = ? AND verified_at IS NULL AND (SELECT COALESCE(MAX(visit_date),'1970-01-01') FROM order_items WHERE order_items.order_id = orders.id) < ?)",
-				1, 2, 1, today)
+			// 已完成：已核销、已取消、已过期、已关闭
+			db = db.Where("status IN (?)", []int{2, 3, 4, 5})
 		}
 	}
 	if err = db.Count(&total).Error; err != nil {
@@ -79,22 +81,29 @@ func (s *ticketOrder) GetMaxVisitDateByOrderIDs(orderIDs []uint) (map[uint]strin
 	return m, nil
 }
 
-// OrderStatusLabel 根据订单与最晚游玩日计算展示状态：待支付、待核销、已核销、已取消、已过期
+// OrderStatusLabel 根据订单与最晚游玩日计算展示状态：待支付、待核销、已核销、已取消、已过期、已关闭
 func (s *ticketOrder) OrderStatusLabel(order *model.TicketOrder, maxVisitDate string) string {
-	if order.Status == 0 {
+	switch order.Status {
+	case 0:
 		return "待支付"
-	}
-	if order.Status == 2 {
-		return "已取消"
-	}
-	if order.VerifiedAt != nil {
+	case 1:
+		// 待核销：根据最晚游玩日判断是否已过期
+		today := orderListToday()
+		if maxVisitDate != "" && maxVisitDate < today {
+			return "已过期"
+		}
+		return "待核销"
+	case 2:
 		return "已核销"
-	}
-	today := orderListToday()
-	if maxVisitDate < today {
+	case 3:
+		return "已取消"
+	case 4:
 		return "已过期"
+	case 5:
+		return "已关闭"
+	default:
+		return "未知"
 	}
-	return "待核销"
 }
 
 func (s *ticketOrder) GetByID(id uint) (order model.TicketOrder, items []model.OrderItem, err error) {
@@ -217,14 +226,14 @@ func (s *ticketOrder) CreateOrder(userID uint, req request.MiniOrderCreate) (ord
 	return
 }
 
-// VerifyOrder 核销订单（仅已支付未核销的订单可核销，由后台或核销端调用）
+// VerifyOrder 核销订单（仅待核销状态的订单可核销，由后台或核销端调用）
 func (s *ticketOrder) VerifyOrder(orderID uint) error {
 	var order model.TicketOrder
 	if err := global.GVA_DB.Where("id = ?", orderID).First(&order).Error; err != nil || order.ID == 0 {
 		return fmt.Errorf("订单不存在")
 	}
 	if order.Status != 1 {
-		return fmt.Errorf("仅已支付订单可核销")
+		return fmt.Errorf("仅待核销订单可核销")
 	}
 	if order.VerifiedAt != nil {
 		return fmt.Errorf("该订单已核销")
