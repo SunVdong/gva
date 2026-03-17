@@ -15,6 +15,11 @@ import (
 
 type ticketOrder struct{}
 
+// orderListToday 用于与订单项最大游玩日比较，取当地日期
+func orderListToday() string {
+	return time.Now().Format("2006-01-02")
+}
+
 func (s *ticketOrder) GetList(req request.TicketOrderSearch) (list []model.TicketOrder, total int64, err error) {
 	db := global.GVA_DB.Model(&model.TicketOrder{})
 	if req.OrderNo != "" {
@@ -26,6 +31,20 @@ func (s *ticketOrder) GetList(req request.TicketOrderSearch) (list []model.Ticke
 	if req.Status != nil {
 		db = db.Where("status = ?", *req.Status)
 	}
+	// 订单类型：待支付、待核销、已完成（不传则不过滤）
+	if req.OrderType != nil {
+		today := orderListToday()
+		switch *req.OrderType {
+		case "pending_payment", "待支付":
+			db = db.Where("status = ?", 0)
+		case "pending_verify", "待核销":
+			db = db.Where("status = ? AND verified_at IS NULL", 1).
+				Where("(SELECT COALESCE(MAX(visit_date),'1970-01-01') FROM order_items WHERE order_items.order_id = orders.id) >= ?", today)
+		case "completed", "已完成":
+			db = db.Where("(status = ? AND verified_at IS NOT NULL) OR (status = ?) OR (status = ? AND verified_at IS NULL AND (SELECT COALESCE(MAX(visit_date),'1970-01-01') FROM order_items WHERE order_items.order_id = orders.id) < ?)",
+				1, 2, 1, today)
+		}
+	}
 	if err = db.Count(&total).Error; err != nil {
 		return
 	}
@@ -36,6 +55,46 @@ func (s *ticketOrder) GetList(req request.TicketOrderSearch) (list []model.Ticke
 	}
 	err = db.Order("id DESC").Find(&list).Error
 	return
+}
+
+// GetMaxVisitDateByOrderIDs 批量获取订单项中最晚游玩日期，用于计算订单状态文案。返回 orderID -> "2006-01-02"
+func (s *ticketOrder) GetMaxVisitDateByOrderIDs(orderIDs []uint) (map[uint]string, error) {
+	if len(orderIDs) == 0 {
+		return nil, nil
+	}
+	type row struct {
+		OrderID  uint      `gorm:"column:order_id"`
+		MaxVisit time.Time `gorm:"column:max_visit"`
+	}
+	var rows []row
+	err := global.GVA_DB.Model(&model.OrderItem{}).Select("order_id, MAX(visit_date) as max_visit").
+		Where("order_id IN ?", orderIDs).Group("order_id").Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+	m := make(map[uint]string, len(rows))
+	for _, r := range rows {
+		m[r.OrderID] = r.MaxVisit.Format("2006-01-02")
+	}
+	return m, nil
+}
+
+// OrderStatusLabel 根据订单与最晚游玩日计算展示状态：待支付、待核销、已核销、已取消、已过期
+func (s *ticketOrder) OrderStatusLabel(order *model.TicketOrder, maxVisitDate string) string {
+	if order.Status == 0 {
+		return "待支付"
+	}
+	if order.Status == 2 {
+		return "已取消"
+	}
+	if order.VerifiedAt != nil {
+		return "已核销"
+	}
+	today := orderListToday()
+	if maxVisitDate < today {
+		return "已过期"
+	}
+	return "待核销"
 }
 
 func (s *ticketOrder) GetByID(id uint) (order model.TicketOrder, items []model.OrderItem, err error) {

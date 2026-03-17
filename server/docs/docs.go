@@ -9877,7 +9877,7 @@ const docTemplate = `{
         },
         "/ticket/mini/order/myList": {
             "get": {
-                "description": "小程序端获取当前登录用户的订单列表，分页",
+                "description": "按类型筛选：待支付、待核销、已完成（已完成含已核销/已取消/已过期）；不传 orderType 返回全部。列表中每条订单带 statusLabel 表明状态。",
                 "consumes": [
                     "application/json"
                 ],
@@ -9894,6 +9894,12 @@ const docTemplate = `{
                         "description": "小程序登录后返回的 token",
                         "name": "x-token",
                         "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "可选值：pending_payment|pending_verify|completed，代表，待支付|待核销|已完成， 不传默认全部",
+                        "name": "orderType",
+                        "in": "query"
                     },
                     {
                         "type": "integer",
@@ -9922,6 +9928,111 @@ const docTemplate = `{
                                         "data": {
                                             "$ref": "#/definitions/response.PageResult"
                                         },
+                                        "msg": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/ticket/mini/order/review/create": {
+            "post": {
+                "description": "对已核销的门票订单进行评价（评分1-5、50字内内容），每个订单只能评价一次",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "小程序-景点"
+                ],
+                "summary": "发布订单评价",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "小程序登录后返回的 token",
+                        "name": "x-token",
+                        "in": "header"
+                    },
+                    {
+                        "description": "评价内容",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.CreateOrderReviewRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/model.OrderReview"
+                                        },
+                                        "msg": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/ticket/mini/order/review/delete": {
+            "post": {
+                "description": "删除自己对该订单的评价",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "小程序-景点"
+                ],
+                "summary": "删除订单评价",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "小程序登录后返回的 token",
+                        "name": "x-token",
+                        "in": "header"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "评价ID",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
                                         "msg": {
                                             "type": "string"
                                         }
@@ -11976,6 +12087,35 @@ const docTemplate = `{
                 }
             }
         },
+        "model.OrderReview": {
+            "type": "object",
+            "properties": {
+                "ID": {
+                    "description": "主键ID",
+                    "type": "integer"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "description": "创建时间",
+                    "type": "string"
+                },
+                "orderId": {
+                    "type": "integer"
+                },
+                "rating": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "description": "更新时间",
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "integer"
+                }
+            }
+        },
         "model.Venue": {
             "type": "object"
         },
@@ -12464,6 +12604,30 @@ const docTemplate = `{
                 "password": {
                     "description": "密码",
                     "type": "string"
+                }
+            }
+        },
+        "request.CreateOrderReviewRequest": {
+            "type": "object",
+            "required": [
+                "orderId",
+                "rating"
+            ],
+            "properties": {
+                "content": {
+                    "description": "评价内容，50字内",
+                    "type": "string",
+                    "maxLength": 50
+                },
+                "orderId": {
+                    "description": "订单ID",
+                    "type": "integer"
+                },
+                "rating": {
+                    "description": "评分 1-5",
+                    "type": "integer",
+                    "maximum": 5,
+                    "minimum": 1
                 }
             }
         },

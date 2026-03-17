@@ -900,6 +900,26 @@ definitions:
         description: 作者
         type: integer
     type: object
+  model.OrderReview:
+    properties:
+      ID:
+        description: 主键ID
+        type: integer
+      content:
+        type: string
+      createdAt:
+        description: 创建时间
+        type: string
+      orderId:
+        type: integer
+      rating:
+        type: integer
+      updatedAt:
+        description: 更新时间
+        type: string
+      userId:
+        type: integer
+    type: object
   model.Venue:
     type: object
   model.VenueCalendar:
@@ -1249,6 +1269,24 @@ definitions:
       password:
         description: 密码
         type: string
+    type: object
+  request.CreateOrderReviewRequest:
+    properties:
+      content:
+        description: 评价内容，50字内
+        maxLength: 50
+        type: string
+      orderId:
+        description: 订单ID
+        type: integer
+      rating:
+        description: 评分 1-5
+        maximum: 5
+        minimum: 1
+        type: integer
+    required:
+    - orderId
+    - rating
     type: object
   request.CreateReservationReviewRequest:
     properties:
@@ -8139,11 +8177,17 @@ paths:
     get:
       consumes:
       - application/json
-      description: 小程序端获取当前登录用户的订单列表，分页
+      description: 按类型筛选：待支付、待核销、已完成（已完成含已核销/已取消/已过期）；不传 orderType 返回全部。列表中每条订单带 statusLabel
+        表明状态。
       parameters:
       - description: 小程序登录后返回的 token
         in: header
         name: x-token
+        type: string
+      - description: 可选值：pending_payment|pending_verify|completed，代表，待支付|待核销|已完成，
+          不传默认全部
+        in: query
+        name: orderType
         type: string
       - description: 页码
         in: query
@@ -8168,6 +8212,69 @@ paths:
                   type: string
               type: object
       summary: 我的订单列表
+      tags:
+      - 小程序-景点
+  /ticket/mini/order/review/create:
+    post:
+      consumes:
+      - application/json
+      description: 对已核销的门票订单进行评价（评分1-5、50字内内容），每个订单只能评价一次
+      parameters:
+      - description: 小程序登录后返回的 token
+        in: header
+        name: x-token
+        type: string
+      - description: 评价内容
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateOrderReviewRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.OrderReview'
+                msg:
+                  type: string
+              type: object
+      summary: 发布订单评价
+      tags:
+      - 小程序-景点
+  /ticket/mini/order/review/delete:
+    post:
+      consumes:
+      - application/json
+      description: 删除自己对该订单的评价
+      parameters:
+      - description: 小程序登录后返回的 token
+        in: header
+        name: x-token
+        type: string
+      - description: 评价ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      summary: 删除订单评价
       tags:
       - 小程序-景点
   /ticket/mini/product/detail:

@@ -42,13 +42,14 @@ func (a *miniOrderApi) Create(c *gin.Context) {
 // MyList 小程序-我的订单列表（需登录）
 // @Tags        小程序-景点
 // @Summary     我的订单列表
-// @Description 小程序端获取当前登录用户的订单列表，分页
+// @Description 按类型筛选：待支付、待核销、已完成（已完成含已核销/已取消/已过期）；不传 orderType 返回全部。列表中每条订单带 statusLabel 表明状态。
 // @Accept      json
 // @Produce     json
-// @Param       x-token header string false "小程序登录后返回的 token"
-// @Param       page     query int false "页码"
-// @Param       pageSize query int false "每页条数"
-// @Success     200      {object} response.Response{data=response.PageResult,msg=string}
+// @Param       x-token   header string false "小程序登录后返回的 token"
+// @Param       orderType query  string false "可选值：pending_payment|pending_verify|completed，代表，待支付|待核销|已完成， 不传默认全部"
+// @Param       page      query  int    false "页码"
+// @Param       pageSize  query  int    false "每页条数"
+// @Success     200       {object} response.Response{data=response.PageResult,msg=string}
 // @Router      /ticket/mini/order/myList [get]
 func (a *miniOrderApi) MyList(c *gin.Context) {
 	userID, ok := getUserID(c)
@@ -73,8 +74,32 @@ func (a *miniOrderApi) MyList(c *gin.Context) {
 		response.FailWithMessage("获取失败", c)
 		return
 	}
+	// 批量查订单项最晚游玩日，用于生成 statusLabel
+	orderIDs := make([]uint, 0, len(list))
+	for _, o := range list {
+		orderIDs = append(orderIDs, o.ID)
+	}
+	maxVisitMap, _ := svcOrder.GetMaxVisitDateByOrderIDs(orderIDs)
+	items := make([]gin.H, 0, len(list))
+	for _, o := range list {
+		maxVisit := maxVisitMap[o.ID]
+		items = append(items, gin.H{
+			"id":          o.ID,
+			"orderNo":     o.OrderNo,
+			"userId":      o.UserID,
+			"bookerName":  o.BookerName,
+			"bookerPhone": o.BookerPhone,
+			"totalAmount": o.TotalAmount,
+			"payAmount":   o.PayAmount,
+			"status":      o.Status,
+			"payTime":     o.PayTime,
+			"verifiedAt":  o.VerifiedAt,
+			"createdAt":   o.CreatedAt,
+			"statusLabel": svcOrder.OrderStatusLabel(&o, maxVisit),
+		})
+	}
 	response.OkWithDetailed(response.PageResult{
-		List: list, Total: total, Page: req.Page, PageSize: req.PageSize,
+		List: items, Total: total, Page: req.Page, PageSize: req.PageSize,
 	}, "获取成功", c)
 }
 
