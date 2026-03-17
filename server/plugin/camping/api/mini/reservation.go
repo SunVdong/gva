@@ -2,8 +2,11 @@ package mini
 
 import (
 	"strconv"
+	"time"
 
+	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
+	"github.com/flipped-aurora/gin-vue-admin/server/plugin/camping/model"
 	campingRequest "github.com/flipped-aurora/gin-vue-admin/server/plugin/camping/model/request"
 	"github.com/gin-gonic/gin"
 )
@@ -176,20 +179,52 @@ func (a *reservationApi) MyDetail(c *gin.Context) {
 	if s, _ := svcVenueTimeslot.GetVenueTimeslot(res.TimeslotID); s.ID != 0 {
 		timeslotRange = s.StartTime.FormatHHMM() + "-" + s.EndTime.FormatHHMM()
 	}
+
+	canChange := false
+	var lastChangeTime *time.Time
+
+	// 仅在预约为未取消状态时计算退改能力和最晚时间
+	if res.Status == 0 {
+		var venue model.Venue
+		if err := global.GVA_DB.Where("id = ?", res.VenueID).First(&venue).Error; err == nil && venue.ID != 0 && venue.RefundChangeHours > 0 {
+			var slot model.VenueTimeslot
+			if err := global.GVA_DB.Where("id = ?", res.TimeslotID).First(&slot).Error; err == nil {
+				if startTime, err := combineDateAndTimeOnly(res.ReserveDate, slot.StartTime); err == nil {
+					t := startTime.Add(-time.Duration(venue.RefundChangeHours) * time.Hour)
+					lastChangeTime = &t
+					now := time.Now()
+					if now.Before(t) || now.Equal(t) {
+						canChange = true
+					}
+				}
+			}
+		}
+	}
+
+	var lastChangeAt interface{}
+	if lastChangeTime != nil {
+		// 格式化为 "YYYY-MM-DD HH:MM"
+		lastChangeAt = lastChangeTime.Format("2006-01-02 15:04")
+	} else {
+		lastChangeAt = nil
+	}
+
 	detail := gin.H{
-		"id":            res.ID,
+		"id":           res.ID,
 		"reservationNo": res.ReservationNo,
-		"venueId":       res.VenueID,
-		"venueName":     venueName,
-		"timeslotId":    res.TimeslotID,
+		"venueId":      res.VenueID,
+		"venueName":    venueName,
+		"timeslotId":   res.TimeslotID,
 		"timeslotRange": timeslotRange,
-		"reserveDate":   res.ReserveDate,
-		"contactName":   res.ContactName,
-		"contactPhone":  res.ContactPhone,
-		"contactCount":  res.ContactCount,
-		"status":        res.Status,
-		"verifyCode":    res.VerifyCode,
-		"createdAt":     res.CreatedAt,
+		"reserveDate":  res.ReserveDate,
+		"contactName":  res.ContactName,
+		"contactPhone": res.ContactPhone,
+		"contactCount": res.ContactCount,
+		"status":       res.Status,
+		"verifyCode":   res.VerifyCode,
+		"createdAt":    res.CreatedAt,
+		"canChange":    canChange,
+		"lastChangeAt": lastChangeAt,
 	}
 	// 已核销时附带评价信息（有则返回，无则 null）
 	if res.Status == 1 {
@@ -355,4 +390,24 @@ func getUserID(c *gin.Context) (uint, bool) {
 	}
 	u, ok := uid.(uint)
 	return u, ok
+}
+
+// combineDateAndTimeOnly 将日期与 TimeOnly 组合为本地时区的 time.Time
+func combineDateAndTimeOnly(date time.Time, t model.TimeOnly) (time.Time, error) {
+	s := string(t)
+	loc := time.Local
+	if s == "" {
+		return time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, loc), nil
+	}
+	var parsed time.Time
+	var err error
+	if len(s) >= 8 {
+		parsed, err = time.ParseInLocation("15:04:05", s, loc)
+	} else {
+		parsed, err = time.ParseInLocation("15:04", s, loc)
+	}
+	if err != nil {
+		return time.Time{}, err
+	}
+	return time.Date(date.Year(), date.Month(), date.Day(), parsed.Hour(), parsed.Minute(), parsed.Second(), 0, loc), nil
 }
