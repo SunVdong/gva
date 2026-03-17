@@ -233,7 +233,7 @@ func (a *reservationApi) Cancel(c *gin.Context) {
 		return
 	}
 	if err := svcReservation.CancelReservation(idReq.ID); err != nil {
-		response.FailWithMessage("取消失败", c)
+		response.FailWithMessage(err.Error(), c)
 		return
 	}
 	response.OkWithMessage("取消成功", c)

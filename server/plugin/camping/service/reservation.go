@@ -175,7 +175,51 @@ func (s *reservation) VerifyReservationByCode(code string) error {
 }
 
 func (s *reservation) CancelReservation(id uint) error {
+	var res model.VenueReservation
+	if err := global.GVA_DB.Where("id = ?", id).First(&res).Error; err != nil {
+		return err
+	}
+	// 校验：距开始时间不足 N 小时不可取消（N 为场地的 RefundChangeHours）
+	var venue model.Venue
+	if err := global.GVA_DB.Where("id = ?", res.VenueID).First(&venue).Error; err != nil {
+		return err
+	}
+	if venue.RefundChangeHours > 0 {
+		var slot model.VenueTimeslot
+		if err := global.GVA_DB.Where("id = ?", res.TimeslotID).First(&slot).Error; err != nil {
+			return err
+		}
+		startTime, err := combineDateAndTimeOnly(res.ReserveDate, slot.StartTime)
+		if err != nil {
+			return err
+		}
+		now := time.Now()
+		minCancelTime := startTime.Add(-time.Duration(venue.RefundChangeHours) * time.Hour)
+		if now.After(minCancelTime) {
+			return fmt.Errorf("距开始时间不足 %d 小时，不可取消", venue.RefundChangeHours)
+		}
+	}
 	return global.GVA_DB.Model(&model.VenueReservation{}).Where("id = ?", id).Update("status", 2).Error
+}
+
+// combineDateAndTimeOnly 将日期与 TimeOnly 拼成当地时区的 time.Time（使用 time.Local 便于与当前时间比较）
+func combineDateAndTimeOnly(date time.Time, t model.TimeOnly) (time.Time, error) {
+	s := string(t)
+	loc := time.Local
+	if s == "" {
+		return time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, loc), nil
+	}
+	var tParsed time.Time
+	var err error
+	if len(s) >= 8 {
+		tParsed, err = time.ParseInLocation("15:04:05", s, loc)
+	} else {
+		tParsed, err = time.ParseInLocation("15:04", s, loc)
+	}
+	if err != nil {
+		return time.Time{}, err
+	}
+	return time.Date(date.Year(), date.Month(), date.Day(), tParsed.Hour(), tParsed.Minute(), tParsed.Second(), 0, loc), nil
 }
 
 // GetReservedTimeslotIds 获取某场地某日已约满的时段ID列表（已预约数 >= capacity 的时段）
