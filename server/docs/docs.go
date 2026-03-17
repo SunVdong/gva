@@ -6189,7 +6189,7 @@ const docTemplate = `{
         },
         "/mini/login": {
             "post": {
-                "description": "使用 wx.login 获得的 code 换取 openid，在 users 表创建/绑定用户并签发本系统 JWT，请求头带 x-token 后可选注入 x-user-id",
+                "description": "前端先 wx.login 获取 login_code，再在按钮回调中通过 wx.getPhoneNumber 获取 phone_code，后端同时使用两个 code 换取 openid 和手机号，在 users 表中绑定 openid + phone 并签发本系统 JWT，请求头带 x-token 后可选注入 x-user-id",
                 "consumes": [
                     "application/json"
                 ],
@@ -6199,7 +6199,7 @@ const docTemplate = `{
                 "tags": [
                     "小程序"
                 ],
-                "summary": "小程序登录",
+                "summary": "小程序组合登录",
                 "parameters": [
                     {
                         "description": "请求体",
@@ -6214,55 +6214,6 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "data 含 token、user(id,openid,nickname,avatarUrl)",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/response.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "object"
-                                        },
-                                        "msg": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/mini/loginByPhone": {
-            "post": {
-                "description": "前端 wx.getPhoneNumber 用户同意后拿到 code，后端向微信换手机号，在 users 表按手机号查找或创建用户并签发 JWT",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "小程序"
-                ],
-                "summary": "本机号一键登录",
-                "parameters": [
-                    {
-                        "description": "请求体",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "object"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "data 含 token、user(id,phone,nickname,avatarUrl)",
                         "schema": {
                             "allOf": [
                                 {

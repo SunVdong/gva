@@ -102,7 +102,52 @@ func (s *ticketOrder) GetByID(id uint) (order model.TicketOrder, items []model.O
 	if err != nil {
 		return
 	}
-	err = global.GVA_DB.Where("order_id = ?", id).Order("id").Find(&items).Error
+	// 查询订单项
+	if err = global.GVA_DB.Where("order_id = ?", id).Order("id").Find(&items).Error; err != nil {
+		return
+	}
+
+	// 补充每个订单项对应的门票商品名称（ticket_products.name）
+	if len(items) > 0 {
+		// 收集 SKU ID
+		skuIDs := make([]uint, 0, len(items))
+		for _, it := range items {
+			skuIDs = append(skuIDs, it.SkuID)
+		}
+
+		// 查询 SKU，拿到 ProductID
+		var skus []model.TicketSku
+		if e := global.GVA_DB.Where("id IN ?", skuIDs).Find(&skus).Error; e == nil && len(skus) > 0 {
+			productIDs := make([]uint, 0, len(skus))
+			for _, sku := range skus {
+				productIDs = append(productIDs, sku.ProductID)
+			}
+
+			// 查询门票商品，拿到商品名称
+			var products []model.TicketProduct
+			if e := global.GVA_DB.Where("id IN ?", productIDs).Find(&products).Error; e == nil && len(products) > 0 {
+				productNameByID := make(map[uint]string, len(products))
+				for _, p := range products {
+					productNameByID[p.ID] = p.Name
+				}
+
+				// 构建 SKU -> 商品名称 的映射
+				productNameBySkuID := make(map[uint]string, len(skus))
+				for _, sku := range skus {
+					if name, ok := productNameByID[sku.ProductID]; ok {
+						productNameBySkuID[sku.ID] = name
+					}
+				}
+
+				// 写回每个订单项的 ProductName 字段
+				for i := range items {
+					if name, ok := productNameBySkuID[items[i].SkuID]; ok {
+						items[i].ProductName = name
+					}
+				}
+			}
+		}
+	}
 	return
 }
 
