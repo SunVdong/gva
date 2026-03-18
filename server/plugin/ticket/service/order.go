@@ -11,6 +11,7 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/ticket/model"
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/ticket/model/request"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type ticketOrder struct{}
@@ -199,6 +200,8 @@ func (s *ticketOrder) CreateOrder(userID uint, req request.MiniOrderCreate) (ord
 	err = global.GVA_DB.Transaction(func(tx *gorm.DB) error {
 		var totalAmount float64
 		var orderItems []model.OrderItem
+		// 每单限购：同一订单内，同一 SKU 的数量汇总后，不得超过 sku.limit_buy（0 表示不限购）
+		perOrderQty := make(map[uint]int)
 		for _, it := range req.Items {
 			var sku model.TicketSku
 			if e := tx.Where("id = ? AND status = ?", it.SkuID, 1).First(&sku).Error; e != nil {
@@ -208,11 +211,26 @@ func (s *ticketOrder) CreateOrder(userID uint, req request.MiniOrderCreate) (ord
 			if e != nil {
 				return fmt.Errorf("游玩日期格式错误")
 			}
+			perOrderQty[it.SkuID] += it.Quantity
+			if sku.LimitBuy > 0 && perOrderQty[it.SkuID] > sku.LimitBuy {
+				return fmt.Errorf("门票 %s 每单限购 %d 张", sku.Name, sku.LimitBuy)
+			}
+			// 日历库存校验：必须存在当日排期才可售，且按 stock-sold 判断可售数量
 			var cal model.TicketCalendar
-			if e := tx.Where("sku_id = ? AND visit_date = ? AND status = ?", it.SkuID, visitDate, 1).First(&cal).Error; e == nil {
-				if cal.Stock-cal.Sold < it.Quantity {
-					return fmt.Errorf("门票 %s 所选日期库存不足", sku.Name)
-				}
+			if e := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+				Where("sku_id = ? AND visit_date = ? AND status = ?", it.SkuID, visitDate, 1).
+				First(&cal).Error; e != nil {
+				return fmt.Errorf("门票 %s 所选日期未开放或无库存", sku.Name)
+			}
+			// 扣减库存：sold += quantity（带条件避免并发超卖）
+			ur := tx.Model(&model.TicketCalendar{}).
+				Where("id = ? AND sold + ? <= stock", cal.ID, it.Quantity).
+				UpdateColumn("sold", gorm.Expr("sold + ?", it.Quantity))
+			if ur.Error != nil {
+				return ur.Error
+			}
+			if ur.RowsAffected == 0 {
+				return fmt.Errorf("门票 %s 所选日期库存不足", sku.Name)
 			}
 			subTotal := sku.Price * float64(it.Quantity)
 			totalAmount += subTotal

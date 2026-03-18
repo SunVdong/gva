@@ -106,7 +106,6 @@
         <div class="flex justify-between items-center">
           <span class="text-lg">「{{ currentProductName }}」SKU 与规则</span>
           <div>
-            <el-button type="primary" size="small" @click="addSkuRow">添加 SKU</el-button>
             <el-button type="primary" @click="saveSkuAndRule">保存</el-button>
             <el-button @click="skuDrawerVisible = false">关闭</el-button>
           </div>
@@ -114,6 +113,10 @@
       </template>
       <el-tabs v-model="activeTab">
         <el-tab-pane label="门票 SKU" name="sku">
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-gray-500 text-sm">限购为0,表示不限购</span>
+            <el-button type="primary" size="small" @click="addSkuRow">添加 SKU</el-button>
+          </div>
           <el-table :data="skuList" border size="small">
             <el-table-column label="SKU 名称" min-width="130">
               <template #default="{ row }">
@@ -130,7 +133,7 @@
                 <el-input-number v-model="row.marketPrice" :min="0" :precision="2" size="small" style="width:100%" />
               </template>
             </el-table-column>
-            <el-table-column label="每单限购" width="100">
+            <el-table-column label="限购" width="100">
               <template #default="{ row }">
                 <el-input-number v-model="row.limitBuy" :min="0" size="small" style="width:100%" />
               </template>
