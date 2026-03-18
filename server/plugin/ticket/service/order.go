@@ -115,47 +115,73 @@ func (s *ticketOrder) GetByID(id uint) (order model.TicketOrder, items []model.O
 	if err = global.GVA_DB.Where("order_id = ?", id).Order("id").Find(&items).Error; err != nil {
 		return
 	}
+	if err = s.fillOrderItemsProductName(items); err != nil {
+		return
+	}
+	return
+}
 
-	// 补充每个订单项对应的门票商品名称（ticket_products.name）
-	if len(items) > 0 {
-		// 收集 SKU ID
-		skuIDs := make([]uint, 0, len(items))
-		for _, it := range items {
-			skuIDs = append(skuIDs, it.SkuID)
+// fillOrderItemsProductName 补充每个订单项对应的门票商品名称（ticket_products.name）
+func (s *ticketOrder) fillOrderItemsProductName(items []model.OrderItem) error {
+	if len(items) == 0 {
+		return nil
+	}
+	// 收集 SKU ID
+	skuIDs := make([]uint, 0, len(items))
+	for _, it := range items {
+		skuIDs = append(skuIDs, it.SkuID)
+	}
+
+	// 查询 SKU，拿到 ProductID
+	var skus []model.TicketSku
+	if e := global.GVA_DB.Where("id IN ?", skuIDs).Find(&skus).Error; e != nil || len(skus) == 0 {
+		return e
+	}
+	productIDs := make([]uint, 0, len(skus))
+	for _, sku := range skus {
+		productIDs = append(productIDs, sku.ProductID)
+	}
+
+	// 查询门票商品，拿到商品名称
+	var products []model.TicketProduct
+	if e := global.GVA_DB.Where("id IN ?", productIDs).Find(&products).Error; e != nil {
+		return e
+	}
+	if len(products) == 0 {
+		return nil
+	}
+	productNameByID := make(map[uint]string, len(products))
+	for _, p := range products {
+		productNameByID[p.ID] = p.Name
+	}
+
+	// 构建 SKU -> 商品名称 的映射
+	productNameBySkuID := make(map[uint]string, len(skus))
+	for _, sku := range skus {
+		if name, ok := productNameByID[sku.ProductID]; ok {
+			productNameBySkuID[sku.ID] = name
 		}
+	}
 
-		// 查询 SKU，拿到 ProductID
-		var skus []model.TicketSku
-		if e := global.GVA_DB.Where("id IN ?", skuIDs).Find(&skus).Error; e == nil && len(skus) > 0 {
-			productIDs := make([]uint, 0, len(skus))
-			for _, sku := range skus {
-				productIDs = append(productIDs, sku.ProductID)
-			}
-
-			// 查询门票商品，拿到商品名称
-			var products []model.TicketProduct
-			if e := global.GVA_DB.Where("id IN ?", productIDs).Find(&products).Error; e == nil && len(products) > 0 {
-				productNameByID := make(map[uint]string, len(products))
-				for _, p := range products {
-					productNameByID[p.ID] = p.Name
-				}
-
-				// 构建 SKU -> 商品名称 的映射
-				productNameBySkuID := make(map[uint]string, len(skus))
-				for _, sku := range skus {
-					if name, ok := productNameByID[sku.ProductID]; ok {
-						productNameBySkuID[sku.ID] = name
-					}
-				}
-
-				// 写回每个订单项的 ProductName 字段
-				for i := range items {
-					if name, ok := productNameBySkuID[items[i].SkuID]; ok {
-						items[i].ProductName = name
-					}
-				}
-			}
+	// 写回每个订单项的 ProductName 字段
+	for i := range items {
+		if name, ok := productNameBySkuID[items[i].SkuID]; ok {
+			items[i].ProductName = name
 		}
+	}
+	return nil
+}
+
+// GetByOrderNoPublic 根据订单号查询订单及订单项（公开给 H5 核销使用）
+func (s *ticketOrder) GetByOrderNoPublic(orderNo string) (order model.TicketOrder, items []model.OrderItem, err error) {
+	if err = global.GVA_DB.Where("order_no = ?", orderNo).First(&order).Error; err != nil {
+		return
+	}
+	if err = global.GVA_DB.Where("order_id = ?", order.ID).Order("id").Find(&items).Error; err != nil {
+		return
+	}
+	if err = s.fillOrderItemsProductName(items); err != nil {
+		return
 	}
 	return
 }
@@ -232,12 +258,27 @@ func (s *ticketOrder) VerifyOrder(orderID uint) error {
 	if err := global.GVA_DB.Where("id = ?", orderID).First(&order).Error; err != nil || order.ID == 0 {
 		return fmt.Errorf("订单不存在")
 	}
+	// 兼容历史数据：可能 status 已更新但 verified_at 为空，或反之
+	if order.Status == 2 || order.VerifiedAt != nil {
+		return fmt.Errorf("该订单已核销")
+	}
 	if order.Status != 1 {
 		return fmt.Errorf("仅待核销订单可核销")
 	}
-	if order.VerifiedAt != nil {
-		return fmt.Errorf("该订单已核销")
-	}
 	now := time.Now()
-	return global.GVA_DB.Model(&model.TicketOrder{}).Where("id = ?", orderID).Update("verified_at", now).Error
+	return global.GVA_DB.Model(&model.TicketOrder{}).
+		Where("id = ?", orderID).
+		Updates(map[string]any{
+			"verified_at": now,
+			"status":      2,
+		}).Error
+}
+
+// VerifyOrderByOrderNoPublic 根据订单号核销订单（公开给 H5 核销使用）
+func (s *ticketOrder) VerifyOrderByOrderNoPublic(orderNo string) error {
+	var order model.TicketOrder
+	if err := global.GVA_DB.Where("order_no = ?", orderNo).First(&order).Error; err != nil || order.ID == 0 {
+		return fmt.Errorf("订单不存在")
+	}
+	return s.VerifyOrder(order.ID)
 }

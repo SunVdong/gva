@@ -138,7 +138,6 @@
 import { getSiteList } from '@/plugin/camping/api/site'
 import { getTimeSlotsByVenuePublic } from '@/plugin/camping/api/timeSlot'
 import { createReservation, getReservationList, cancelReservation, getReservedSlotIdsPublic } from '@/plugin/camping/api/reservation'
-import { getParams } from '@/utils/params'
 import vueQr from 'vue-qr/src/packages/vue-qr.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ref, reactive, onMounted } from 'vue'
@@ -266,7 +265,7 @@ const submitReserve = async () => {
       ElMessage.success('预约成功')
       reserveDialogVisible.value = false
       currentReservation.value = res.data
-      qrCodeText.value = await getVerifyPageUrl(res.data.verifyCode || '')
+      qrCodeText.value = getVerifyPageUrl(res.data.verifyCode || '')
       qrDialogVisible.value = true
       getTableData()
     } else {
@@ -275,15 +274,15 @@ const submitReserve = async () => {
   })
 }
 
-/** 生成核销页链接：{域名}{path}#/h5/verify?code=核销码，优先使用参数 h5_verify_base_url */
-async function getVerifyPageUrl(code) {
-  const base = (await getParams('h5_verify_base_url')) || (window.location.origin + (window.location.pathname || '').replace(/\/$/, ''))
-  return `${base}#/h5/verify?code=${encodeURIComponent(code || '')}`
+/** 生成核销页链接：{域名}{path}#/h5/verify?type=reservation&code=核销码 */
+function getVerifyPageUrl(code) {
+  const base = window.location.origin + (window.location.pathname || '').replace(/\/$/, '')
+  return `${base}#/h5/verify?type=reservation&code=${encodeURIComponent(code || '')}`
 }
 
-const showQr = async (row) => {
+const showQr = (row) => {
   currentReservation.value = row
-  qrCodeText.value = await getVerifyPageUrl(row.verifyCode || '')
+  qrCodeText.value = getVerifyPageUrl(row.verifyCode || '')
   qrDialogVisible.value = true
 }
 

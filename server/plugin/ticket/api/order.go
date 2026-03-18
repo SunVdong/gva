@@ -47,3 +47,49 @@ func (a *ticketOrderApi) Find(c *gin.Context) {
 		"items": items,
 	}, c)
 }
+
+// GetOrderByCodePublic 公开：根据订单号(code)查询门票订单及订单项（用于 H5 扫码核销）
+// @Tags TicketOrder
+// @Summary 根据订单号查询门票订单(公开)
+// @Param code query string true "订单号"
+// @Success 200 {object} response.Response{data=object,msg=string} "查询成功"
+// @Router /ticket/order/getOrderByCodePublic [get]
+func (a *ticketOrderApi) GetOrderByCodePublic(c *gin.Context) {
+	code := c.Query("code")
+	if code == "" {
+		response.FailWithMessage("订单号不能为空", c)
+		return
+	}
+	order, items, err := serviceOrder.GetByOrderNoPublic(code)
+	if err != nil {
+		response.FailWithMessage("订单不存在或已失效", c)
+		return
+	}
+	response.OkWithData(gin.H{
+		"order": order,
+		"items": items,
+	}, c)
+}
+
+// VerifyOrderByCodePublic 公开：根据订单号(code)核销门票订单（用于 H5 扫码核销）
+// @Tags TicketOrder
+// @Summary 根据订单号核销门票订单(公开)
+// @Param code query string true "订单号"
+// @Success 200 {object} response.Response{data=object,msg=string} "核销成功"
+// @Router /ticket/order/verifyOrderByCodePublic [post]
+func (a *ticketOrderApi) VerifyOrderByCodePublic(c *gin.Context) {
+	code := c.Query("code")
+	if code == "" {
+		response.FailWithMessage("订单号不能为空", c)
+		return
+	}
+	if err := serviceOrder.VerifyOrderByOrderNoPublic(code); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	order, items, _ := serviceOrder.GetByOrderNoPublic(code)
+	response.OkWithData(gin.H{
+		"order": order,
+		"items": items,
+	}, c)
+}

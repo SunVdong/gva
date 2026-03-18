@@ -9,7 +9,7 @@ import (
 var RouterGroupApp = new(RouterGroup)
 
 type RouterGroup struct {
-	System system.RouterGroup
+	System  system.RouterGroup
 	Example example.RouterGroup
-	Mini   mini.RouterGroup
+	Mini    mini.RouterGroup
 }
