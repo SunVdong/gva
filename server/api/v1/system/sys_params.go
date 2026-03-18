@@ -169,3 +169,32 @@ func (sysParamsApi *SysParamsApi) GetSysParam(c *gin.Context) {
 	}
 	response.OkWithDetailed(params, "获取成功", c)
 }
+
+const RedeemCodeParamKey = "redeem_code"
+
+// ValidateRedeemCodeReq 核销密码校验请求（H5 工作人员身份验证）
+type ValidateRedeemCodeReq struct {
+	Code string `json:"code" binding:"required"` // 核销密码（与参数 redeem_code 一致即可）
+}
+
+// ValidateRedeemCode 公开：校验核销密码是否与参数 redeem_code 一致，不返回密码本身
+// @Tags SysParams
+// @Summary 校验核销密码(公开)
+// @Accept json
+// @Produce json
+// @Param data body ValidateRedeemCodeReq true "核销密码"
+// @Success 200 {object} response.Response{data=object,msg=string} "valid: true/false"
+// @Router /sysParams/validateRedeemCode [post]
+func (sysParamsApi *SysParamsApi) ValidateRedeemCode(c *gin.Context) {
+	var req ValidateRedeemCodeReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.FailWithMessage("参数错误", c)
+		return
+	}
+	param, err := sysParamsService.GetSysParam(RedeemCodeParamKey)
+	if err != nil || param.Key == "" {
+		response.OkWithData(gin.H{"valid": false}, c)
+		return
+	}
+	response.OkWithData(gin.H{"valid": param.Value == req.Code}, c)
+}

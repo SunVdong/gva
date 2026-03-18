@@ -109,3 +109,13 @@ export const getSysParam = (params) => {
     params
   })
 }
+
+// 公开：校验核销密码（H5 工作人员身份验证），与参数 redeem_code 比对，不返回密码
+// @Router /sysParams/validateRedeemCode [post]
+export const validateRedeemCode = (data) => {
+  return service({
+    url: '/sysParams/validateRedeemCode',
+    method: 'post',
+    data
+  })
+}

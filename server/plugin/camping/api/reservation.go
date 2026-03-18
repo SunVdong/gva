@@ -151,6 +151,26 @@ func (a *reservationApi) VerifyReservationByCode(c *gin.Context) {
 	response.OkWithMessage("核销成功", c)
 }
 
+// VerifyReservationByCodePublic 公开核销（根据核销码，无需登录，用于 H5 扫码核销）
+// @Tags CampingReservation
+// @Summary 根据核销码核销(公开)
+// @Param code query string true "核销码"
+// @Success 200 {object} response.Response{data=model.VenueReservation,msg=string} "核销成功"
+// @Router /camping/reservation/verifyReservationByCodePublic [post]
+func (a *reservationApi) VerifyReservationByCodePublic(c *gin.Context) {
+	code := c.Query("code")
+	if code == "" {
+		response.FailWithMessage("核销码不能为空", c)
+		return
+	}
+	if err := serviceResv.VerifyReservationByCode(code); err != nil {
+		response.FailWithMessage("核销失败，请检查核销码或状态", c)
+		return
+	}
+	res, _ := serviceResv.GetReservationByVerifyCode(code)
+	response.OkWithData(res, c)
+}
+
 // CancelReservation 取消预约
 // @Tags CampingReservation
 // @Summary 取消预约

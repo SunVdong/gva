@@ -47,6 +47,9 @@
         <el-table-column align="left" label="联系电话" prop="contactPhone" width="120" />
         <el-table-column align="left" label="人数" prop="contactCount" width="70" />
         <el-table-column align="left" label="核销码" prop="verifyCode" width="130" />
+        <el-table-column align="left" label="核销时间" width="160">
+          <template #default="{ row }">{{ formatDateTime(row.verifiedAt) }}</template>
+        </el-table-column>
         <el-table-column align="left" label="状态" width="100">
           <template #default="{ row }">
             <el-tag :type="row.status === 0 ? 'warning' : row.status === 1 ? 'success' : row.status === 2 ? 'info' : 'danger'">
@@ -135,6 +138,7 @@
 import { getSiteList } from '@/plugin/camping/api/site'
 import { getTimeSlotsByVenuePublic } from '@/plugin/camping/api/timeSlot'
 import { createReservation, getReservationList, cancelReservation, getReservedSlotIdsPublic } from '@/plugin/camping/api/reservation'
+import { getParams } from '@/utils/params'
 import vueQr from 'vue-qr/src/packages/vue-qr.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ref, reactive, onMounted } from 'vue'
@@ -186,6 +190,14 @@ function formatDate(d) {
   if (!d) return '-'
   if (typeof d === 'string') return d.slice(0, 10)
   return d
+}
+
+function formatDateTime(d) {
+  if (!d) return '-'
+  const v = typeof d === 'string' ? d : ''
+  if (!v) return '-'
+  // 统一显示到分钟，例如 2025-01-02 15:04
+  return v.replace('T', ' ').slice(0, 16)
 }
 
 const getTableData = async () => {
@@ -254,7 +266,7 @@ const submitReserve = async () => {
       ElMessage.success('预约成功')
       reserveDialogVisible.value = false
       currentReservation.value = res.data
-      qrCodeText.value = res.data.verifyCode || ''
+      qrCodeText.value = await getVerifyPageUrl(res.data.verifyCode || '')
       qrDialogVisible.value = true
       getTableData()
     } else {
@@ -263,9 +275,15 @@ const submitReserve = async () => {
   })
 }
 
-const showQr = (row) => {
+/** 生成核销页链接：{域名}{path}#/h5/verify?code=核销码，优先使用参数 h5_verify_base_url */
+async function getVerifyPageUrl(code) {
+  const base = (await getParams('h5_verify_base_url')) || (window.location.origin + (window.location.pathname || '').replace(/\/$/, ''))
+  return `${base}#/h5/verify?code=${encodeURIComponent(code || '')}`
+}
+
+const showQr = async (row) => {
   currentReservation.value = row
-  qrCodeText.value = row.verifyCode || ''
+  qrCodeText.value = await getVerifyPageUrl(row.verifyCode || '')
   qrDialogVisible.value = true
 }
 

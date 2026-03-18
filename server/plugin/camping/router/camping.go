@@ -52,6 +52,7 @@ func (r *reservationRouter) Init(public, private *gin.RouterGroup) {
 	resv := private.Group("camping").Group("reservation")
 	public.Group("camping").Group("reservation").POST("createReservation", apiResv.CreateReservation)
 	public.Group("camping").Group("reservation").GET("getReservationByVerifyCodePublic", apiResv.GetReservationByVerifyCodePublic)
+	public.Group("camping").Group("reservation").POST("verifyReservationByCodePublic", apiResv.VerifyReservationByCodePublic)
 	public.Group("camping").Group("reservation").GET("getReservedSlotIdsPublic", apiResv.GetReservedSlotIdsPublic)
 	resv.GET("getReservation", apiResv.GetReservation)
 	resv.GET("getReservationList", apiResv.GetReservationList)

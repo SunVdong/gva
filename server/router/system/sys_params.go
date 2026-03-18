@@ -26,5 +26,7 @@ func (s *SysParamsRouter) InitSysParamsRouter(Router *gin.RouterGroup, PublicRou
 	{
 		// 小程序/外部端使用：无需鉴权获取系统参数，路径与内部区分，避免冲突
 		sysParamsPublicRouter.GET("getSysParamPublic", sysParamsApi.GetSysParam)
+		// H5 核销页工作人员身份验证：校验输入的 8 位数字是否与参数 redeem_code 一致
+		sysParamsPublicRouter.POST("validateRedeemCode", sysParamsApi.ValidateRedeemCode)
 	}
 }

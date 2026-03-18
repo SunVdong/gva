@@ -32,6 +32,15 @@ const routes = [
     component: () => import('@/view/example/upload/scanUpload.vue')
   },
   {
+    path: '/h5/verify',
+    name: 'H5Verify',
+    meta: {
+      title: '核销',
+      client: true
+    },
+    component: () => import('@/plugin/camping/view/h5Verify.vue')
+  },
+  {
     path: '/:catchAll(.*)',
     meta: {
       closeTab: true

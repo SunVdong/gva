@@ -175,11 +175,24 @@ func (s *reservation) GetReservationList(req request.VenueReservationSearch) (li
 }
 
 func (s *reservation) VerifyReservation(id uint) error {
-	return global.GVA_DB.Model(&model.VenueReservation{}).Where("id = ? AND status = 0", id).Update("status", 1).Error
+	now := time.Now()
+	return global.GVA_DB.Model(&model.VenueReservation{}).
+		Where("id = ? AND status = 0", id).
+		Updates(map[string]interface{}{"status": 1, "verified_at": now}).Error
 }
 
 func (s *reservation) VerifyReservationByCode(code string) error {
-	return global.GVA_DB.Model(&model.VenueReservation{}).Where("verify_code = ? AND status = 0", code).Update("status", 1).Error
+	now := time.Now()
+	res := global.GVA_DB.Model(&model.VenueReservation{}).
+		Where("verify_code = ? AND status = 0", code).
+		Updates(map[string]interface{}{"status": 1, "verified_at": now})
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return fmt.Errorf("核销码无效或该预约已核销/已取消/已过期")
+	}
+	return nil
 }
 
 func (s *reservation) CancelReservation(id uint) error {
