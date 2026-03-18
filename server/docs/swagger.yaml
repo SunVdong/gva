@@ -3843,8 +3843,12 @@ paths:
     post:
       consumes:
       - application/json
-      description: 用户取消自己的预约
+      description: 用户取消自己的预约。需先登录，请求头携带 x-token
       parameters:
+      - description: 小程序登录后返回的 token
+        in: header
+        name: x-token
+        type: string
       - description: 预约ID
         in: query
         name: id
@@ -3930,8 +3934,12 @@ paths:
     get:
       consumes:
       - application/json
-      description: 获取预约详情含场地名、时段、核销码，仅限本人
+      description: 获取预约详情含场地名、时段、核销码，仅限本人。需先登录，请求头携带 x-token
       parameters:
+      - description: 小程序登录后返回的 token
+        in: header
+        name: x-token
+        type: string
       - description: 预约ID
         in: query
         name: id
@@ -3958,8 +3966,12 @@ paths:
     get:
       consumes:
       - application/json
-      description: 按当前用户获取预约列表，分页
+      description: 按当前用户获取预约列表，分页。需先登录，请求头携带 x-token
       parameters:
+      - description: 小程序登录后返回的 token
+        in: header
+        name: x-token
+        type: string
       - description: 页码
         in: query
         name: page
@@ -4198,6 +4210,10 @@ paths:
   /camping/reservation/createReservation:
     post:
       parameters:
+      - description: 可选，小程序登录后返回的 token，携带时预约关联当前用户
+        in: header
+        name: x-token
+        type: string
       - description: 预约信息
         in: body
         name: data

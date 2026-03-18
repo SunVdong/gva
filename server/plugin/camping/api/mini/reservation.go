@@ -74,9 +74,10 @@ func (a *reservationApi) Update(c *gin.Context) {
 // MyList 小程序-我的预约列表
 // @Tags        小程序-露营
 // @Summary     我的预约列表
-// @Description 按当前用户获取预约列表，分页
+// @Description 按当前用户获取预约列表，分页。需先登录，请求头携带 x-token
 // @Accept      json
 // @Produce     json
+// @Param       x-token  header string false "小程序登录后返回的 token"
 // @Param       page     query int false "页码"
 // @Param       pageSize query int false "每页条数"
 // @Param       status   query int false "状态 0待核销 1已核销 2已取消 3已过期"
@@ -140,9 +141,10 @@ func (a *reservationApi) MyList(c *gin.Context) {
 // MyDetail 小程序-预约详情（含核销码，仅本人）
 // @Tags        小程序-露营
 // @Summary     预约详情
-// @Description 获取预约详情含场地名、时段、核销码，仅限本人
+// @Description 获取预约详情含场地名、时段、核销码，仅限本人。需先登录，请求头携带 x-token
 // @Accept      json
 // @Produce     json
+// @Param       x-token header string false "小程序登录后返回的 token"
 // @Param       id query int true "预约ID"
 // @Success     200 {object} response.Response{data=object,msg=string}
 // @Router      /camping/mini/reservation/myDetail [get]
@@ -246,9 +248,10 @@ func (a *reservationApi) MyDetail(c *gin.Context) {
 // Cancel 小程序-取消预约（仅本人）
 // @Tags        小程序-露营
 // @Summary     取消预约
-// @Description 用户取消自己的预约
+// @Description 用户取消自己的预约。需先登录，请求头携带 x-token
 // @Accept      json
 // @Produce     json
+// @Param       x-token header string false "小程序登录后返回的 token"
 // @Param       id query int true "预约ID"
 // @Success     200 {object} response.Response{msg=string}
 // @Router      /camping/mini/reservation/cancel [post]

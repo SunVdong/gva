@@ -2410,7 +2410,7 @@ const docTemplate = `{
         },
         "/camping/mini/reservation/cancel": {
             "post": {
-                "description": "用户取消自己的预约",
+                "description": "用户取消自己的预约。需先登录，请求头携带 x-token",
                 "consumes": [
                     "application/json"
                 ],
@@ -2422,6 +2422,12 @@ const docTemplate = `{
                 ],
                 "summary": "取消预约",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "小程序登录后返回的 token",
+                        "name": "x-token",
+                        "in": "header"
+                    },
                     {
                         "type": "integer",
                         "description": "预约ID",
@@ -2556,7 +2562,7 @@ const docTemplate = `{
         },
         "/camping/mini/reservation/myDetail": {
             "get": {
-                "description": "获取预约详情含场地名、时段、核销码，仅限本人",
+                "description": "获取预约详情含场地名、时段、核销码，仅限本人。需先登录，请求头携带 x-token",
                 "consumes": [
                     "application/json"
                 ],
@@ -2568,6 +2574,12 @@ const docTemplate = `{
                 ],
                 "summary": "预约详情",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "小程序登录后返回的 token",
+                        "name": "x-token",
+                        "in": "header"
+                    },
                     {
                         "type": "integer",
                         "description": "预约ID",
@@ -2603,7 +2615,7 @@ const docTemplate = `{
         },
         "/camping/mini/reservation/myList": {
             "get": {
-                "description": "按当前用户获取预约列表，分页",
+                "description": "按当前用户获取预约列表，分页。需先登录，请求头携带 x-token",
                 "consumes": [
                     "application/json"
                 ],
@@ -2615,6 +2627,12 @@ const docTemplate = `{
                 ],
                 "summary": "我的预约列表",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "小程序登录后返回的 token",
+                        "name": "x-token",
+                        "in": "header"
+                    },
                     {
                         "type": "integer",
                         "description": "页码",
@@ -3013,6 +3031,12 @@ const docTemplate = `{
                 ],
                 "summary": "提交预约(公开)",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "可选，小程序登录后返回的 token，携带时预约关联当前用户",
+                        "name": "x-token",
+                        "in": "header"
+                    },
                     {
                         "description": "预约信息",
                         "name": "data",

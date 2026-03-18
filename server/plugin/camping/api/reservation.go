@@ -13,9 +13,10 @@ var Reservation = new(reservationApi)
 
 type reservationApi struct{}
 
-// CreateReservation 创建预约（公开接口，前台提交预约）
+// CreateReservation 创建预约（公开接口，前台提交预约；可选带 x-token 关联当前用户）
 // @Tags CampingReservation
 // @Summary 提交预约(公开)
+// @Param x-token header string false "可选，小程序登录后返回的 token，携带时预约关联当前用户"
 // @Param data body request.CreateVenueReservationRequest true "预约信息"
 // @Success 200 {object} response.Response{data=model.VenueReservation,msg=string} "预约成功"
 // @Router /camping/reservation/createReservation [post]
