@@ -80,7 +80,7 @@ func (a *reservationApi) Update(c *gin.Context) {
 // @Param       x-token  header string false "小程序登录后返回的 token"
 // @Param       page     query int false "页码"
 // @Param       pageSize query int false "每页条数"
-// @Param       status   query int false "状态 0待核销 1已核销 2已取消 3已过期"
+// @Param       statusType query string false "状态类型 pending_verify|completed（分别为待核销/已完成；已完成包含:1已核销/2已取消/3已过期）"
 // @Success     200 {object} response.Response{data=response.PageResult,msg=string}
 // @Router      /camping/mini/reservation/myList [get]
 func (a *reservationApi) MyList(c *gin.Context) {
@@ -89,11 +89,18 @@ func (a *reservationApi) MyList(c *gin.Context) {
 		response.FailWithMessage("请先登录", c)
 		return
 	}
+	statusType := c.Query("statusType")
+	if statusType != "" && statusType != "pending_verify" && statusType != "completed" {
+		response.FailWithMessage("statusType 仅支持 pending_verify 或 completed", c)
+		return
+	}
 	var req campingRequest.VenueReservationSearch
 	if err := c.ShouldBindQuery(&req); err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
+	// 以 statusType 为准，不再使用数字 status 参数
+	req.Status = nil
 	req.UserID = &userID
 	if req.Page < 1 {
 		req.Page = 1
@@ -101,7 +108,22 @@ func (a *reservationApi) MyList(c *gin.Context) {
 	if req.PageSize <= 0 || req.PageSize > 50 {
 		req.PageSize = 20
 	}
-	list, total, err := svcReservation.GetReservationList(req)
+	// statusType 参数口径（小程序端）：pending_verify=待核销；completed=已完成（包含：已核销/已取消/已过期）
+	var (
+		list  []model.VenueReservation
+		total int64
+		err   error
+	)
+	switch statusType {
+	case "completed":
+		list, total, err = myReservationListCompleted(userID, req)
+	case "pending_verify":
+		status := 0
+		req.Status = &status
+		list, total, err = svcReservation.GetReservationList(req)
+	default:
+		list, total, err = svcReservation.GetReservationList(req)
+	}
 	if err != nil {
 		response.FailWithMessage("获取失败", c)
 		return
@@ -136,6 +158,33 @@ func (a *reservationApi) MyList(c *gin.Context) {
 	response.OkWithDetailed(response.PageResult{
 		List: items, Total: total, Page: req.Page, PageSize: req.PageSize,
 	}, "获取成功", c)
+}
+
+func myReservationListCompleted(userID uint, req campingRequest.VenueReservationSearch) (list []model.VenueReservation, total int64, err error) {
+	db := global.GVA_DB.Model(&model.VenueReservation{}).Where("user_id = ?", userID)
+	if req.VenueID != nil {
+		db = db.Where("venue_id = ?", *req.VenueID)
+	}
+	if req.ReserveDate != nil {
+		d := *req.ReserveDate
+		db = db.Where("reserve_date = ?", time.Date(d.Year(), d.Month(), d.Day(), 0, 0, 0, 0, time.Local))
+	}
+	if req.VerifyCode != "" {
+		db = db.Where("verify_code = ?", req.VerifyCode)
+	}
+	db = db.Where("status IN (1,2,3)")
+	if err = db.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	limit := req.PageSize
+	offset := req.PageSize * (req.Page - 1)
+	if limit != 0 {
+		db = db.Limit(limit).Offset(offset)
+	}
+	if err = db.Order("reserve_date DESC, timeslot_id ASC").Find(&list).Error; err != nil {
+		return nil, 0, err
+	}
+	return list, total, nil
 }
 
 // MyDetail 小程序-预约详情（含核销码，仅本人）

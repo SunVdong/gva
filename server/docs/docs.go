@@ -2646,9 +2646,9 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
-                        "type": "integer",
-                        "description": "状态 0待核销 1已核销 2已取消 3已过期",
-                        "name": "status",
+						"type": "string",
+						"description": "状态类型 pending_verify|completed（分别为待核销/已完成；已完成包含:1已核销/2已取消/3已过期）",
+						"name": "statusType",
                         "in": "query"
                     }
                 ],
