@@ -989,6 +989,8 @@ definitions:
         type: integer
       venueId:
         type: integer
+      verifiedAt:
+        type: string
       verifyCode:
         type: string
     type: object
@@ -2477,6 +2479,14 @@ definitions:
     properties:
       config:
         $ref: '#/definitions/config.Server'
+    type: object
+  system.ValidateRedeemCodeReq:
+    properties:
+      code:
+        description: 核销密码（与参数 redeem_code 一致即可）
+        type: string
+    required:
+    - code
     type: object
 info:
   contact: {}
@@ -4406,6 +4416,29 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: 根据核销码核销
+      tags:
+      - CampingReservation
+  /camping/reservation/verifyReservationByCodePublic:
+    post:
+      parameters:
+      - description: 核销码
+        in: query
+        name: code
+        required: true
+        type: string
+      responses:
+        "200":
+          description: 核销成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.VenueReservation'
+                msg:
+                  type: string
+              type: object
+      summary: 根据核销码核销(公开)
       tags:
       - CampingReservation
   /camping/site/createSite:
@@ -7735,6 +7768,34 @@ paths:
       summary: 更新参数
       tags:
       - SysParams
+  /sysParams/validateRedeemCode:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 核销密码
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/system.ValidateRedeemCodeReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'valid: true/false'
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: object
+                msg:
+                  type: string
+              type: object
+      summary: 校验核销密码(公开)
+      tags:
+      - SysParams
   /sysVersion/deleteSysVersion:
     delete:
       consumes:
@@ -8388,6 +8449,52 @@ paths:
       summary: 景区列表
       tags:
       - 小程序-景点
+  /ticket/order/getOrderByCodePublic:
+    get:
+      parameters:
+      - description: 订单号
+        in: query
+        name: code
+        required: true
+        type: string
+      responses:
+        "200":
+          description: 查询成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: object
+                msg:
+                  type: string
+              type: object
+      summary: 根据订单号查询门票订单(公开)
+      tags:
+      - TicketOrder
+  /ticket/order/verifyOrderByCodePublic:
+    post:
+      parameters:
+      - description: 订单号
+        in: query
+        name: code
+        required: true
+        type: string
+      responses:
+        "200":
+          description: 核销成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: object
+                msg:
+                  type: string
+              type: object
+      summary: 根据订单号核销门票订单(公开)
+      tags:
+      - TicketOrder
   /user/SetSelfInfo:
     put:
       consumes:

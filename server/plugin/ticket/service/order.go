@@ -82,6 +82,79 @@ func (s *ticketOrder) GetMaxVisitDateByOrderIDs(orderIDs []uint) (map[uint]strin
 	return m, nil
 }
 
+// GetSkuNamesByOrderIDs 批量获取订单项中的 SKU 名称（去重），返回 orderID -> []skuName
+func (s *ticketOrder) GetSkuNamesByOrderIDs(orderIDs []uint) (map[uint][]string, error) {
+	if len(orderIDs) == 0 {
+		return nil, nil
+	}
+	type row struct {
+		OrderID uint   `gorm:"column:order_id"`
+		SkuName string `gorm:"column:sku_name"`
+	}
+	var rows []row
+	if err := global.GVA_DB.Model(&model.OrderItem{}).
+		Select("order_id, sku_name").
+		Where("order_id IN ?", orderIDs).
+		Order("order_id ASC").
+		Scan(&rows).Error; err != nil {
+		return nil, err
+	}
+	m := make(map[uint][]string, len(orderIDs))
+	seen := make(map[uint]map[string]struct{}, len(orderIDs))
+	for _, r := range rows {
+		if strings.TrimSpace(r.SkuName) == "" {
+			continue
+		}
+		if _, ok := seen[r.OrderID]; !ok {
+			seen[r.OrderID] = make(map[string]struct{})
+		}
+		if _, ok := seen[r.OrderID][r.SkuName]; ok {
+			continue
+		}
+		seen[r.OrderID][r.SkuName] = struct{}{}
+		m[r.OrderID] = append(m[r.OrderID], r.SkuName)
+	}
+	return m, nil
+}
+
+// GetProductNamesByOrderIDs 批量获取订单对应的门票商品名称（ticket_products.name，去重），返回 orderID -> []productName
+func (s *ticketOrder) GetProductNamesByOrderIDs(orderIDs []uint) (map[uint][]string, error) {
+	if len(orderIDs) == 0 {
+		return nil, nil
+	}
+	type row struct {
+		OrderID      uint   `gorm:"column:order_id"`
+		ProductName  string `gorm:"column:product_name"`
+	}
+	var rows []row
+	// order_items.sku_id -> ticket_sku.product_id -> ticket_products.name
+	if err := global.GVA_DB.Table(model.OrderItem{}.TableName()).
+		Select("order_items.order_id, ticket_products.name as product_name").
+		Joins("LEFT JOIN ticket_sku ON ticket_sku.id = order_items.sku_id").
+		Joins("LEFT JOIN ticket_products ON ticket_products.id = ticket_sku.product_id").
+		Where("order_items.order_id IN ?", orderIDs).
+		Order("order_items.order_id ASC").
+		Scan(&rows).Error; err != nil {
+		return nil, err
+	}
+	m := make(map[uint][]string, len(orderIDs))
+	seen := make(map[uint]map[string]struct{}, len(orderIDs))
+	for _, r := range rows {
+		if strings.TrimSpace(r.ProductName) == "" {
+			continue
+		}
+		if _, ok := seen[r.OrderID]; !ok {
+			seen[r.OrderID] = make(map[string]struct{})
+		}
+		if _, ok := seen[r.OrderID][r.ProductName]; ok {
+			continue
+		}
+		seen[r.OrderID][r.ProductName] = struct{}{}
+		m[r.OrderID] = append(m[r.OrderID], r.ProductName)
+	}
+	return m, nil
+}
+
 // OrderStatusLabel 根据订单与最晚游玩日计算展示状态：待支付、待核销、已核销、已取消、已过期、已关闭
 func (s *ticketOrder) OrderStatusLabel(order *model.TicketOrder, maxVisitDate string) string {
 	switch order.Status {

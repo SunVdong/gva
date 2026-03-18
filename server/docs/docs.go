@@ -2646,9 +2646,9 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
-						"type": "string",
-						"description": "状态类型 pending_verify|completed（分别为待核销/已完成；已完成包含:1已核销/2已取消/3已过期）",
-						"name": "statusType",
+                        "type": "string",
+                        "description": "状态类型 pending_verify|completed（分别为待核销/已完成；已完成包含:1已核销/2已取消/3已过期）",
+                        "name": "statusType",
                         "in": "query"
                     }
                 ],
@@ -3363,6 +3363,46 @@ const docTemplate = `{
                                 {
                                     "type": "object",
                                     "properties": {
+                                        "msg": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/camping/reservation/verifyReservationByCodePublic": {
+            "post": {
+                "tags": [
+                    "CampingReservation"
+                ],
+                "summary": "根据核销码核销(公开)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "核销码",
+                        "name": "code",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "核销成功",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/model.VenueReservation"
+                                        },
                                         "msg": {
                                             "type": "string"
                                         }
@@ -9110,6 +9150,54 @@ const docTemplate = `{
                 }
             }
         },
+        "/sysParams/validateRedeemCode": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "SysParams"
+                ],
+                "summary": "校验核销密码(公开)",
+                "parameters": [
+                    {
+                        "description": "核销密码",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/system.ValidateRedeemCodeReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "valid: true/false",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "msg": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/sysVersion/deleteSysVersion": {
             "delete": {
                 "security": [
@@ -10213,6 +10301,86 @@ const docTemplate = `{
                                     "properties": {
                                         "data": {
                                             "$ref": "#/definitions/response.PageResult"
+                                        },
+                                        "msg": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/ticket/order/getOrderByCodePublic": {
+            "get": {
+                "tags": [
+                    "TicketOrder"
+                ],
+                "summary": "根据订单号查询门票订单(公开)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "订单号",
+                        "name": "code",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "查询成功",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "msg": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/ticket/order/verifyOrderByCodePublic": {
+            "post": {
+                "tags": [
+                    "TicketOrder"
+                ],
+                "summary": "根据订单号核销门票订单(公开)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "订单号",
+                        "name": "code",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "核销成功",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
                                         },
                                         "msg": {
                                             "type": "string"
@@ -12191,6 +12359,9 @@ const docTemplate = `{
                 },
                 "venueId": {
                     "type": "integer"
+                },
+                "verifiedAt": {
+                    "type": "string"
                 },
                 "verifyCode": {
                     "type": "string"
@@ -14307,6 +14478,18 @@ const docTemplate = `{
             "properties": {
                 "config": {
                     "$ref": "#/definitions/config.Server"
+                }
+            }
+        },
+        "system.ValidateRedeemCodeReq": {
+            "type": "object",
+            "required": [
+                "code"
+            ],
+            "properties": {
+                "code": {
+                    "description": "核销密码（与参数 redeem_code 一致即可）",
+                    "type": "string"
                 }
             }
         }

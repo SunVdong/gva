@@ -1,6 +1,8 @@
 package mini
 
 import (
+	"strings"
+
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/ticket/model/request"
 	"github.com/gin-gonic/gin"
@@ -80,9 +82,13 @@ func (a *miniOrderApi) MyList(c *gin.Context) {
 		orderIDs = append(orderIDs, o.ID)
 	}
 	maxVisitMap, _ := svcOrder.GetMaxVisitDateByOrderIDs(orderIDs)
+	skuNamesMap, _ := svcOrder.GetSkuNamesByOrderIDs(orderIDs)
+	productNamesMap, _ := svcOrder.GetProductNamesByOrderIDs(orderIDs)
 	items := make([]gin.H, 0, len(list))
 	for _, o := range list {
 		maxVisit := maxVisitMap[o.ID]
+		skuNames := skuNamesMap[o.ID]
+		productNames := productNamesMap[o.ID]
 		items = append(items, gin.H{
 			"id":          o.ID,
 			"orderNo":     o.OrderNo,
@@ -96,6 +102,10 @@ func (a *miniOrderApi) MyList(c *gin.Context) {
 			"verifiedAt":  o.VerifiedAt,
 			"createdAt":   o.CreatedAt,
 			"statusLabel": svcOrder.OrderStatusLabel(&o, maxVisit),
+			"skuNames":    skuNames,
+			"skuNameText": strings.Join(skuNames, "、"),
+			"productNames":    productNames,
+			"productNameText": strings.Join(productNames, "、"),
 		})
 	}
 	response.OkWithDetailed(response.PageResult{
