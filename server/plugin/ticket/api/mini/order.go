@@ -1,10 +1,13 @@
 package mini
 
 import (
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/ticket/model/request"
+	"github.com/flipped-aurora/gin-vue-admin/server/service/system"
 	"github.com/gin-gonic/gin"
 )
 
@@ -146,6 +149,38 @@ func (a *miniOrderApi) Detail(c *gin.Context) {
 		return
 	}
 	data := gin.H{"order": order, "items": items}
+
+	// 是否可退款 & 最晚退款时间（精确到小时）
+	// 规则：读取系统参数 refund_limit_hours，例如 24 表示距离“门票开始时间”不足 24 小时不允许退款
+	canRefund := false
+	var lastRefundAt interface{} = nil
+	limitHours := 0
+	if v, err := new(system.SysParamsService).GetSysParam("refund_limit_hours"); err == nil {
+		limitHours, _ = strconv.Atoi(strings.TrimSpace(v.Value))
+	}
+	if limitHours > 0 && len(items) > 0 {
+		// “门票开始时间”取该订单最早游玩日当天 00:00（本地时区）
+		minVisit := items[0].VisitDate
+		for i := 1; i < len(items); i++ {
+			if items[i].VisitDate.Before(minVisit) {
+				minVisit = items[i].VisitDate
+			}
+		}
+		startAt := time.Date(minVisit.Year(), minVisit.Month(), minVisit.Day(), 0, 0, 0, 0, time.Local)
+		last := startAt.Add(-time.Duration(limitHours) * time.Hour).Truncate(time.Hour)
+		lastRefundAt = last.Format("2006-01-02 15:00")
+
+		// 仅待核销且未核销的订单允许退款窗口判断（已核销/已取消/已过期/已关闭/待支付均不可退）
+		if order.Status == 1 && order.VerifiedAt == nil {
+			now := time.Now()
+			if now.Before(last) || now.Equal(last) {
+				canRefund = true
+			}
+		}
+	}
+	data["canRefund"] = canRefund
+	data["lastRefundAt"] = lastRefundAt
+
 	// 已核销时附带评价信息（有则返回，无则 null）
 	if order.Status == 2 && order.VerifiedAt != nil {
 		review, _ := svcOrderReview.GetByOrderID(order.ID)
