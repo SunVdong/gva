@@ -40,7 +40,7 @@
         <el-button type="primary" icon="Plus" @click="openBatchSet">批量设置库存</el-button>
       </div>
       <el-table :data="calendarList" border size="small">
-        <el-table-column label="游玩日期" width="120">
+        <el-table-column label="游玩日期" width="240">
           <template #default="{ row }">
             {{ formatDate(row.visitDate) }}
           </template>
@@ -148,8 +148,10 @@ function productName(productId) {
 
 function formatDate(d) {
   if (!d) return ''
-  const s = typeof d === 'string' ? d : (d.year && d.month ? `${d.year}-${String(d.month).padStart(2, '0')}-${String(d.day || d.date || 1).padStart(2, '0')}` : '')
-  if (s) return s
+  const s = typeof d === 'string'
+    ? d
+    : (d.year && d.month ? `${d.year}-${String(d.month).padStart(2, '0')}-${String(d.day || d.date || 1).padStart(2, '0')}` : '')
+  if (s) return s.slice(0, 10)
   if (d instanceof Date) return d.toISOString().slice(0, 10)
   return String(d).slice(0, 10)
 }

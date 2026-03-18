@@ -120,27 +120,22 @@
                 <el-input v-model="row.name" placeholder="如成人票" size="small" />
               </template>
             </el-table-column>
-            <el-table-column label="销售价" width="118">
+            <el-table-column label="销售价" width="150">
               <template #default="{ row }">
                 <el-input-number v-model="row.price" :min="0" :precision="2" size="small" style="width:100%" />
               </template>
             </el-table-column>
-            <el-table-column label="市场价" width="118">
+            <el-table-column label="市场价" width="150">
               <template #default="{ row }">
                 <el-input-number v-model="row.marketPrice" :min="0" :precision="2" size="small" style="width:100%" />
               </template>
             </el-table-column>
-            <el-table-column label="库存" width="118">
-              <template #default="{ row }">
-                <el-input-number v-model="row.stock" :min="0" size="small" style="width:100%" />
-              </template>
-            </el-table-column>
-            <el-table-column label="限购" width="96">
+            <el-table-column label="每单限购" width="100">
               <template #default="{ row }">
                 <el-input-number v-model="row.limitBuy" :min="0" size="small" style="width:100%" />
               </template>
             </el-table-column>
-            <el-table-column label="状态" width="96">
+            <el-table-column label="状态" width="100">
               <template #default="{ row }">
                 <el-select v-model="row.status" size="small" style="width:100%">
                   <el-option label="启用" :value="1" />
@@ -361,7 +356,6 @@ function addSkuRow() {
     name: '',
     price: 0,
     marketPrice: undefined,
-    stock: 0,
     limitBuy: 0,
     status: 1
   })
@@ -436,7 +430,6 @@ const saveSkuAndRule = async () => {
       name: s.name,
       price: Number(s.price),
       marketPrice: s.marketPrice != null ? Number(s.marketPrice) : null,
-      stock: Number(s.stock) || 0,
       limitBuy: Number(s.limitBuy) || 0,
       status: s.status ?? 1
     }
