@@ -42,10 +42,25 @@ func (a *ticketOrderApi) Find(c *gin.Context) {
 		response.FailWithMessage("查询失败", c)
 		return
 	}
-	response.OkWithData(gin.H{
+	data := gin.H{
 		"order": order,
 		"items": items,
-	}, c)
+	}
+	// 已核销时附带评价信息（有则返回，无则 null）
+	if order.Status == 2 && order.VerifiedAt != nil {
+		review, _ := serviceOrderReview.GetByOrderID(order.ID)
+		if review.ID != 0 {
+			data["review"] = gin.H{
+				"id":        review.ID,
+				"rating":    review.Rating,
+				"content":   review.Content,
+				"createdAt": review.CreatedAt,
+			}
+		} else {
+			data["review"] = nil
+		}
+	}
+	response.OkWithData(data, c)
 }
 
 // GetOrderByCodePublic 公开：根据订单号(code)查询门票订单及订单项（用于 H5 扫码核销）

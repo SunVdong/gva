@@ -15,6 +15,7 @@ var (
 	serviceCalendar      = service.Service.Calendar
 	serviceUser          = service.Service.User
 	serviceOrder         = service.Service.Order
+	serviceOrderReview   = service.Service.OrderReview
 )
 
 type api struct {

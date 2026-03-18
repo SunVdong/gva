@@ -104,6 +104,7 @@
           <el-descriptions-item label="支付时间">{{ detail.order.payTime ? formatDate(detail.order.payTime) : '-' }}</el-descriptions-item>
           <el-descriptions-item label="创建时间">{{ detail.order.CreatedAt ? formatDate(detail.order.CreatedAt) : '-' }}</el-descriptions-item>
         </el-descriptions>
+
         <div class="text-sm font-medium mt-4">订单明细</div>
         <el-table :data="detail.items" border size="small">
           <el-table-column label="门票名称" prop="skuName" min-width="120" />
@@ -118,6 +119,15 @@
             <template #default="{ row }">{{ row.visitDate ? formatVisitDate(row.visitDate) : '-' }}</template>
           </el-table-column>
         </el-table>
+
+        <div v-if="detail.order.status === 2" class="mt-4">
+          <div class="text-sm font-medium mb-2">评价信息</div>
+          <el-descriptions :column="1" border>
+            <el-descriptions-item label="评分">{{ detail.review?.rating ?? '-' }}</el-descriptions-item>
+            <el-descriptions-item label="内容">{{ detail.review?.content || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="评价时间">{{ detail.review?.createdAt ? formatDate(detail.review.createdAt) : '-' }}</el-descriptions-item>
+          </el-descriptions>
+        </div>
       </div>
     </el-drawer>
   </div>
@@ -135,7 +145,7 @@ const pageSize = ref(10)
 const tableData = ref([])
 const searchInfo = ref({})
 const detailVisible = ref(false)
-const detail = ref({ order: null, items: [] })
+const detail = ref({ order: null, items: [], review: null })
 
 function formatDate(d) {
   if (!d) return ''
@@ -171,7 +181,7 @@ const handleSizeChange = (val) => { pageSize.value = val; getTableData() }
 const showDetail = async (row) => {
   const res = await findOrder({ id: row.ID })
   if (res.code === 0 && res.data) {
-    detail.value = { order: res.data.order, items: res.data.items || [] }
+    detail.value = { order: res.data.order, items: res.data.items || [], review: res.data.review || null }
     detailVisible.value = true
   }
 }
