@@ -28,6 +28,8 @@
       <el-table :data="tableData" row-key="ID">
         <el-table-column align="left" label="ID" prop="ID" width="80" />
         <el-table-column align="left" label="订单号" prop="orderNo" min-width="160" show-overflow-tooltip />
+        <el-table-column align="left" label="联系人" prop="bookerName" width="110" show-overflow-tooltip />
+        <el-table-column align="left" label="联系电话" prop="bookerPhone" width="130" show-overflow-tooltip />
         <el-table-column align="left" label="用户ID" prop="userId" width="90" />
         <el-table-column align="left" label="订单金额" width="100">
           <template #default="{ row }">
@@ -86,6 +88,8 @@
         <el-descriptions :column="1" border>
           <el-descriptions-item label="订单号">{{ detail.order.orderNo }}</el-descriptions-item>
           <el-descriptions-item label="用户ID">{{ detail.order.userId }}</el-descriptions-item>
+          <el-descriptions-item label="联系人">{{ detail.order.bookerName || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="联系电话">{{ detail.order.bookerPhone || '-' }}</el-descriptions-item>
           <el-descriptions-item label="订单金额">¥{{ (detail.order.totalAmount ?? 0).toFixed(2) }}</el-descriptions-item>
           <el-descriptions-item label="支付金额">¥{{ (detail.order.payAmount ?? 0).toFixed(2) }}</el-descriptions-item>
           <el-descriptions-item label="状态">
