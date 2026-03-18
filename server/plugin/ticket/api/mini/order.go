@@ -137,7 +137,7 @@ func (a *miniOrderApi) Detail(c *gin.Context) {
 	}
 	data := gin.H{"order": order, "items": items}
 	// 已核销时附带评价信息（有则返回，无则 null）
-	if order.Status == 1 && order.VerifiedAt != nil {
+	if order.Status == 2 && order.VerifiedAt != nil {
 		review, _ := svcOrderReview.GetByOrderID(order.ID)
 		if review.ID != 0 {
 			data["review"] = gin.H{

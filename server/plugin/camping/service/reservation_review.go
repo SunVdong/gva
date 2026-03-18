@@ -23,6 +23,9 @@ func (s *reservationReview) CreateReview(req campingRequest.CreateReservationRev
 	if res.Status != 1 {
 		return model.VenueReservationReview{}, fmt.Errorf("仅核销后的预约可评价")
 	}
+	if res.VerifiedAt == nil {
+		return model.VenueReservationReview{}, fmt.Errorf("仅核销后的预约可评价")
+	}
 	var exist model.VenueReservationReview
 	if err := global.GVA_DB.Where("reservation_id = ?", req.ReservationID).First(&exist).Error; err == nil && exist.ID != 0 {
 		return model.VenueReservationReview{}, fmt.Errorf("该预约已评价过，可先删除再重新评价")
