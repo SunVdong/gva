@@ -1,57 +1,18 @@
 <template>
   <div
-    class="h-full gva-container2 overflow-auto bg-white text-black dark:bg-slate-800 dark:text-white"
+    class="h-[calc(100vh-4rem)] w-full overflow-hidden bg-white text-black dark:bg-slate-800 dark:text-white flex items-center justify-center"
   >
-    <div class="p-4 lg:p-6">
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <gva-card>
-          <gva-chart :type="1" title="访问人数" />
-        </gva-card>
-        <gva-card>
-          <gva-chart :type="2" title="新增客户" />
-        </gva-card>
-        <gva-card>
-          <gva-chart :type="3" title="解决数量" />
-        </gva-card>
-      </div>
-
-      <div class="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-12 items-start">
-        <div class="grid grid-cols-1 gap-4 xl:col-span-8 self-start content-start">
-          <gva-card title="内容数据">
-            <gva-chart :type="4" />
-          </gva-card>
-        </div>
-
-        <div class="grid grid-cols-1 gap-4 xl:col-span-4 self-start content-start">
-          <gva-card title="快捷功能">
-            <gva-quick-link />
-          </gva-card>
-        </div>
-      </div>
+    <div
+      class="px-6 py-4 -translate-y-4 whitespace-nowrap text-center text-xl sm:text-2xl font-semibold tracking-widest rounded-2xl
+      bg-slate-100/70 text-slate-900 shadow-sm ring-1 ring-slate-200/70
+      dark:bg-slate-900/40 dark:text-white dark:ring-slate-700/50 dark:shadow-none"
+    >
+      欢迎光临乐享悦岛管理后台
     </div>
   </div>
 </template>
 
 <script setup>
-  import { computed } from 'vue'
-  import {
-    GvaChart,
-    GvaQuickLink,
-    GvaCard
-  } from './components'
-
-  const today = computed(() => {
-    try {
-      const d = new Date()
-      return d.toLocaleDateString('zh-CN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-      })
-    } catch (e) {
-      return new Date().toISOString().slice(0, 10)
-    }
-  })
   defineOptions({
     name: 'Dashboard'
   })
