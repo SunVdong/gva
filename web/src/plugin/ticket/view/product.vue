@@ -474,3 +474,13 @@ onMounted(() => {
   getTableData()
 })
 </script>
+
+<style scoped lang="scss">
+  /* 隐藏 el-drawer 默认右上角关闭按钮，避免与自定义“关闭”按钮重叠显示 */
+  :deep(.el-drawer__header .el-drawer__close-btn),
+  :deep(.el-drawer__close-btn),
+  :deep(.el-drawer__header .el-drawer__close),
+  :deep(.el-drawer__close) {
+    display: none !important;
+  }
+</style>
