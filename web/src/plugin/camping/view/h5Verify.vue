@@ -170,7 +170,12 @@ async function doAuth() {
     if (res.code === 0 && res.data && res.data.valid) {
       localStorage.setItem(STORAGE_KEY, String(Date.now() + ONE_MONTH_MS))
       passedAuth.value = true
-      await loadReservation()
+      // 校验成功后，根据 type 自动加载对应内容
+      if (typeFromUrl.value === 'ticket') {
+        await loadTicketOrder()
+      } else {
+        await loadReservation()
+      }
     } else {
       authError.value = '密码错误，请重试'
     }
