@@ -22,7 +22,7 @@
         <el-table-column align="left" label="ID" prop="ID" width="80" />
         <el-table-column align="left" label="头像" width="70">
           <template #default="{ row }">
-            <el-avatar v-if="row.avatar" :src="row.avatar" :size="40" />
+            <el-avatar v-if="row.avatarUrl" :src="row.avatarUrl" :size="40" />
             <span v-else class="text-gray-400">-</span>
           </template>
         </el-table-column>
@@ -94,7 +94,7 @@ const tableData = ref([])
 const searchInfo = ref({})
 
 const formData = ref({
-  ID: 0,
+  id: 0,
   nickname: '',
   avatar: '',
   phone: ''
@@ -130,9 +130,9 @@ const updateFunc = async (row) => {
   if (res.code === 0) {
     const d = res.data
     formData.value = {
-      ID: d.ID,
+      id: d.ID,
       nickname: d.nickname || '',
-      avatar: d.avatar || '',
+      avatar: d.avatarUrl || '',
       phone: d.phone || ''
     }
     dialogVisible.value = true
