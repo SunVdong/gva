@@ -4217,34 +4217,6 @@ paths:
       summary: 取消预约
       tags:
       - CampingReservation
-  /camping/reservation/createReservation:
-    post:
-      parameters:
-      - description: 可选，小程序登录后返回的 token，携带时预约关联当前用户
-        in: header
-        name: x-token
-        type: string
-      - description: 预约信息
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.CreateVenueReservationRequest'
-      responses:
-        "200":
-          description: 预约成功
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/model.VenueReservation'
-                msg:
-                  type: string
-              type: object
-      summary: 提交预约(公开)
-      tags:
-      - CampingReservation
   /camping/reservation/getReservation:
     get:
       parameters:

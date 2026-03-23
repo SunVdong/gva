@@ -50,7 +50,6 @@ func (r *timeSlotRouter) Init(public, private *gin.RouterGroup) {
 // InitReservation 预约路由
 func (r *reservationRouter) Init(public, private *gin.RouterGroup) {
 	resv := private.Group("camping").Group("reservation")
-	public.Group("camping").Group("reservation").POST("createReservation", apiResv.CreateReservation)
 	public.Group("camping").Group("reservation").GET("getReservationByVerifyCodePublic", apiResv.GetReservationByVerifyCodePublic)
 	public.Group("camping").Group("reservation").POST("verifyReservationByCodePublic", apiResv.VerifyReservationByCodePublic)
 	public.Group("camping").Group("reservation").GET("getReservedSlotIdsPublic", apiResv.GetReservedSlotIdsPublic)

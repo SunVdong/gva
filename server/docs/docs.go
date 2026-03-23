@@ -12,8 +12,8 @@ const docTemplate = `{
         "contact": {},
         "version": "{{.Version}}"
     },
-    "host": "ac.whaoot.com",
-    "basePath": "/api",
+    "host": "{{.Host}}",
+    "basePath": "{{.BasePath}}",
     "paths": {
         "/activityGuide/mini/guide/detail": {
             "get": {
@@ -3013,54 +3013,6 @@ const docTemplate = `{
                                 {
                                     "type": "object",
                                     "properties": {
-                                        "msg": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/camping/reservation/createReservation": {
-            "post": {
-                "tags": [
-                    "CampingReservation"
-                ],
-                "summary": "提交预约(公开)",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "可选，小程序登录后返回的 token，携带时预约关联当前用户",
-                        "name": "x-token",
-                        "in": "header"
-                    },
-                    {
-                        "description": "预约信息",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.CreateVenueReservationRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "预约成功",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/response.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/model.VenueReservation"
-                                        },
                                         "msg": {
                                             "type": "string"
                                         }

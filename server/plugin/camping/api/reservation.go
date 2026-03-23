@@ -13,33 +13,6 @@ var Reservation = new(reservationApi)
 
 type reservationApi struct{}
 
-// CreateReservation 创建预约（公开接口，前台提交预约；可选带 x-token 关联当前用户）
-// @Tags CampingReservation
-// @Summary 提交预约(公开)
-// @Param x-token header string false "可选，小程序登录后返回的 token，携带时预约关联当前用户"
-// @Param data body request.CreateVenueReservationRequest true "预约信息"
-// @Success 200 {object} response.Response{data=model.VenueReservation,msg=string} "预约成功"
-// @Router /camping/reservation/createReservation [post]
-func (a *reservationApi) CreateReservation(c *gin.Context) {
-	var req campingRequest.CreateVenueReservationRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.FailWithMessage(err.Error(), c)
-		return
-	}
-	userID := uint(0)
-	if uid, exists := c.Get("x-user-id"); exists {
-		if u, ok := uid.(uint); ok {
-			userID = u
-		}
-	}
-	res, err := serviceResv.CreateReservation(req, userID)
-	if err != nil {
-		response.FailWithMessage(err.Error(), c)
-		return
-	}
-	response.OkWithData(res, c)
-}
-
 // GetReservation 根据ID查询预约
 // @Tags CampingReservation
 // @Summary 根据ID查询预约

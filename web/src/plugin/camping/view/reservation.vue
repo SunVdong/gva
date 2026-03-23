@@ -28,9 +28,6 @@
       </el-form>
     </div>
     <div class="gva-table-box">
-      <div class="gva-btn-list">
-        <el-button type="primary" icon="Plus" @click="openReserveDialog">新增预约</el-button>
-      </div>
       <el-table style="width: 100%" :data="tableData" row-key="ID">
         <el-table-column align="left" label="ID" prop="ID" width="70" />
         <el-table-column align="left" label="预约单号" prop="reservationNo" width="140" />
@@ -84,45 +81,6 @@
         />
       </div>
     </div>
-    <!-- 新增预约 -->
-    <el-drawer v-model="reserveDialogVisible" title="新增预约" size="500" destroy-on-close>
-      <el-form ref="reserveFormRef" :model="reserveForm" label-position="top" :rules="reserveRules">
-        <el-form-item label="场地" prop="venueId">
-          <el-select v-model="reserveForm.venueId" placeholder="请选择场地" style="width: 100%" filterable @change="onVenueChange">
-            <el-option v-for="s in siteOptions" :key="s.ID" :label="s.name" :value="s.ID" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="预约日期" prop="reserveDate">
-          <el-date-picker v-model="reserveForm.reserveDate" type="date" value-format="YYYY-MM-DD" placeholder="选择日期" style="width: 100%" @change="onDateChange" />
-        </el-form-item>
-        <el-form-item label="时段" prop="timeslotId">
-          <el-select v-model="reserveForm.timeslotId" placeholder="请先选择场地" style="width: 100%">
-            <el-option
-              v-for="s in slotOptions"
-              :key="s.ID"
-              :label="`${s.startTime?.slice(0,5) || s.startTime}-${s.endTime?.slice(0,5) || s.endTime}（可约${s.capacity}）`"
-              :value="s.ID"
-              :disabled="reservedSlotIds.includes(s.ID)"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="联系人" prop="contactName">
-          <el-input v-model="reserveForm.contactName" placeholder="联系人姓名" />
-        </el-form-item>
-        <el-form-item label="联系电话" prop="contactPhone">
-          <el-input v-model="reserveForm.contactPhone" placeholder="手机号" />
-        </el-form-item>
-        <el-form-item label="预约人数" prop="contactCount">
-          <el-input-number v-model="reserveForm.contactCount" :min="1" style="width: 100%" />
-        </el-form-item>
-        <el-form-item label="备注" prop="remark">
-          <el-input v-model="reserveForm.remark" type="textarea" :rows="2" placeholder="选填" />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="submitReserve">提交预约</el-button>
-        </el-form-item>
-      </el-form>
-    </el-drawer>
     <!-- 二维码弹窗 -->
     <el-dialog v-model="qrDialogVisible" title="预约成功 - 核销二维码" width="400px" align-center>
       <div class="text-center">
@@ -137,10 +95,10 @@
 <script setup>
 import { getSiteList } from '@/plugin/camping/api/site'
 import { getTimeSlotsByVenuePublic } from '@/plugin/camping/api/timeSlot'
-import { createReservation, getReservationList, cancelReservation, getReservedSlotIdsPublic } from '@/plugin/camping/api/reservation'
+import { getReservationList, cancelReservation } from '@/plugin/camping/api/reservation'
 import vueQr from 'vue-qr/src/packages/vue-qr.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ref, reactive, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 
 defineOptions({ name: 'CampingReservation' })
 
@@ -150,28 +108,7 @@ const pageSize = ref(10)
 const tableData = ref([])
 const searchInfo = ref({})
 const siteOptions = ref([])
-const slotOptions = ref([])
 const allSlotsForList = ref([])
-const reservedSlotIds = ref([])
-const reserveDialogVisible = ref(false)
-const reserveFormRef = ref()
-const reserveForm = reactive({
-  venueId: null,
-  reserveDate: '',
-  timeslotId: null,
-  contactName: '',
-  contactPhone: '',
-  contactCount: 1,
-  remark: ''
-})
-const reserveRules = {
-  venueId: [{ required: true, message: '请选择场地', trigger: 'change' }],
-  reserveDate: [{ required: true, message: '请选择日期', trigger: 'change' }],
-  timeslotId: [{ required: true, message: '请选择时段', trigger: 'change' }],
-  contactName: [{ required: true, message: '请输入联系人', trigger: 'blur' }],
-  contactPhone: [{ required: true, message: '请输入联系电话', trigger: 'blur' }],
-  contactCount: [{ required: true, message: '请输入人数', trigger: 'blur' }]
-}
 const qrDialogVisible = ref(false)
 const currentReservation = ref(null)
 const qrCodeText = ref('')
@@ -217,62 +154,6 @@ const onSubmit = () => { page.value = 1; getTableData() }
 const onReset = () => { searchInfo.value = {}; getTableData() }
 const handleCurrentChange = (val) => { page.value = val; getTableData() }
 const handleSizeChange = (val) => { pageSize.value = val; getTableData() }
-
-const onVenueChange = async () => {
-  reserveForm.timeslotId = null
-  slotOptions.value = []
-  reservedSlotIds.value = []
-  if (reserveForm.venueId) {
-    const res = await getTimeSlotsByVenuePublic({ venueId: reserveForm.venueId })
-    if (res.code === 0) slotOptions.value = res.data || []
-  }
-}
-
-const onDateChange = async () => {
-  reservedSlotIds.value = []
-  if (reserveForm.venueId && reserveForm.reserveDate) {
-    const res = await getReservedSlotIdsPublic({ venueId: reserveForm.venueId, reserveDate: reserveForm.reserveDate })
-    if (res.code === 0) reservedSlotIds.value = res.data || []
-  }
-}
-
-const openReserveDialog = () => {
-  reserveForm.venueId = null
-  reserveForm.reserveDate = ''
-  reserveForm.timeslotId = null
-  reserveForm.contactName = ''
-  reserveForm.contactPhone = ''
-  reserveForm.contactCount = 1
-  reserveForm.remark = ''
-  slotOptions.value = []
-  reservedSlotIds.value = []
-  reserveDialogVisible.value = true
-}
-
-const submitReserve = async () => {
-  await reserveFormRef.value?.validate(async (valid) => {
-    if (!valid) return
-    const res = await createReservation({
-      venueId: reserveForm.venueId,
-      reserveDate: reserveForm.reserveDate,
-      timeslotId: reserveForm.timeslotId,
-      contactName: reserveForm.contactName,
-      contactPhone: reserveForm.contactPhone,
-      contactCount: reserveForm.contactCount,
-      remark: reserveForm.remark
-    })
-    if (res.code === 0) {
-      ElMessage.success('预约成功')
-      reserveDialogVisible.value = false
-      currentReservation.value = res.data
-      qrCodeText.value = getVerifyPageUrl(res.data.verifyCode || '')
-      qrDialogVisible.value = true
-      getTableData()
-    } else {
-      ElMessage.warning(res.msg || '预约失败')
-    }
-  })
-}
 
 /** 生成核销页链接：{域名}{path}#/h5/verify?type=reservation&code=核销码 */
 function getVerifyPageUrl(code) {
