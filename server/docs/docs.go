@@ -12,8 +12,8 @@ const docTemplate = `{
         "contact": {},
         "version": "{{.Version}}"
     },
-    "host": "{{.Host}}",
-    "basePath": "{{.BasePath}}",
+    "host": "ac.whaoot.com",
+    "basePath": "/api",
     "paths": {
         "/activityGuide/mini/guide/detail": {
             "get": {
@@ -6254,7 +6254,7 @@ const docTemplate = `{
         },
         "/mini/login": {
             "post": {
-                "description": "前端先 wx.login 获取 login_code，再在按钮回调中通过 wx.getPhoneNumber 获取 phone_code，后端同时使用两个 code 换取 openid 和手机号，在 users 表中绑定 openid + phone 并签发本系统 JWT，请求头带 x-token 后可选注入 x-user-id",
+                "description": "前端 getPhoneNumber 拿到 encryptedData/iv 后立即调用 wx.login 获取 code，三者一起发给后端；后端用 code 换 session_key，再用 session_key 解密手机号，完成注册/登录并签发 JWT",
                 "consumes": [
                     "application/json"
                 ],
@@ -6264,7 +6264,7 @@ const docTemplate = `{
                 "tags": [
                     "小程序"
                 ],
-                "summary": "小程序组合登录",
+                "summary": "小程序一键登录",
                 "parameters": [
                     {
                         "description": "请求体",
@@ -6278,7 +6278,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "data 含 token、user(id,openid,nickname,avatarUrl)",
+                        "description": "data 含 token、user(id,openid,nickname,avatarUrl,phone)",
                         "schema": {
                             "allOf": [
                                 {

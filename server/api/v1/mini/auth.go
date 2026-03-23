@@ -9,25 +9,26 @@ import (
 
 type AuthApi struct{}
 
-// Login 小程序登录（组合登录：wx.login code + getPhoneNumber code）
+// Login 小程序登录（code + encryptedData + iv）
 // @Tags        小程序
-// @Summary     小程序组合登录
-// @Description 前端先 wx.login 获取 login_code，再在按钮回调中通过 wx.getPhoneNumber 获取 phone_code，后端同时使用两个 code 换取 openid 和手机号，在 users 表中绑定 openid + phone 并签发本系统 JWT，请求头带 x-token 后可选注入 x-user-id
+// @Summary     小程序一键登录
+// @Description 前端 getPhoneNumber 拿到 encryptedData/iv 后立即调用 wx.login 获取 code，三者一起发给后端；后端用 code 换 session_key，再用 session_key 解密手机号，完成注册/登录并签发 JWT
 // @Accept      json
 // @Produce     json
-// @Param       data body object true "请求体" example({"login_code":"wx.login 返回的 code","phone_code":"getPhoneNumber 返回的 code"})
-// @Success     200 {object} response.Response{data=object,msg=string} "data 含 token、user(id,openid,nickname,avatarUrl)"
+// @Param       data body object true "请求体" example({"code":"wx.login 返回的 code","encryptedData":"加密数据","iv":"初始化向量"})
+// @Success     200 {object} response.Response{data=object,msg=string} "data 含 token、user(id,openid,nickname,avatarUrl,phone)"
 // @Router      /mini/login [post]
 func (a *AuthApi) Login(c *gin.Context) {
 	var req struct {
-		LoginCode string `json:"login_code" binding:"required"`
-		PhoneCode string `json:"phone_code" binding:"required"`
+		Code          string `json:"code" binding:"required"`
+		EncryptedData string `json:"encryptedData" binding:"required"`
+		IV            string `json:"iv" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.FailWithMessage("请传入 login_code 和 phone_code", c)
+		response.FailWithMessage("请传入 code、encryptedData 和 iv", c)
 		return
 	}
-	token, user, err := mini.MiniLoginWithPhone(req.LoginCode, req.PhoneCode)
+	token, user, err := mini.MiniLoginDecrypt(req.Code, req.EncryptedData, req.IV)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
