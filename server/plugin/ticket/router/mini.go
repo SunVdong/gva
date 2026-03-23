@@ -20,11 +20,14 @@ func (r *miniRouter) Init(public, private *gin.RouterGroup) {
 	g.GET("product/detail", mini.Product.Detail)
 	// 日历可售
 	g.GET("calendar/sku", mini.Calendar.GetBySku)
+
+	// 需登录接口：强制 JWT 鉴权，未登录/过期统一返回 401
+	auth := g.Group("").Use(middleware.JWTAuth())
 	// 订单
-	g.POST("order/create", mini.Order.Create)
-	g.GET("order/myList", mini.Order.MyList)
-	g.GET("order/detail", mini.Order.Detail)
+	auth.POST("order/create", mini.Order.Create)
+	auth.GET("order/myList", mini.Order.MyList)
+	auth.GET("order/detail", mini.Order.Detail)
 	// 订单评价（仅核销后可评价、可删除）
-	g.POST("order/review/create", mini.Order.CreateReview)
-	g.POST("order/review/delete", mini.Order.DeleteReview)
+	auth.POST("order/review/create", mini.Order.CreateReview)
+	auth.POST("order/review/delete", mini.Order.DeleteReview)
 }

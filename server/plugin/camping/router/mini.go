@@ -20,14 +20,18 @@ func (r *miniRouter) Init(public, private *gin.RouterGroup) {
 	g.GET("site/detail", mini.Site.Detail)
 	// 时段
 	g.GET("slot/availableSlots", mini.Slot.AvailableSlots)
-	// 预约
-	g.POST("reservation/create", mini.Reservation.Create)
-	g.POST("reservation/update", mini.Reservation.Update)
-	g.GET("reservation/myList", mini.Reservation.MyList)
-	g.GET("reservation/myDetail", mini.Reservation.MyDetail)
-	g.POST("reservation/cancel", mini.Reservation.Cancel)
+	// 公开接口
 	g.GET("reservation/cancelRule", mini.Reservation.CancelRule)
+
+	// 需登录接口：强制 JWT 鉴权，未登录/过期统一返回 401
+	auth := g.Group("").Use(middleware.JWTAuth())
+	// 预约
+	auth.POST("reservation/create", mini.Reservation.Create)
+	auth.POST("reservation/update", mini.Reservation.Update)
+	auth.GET("reservation/myList", mini.Reservation.MyList)
+	auth.GET("reservation/myDetail", mini.Reservation.MyDetail)
+	auth.POST("reservation/cancel", mini.Reservation.Cancel)
 	// 预约评价（仅核销后可评价、可删除）
-	g.POST("reservation/review/create", mini.Reservation.CreateReview)
-	g.POST("reservation/review/delete", mini.Reservation.DeleteReview)
+	auth.POST("reservation/review/create", mini.Reservation.CreateReview)
+	auth.POST("reservation/review/delete", mini.Reservation.DeleteReview)
 }
