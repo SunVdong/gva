@@ -3,7 +3,6 @@ package initialize
 import (
 	"context"
 
-	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	model "github.com/flipped-aurora/gin-vue-admin/server/model/system"
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/plugin-tool/utils"
 )
@@ -64,11 +63,4 @@ func Menu(ctx context.Context) {
 		},
 	}
 	utils.RegisterMenus(entities...)
-	// 将已存在的子菜单的父级统一改为「露营预约」
-	var campingMenu model.SysBaseMenu
-	if err := global.GVA_DB.Where("name = ?", "camping").First(&campingMenu).Error; err == nil && campingMenu.ID > 0 {
-		global.GVA_DB.Model(&model.SysBaseMenu{}).
-			Where("name IN ?", []string{"campingSite", "campingTimeSlot", "campingVenueCalendar", "campingReservation", "campingVerify"}).
-			Update("parent_id", campingMenu.ID)
-	}
 }

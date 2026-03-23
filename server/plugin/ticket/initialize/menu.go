@@ -3,7 +3,6 @@ package initialize
 import (
 	"context"
 
-	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	model "github.com/flipped-aurora/gin-vue-admin/server/model/system"
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/plugin-tool/utils"
 )
@@ -61,10 +60,4 @@ func Menu(ctx context.Context) {
 		},
 	}
 	utils.RegisterMenus(entities...)
-	var ticketMenu model.SysBaseMenu
-	if err := global.GVA_DB.Where("name = ?", "ticket").First(&ticketMenu).Error; err == nil && ticketMenu.ID > 0 {
-		global.GVA_DB.Model(&model.SysBaseMenu{}).
-			Where("name IN ?", []string{"ticketScenic", "ticketProduct", "ticketCalendar", "ticketUser", "ticketOrder"}).
-			Update("parent_id", ticketMenu.ID)
-	}
 }
