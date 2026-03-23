@@ -24,7 +24,7 @@ func (r *miniRouter) Init(public, private *gin.RouterGroup) {
 	g.GET("reservation/cancelRule", mini.Reservation.CancelRule)
 
 	// 需登录接口：强制 JWT 鉴权，未登录/过期统一返回 401
-	auth := g.Group("").Use(middleware.JWTAuth())
+	auth := public.Group("camping").Group("mini").Use(middleware.JWTAuth())
 	// 预约
 	auth.POST("reservation/create", mini.Reservation.Create)
 	auth.POST("reservation/update", mini.Reservation.Update)

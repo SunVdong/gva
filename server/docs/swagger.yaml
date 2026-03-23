@@ -6108,6 +6108,66 @@ paths:
       summary: 健康检查
       tags:
       - 小程序
+  /mini/user/info:
+    get:
+      consumes:
+      - application/json
+      description: 获取当前登录用户信息（含昵称、头像），需先登录，请求头携带 x-token
+      parameters:
+      - description: 小程序登录后返回的 token
+        in: header
+        name: x-token
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: object
+                msg:
+                  type: string
+              type: object
+      summary: 获取当前用户信息
+      tags:
+      - 小程序
+  /mini/user/updateProfile:
+    post:
+      consumes:
+      - application/json
+      description: 支持同时修改昵称和头像，也支持只修改其中一个字段，需先登录，请求头携带 x-token
+      parameters:
+      - description: 小程序登录后返回的 token
+        in: header
+        name: x-token
+        type: string
+      - description: 请求体
+        in: body
+        name: data
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: object
+                msg:
+                  type: string
+              type: object
+      summary: 修改用户昵称与头像
+      tags:
+      - 小程序
   /sysDictionary/createSysDictionary:
     post:
       consumes:

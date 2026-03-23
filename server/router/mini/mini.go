@@ -18,6 +18,8 @@ func (r *MiniRouter) Init(public, private *gin.RouterGroup) {
 
 	// 微信支付
 	auth := g.Group("").Use(middleware.JWTAuth())
+	auth.GET("user/info", authApi.UserInfo) // 获取当前登录用户信息（昵称、头像等）
+	auth.POST("user/updateProfile", authApi.UpdateProfile)
 	auth.POST("pay/create", payApi.Create) // 调起支付，需登录，返回 wx.requestPayment 参数
 	g.POST("pay/notify", payApi.Notify)    // 支付结果回调，由微信服务器调用
 }

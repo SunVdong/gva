@@ -22,7 +22,7 @@ func (r *miniRouter) Init(public, private *gin.RouterGroup) {
 	g.GET("calendar/sku", mini.Calendar.GetBySku)
 
 	// 需登录接口：强制 JWT 鉴权，未登录/过期统一返回 401
-	auth := g.Group("").Use(middleware.JWTAuth())
+	auth := public.Group("ticket").Group("mini").Use(middleware.JWTAuth())
 	// 订单
 	auth.POST("order/create", mini.Order.Create)
 	auth.GET("order/myList", mini.Order.MyList)

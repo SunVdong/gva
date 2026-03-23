@@ -6339,6 +6339,107 @@
                 }
             }
         },
+        "/mini/user/info": {
+            "get": {
+                "description": "获取当前登录用户信息（含昵称、头像），需先登录，请求头携带 x-token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "小程序"
+                ],
+                "summary": "获取当前用户信息",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "小程序登录后返回的 token",
+                        "name": "x-token",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "msg": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/mini/user/updateProfile": {
+            "post": {
+                "description": "支持同时修改昵称和头像，也支持只修改其中一个字段，需先登录，请求头携带 x-token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "小程序"
+                ],
+                "summary": "修改用户昵称与头像",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "小程序登录后返回的 token",
+                        "name": "x-token",
+                        "in": "header"
+                    },
+                    {
+                        "description": "请求体",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "msg": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/sysDictionary/createSysDictionary": {
             "post": {
                 "security": [
