@@ -30,7 +30,7 @@
     <div class="gva-table-box">
       <el-table style="width: 100%" :data="tableData" row-key="ID">
         <el-table-column align="left" label="ID" prop="ID" width="70" />
-        <el-table-column align="left" label="预约单号" prop="reservationNo" width="140" />
+        <el-table-column align="left" label="预约单号" prop="reservationNo" width="200" />
         <el-table-column align="left" label="场地" min-width="100">
           <template #default="{ row }">{{ siteName(row.venueId) }}</template>
         </el-table-column>
