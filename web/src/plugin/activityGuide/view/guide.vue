@@ -148,7 +148,7 @@
           <SelectImage v-model="formData.coverImage" :multiple="false" />
         </el-form-item>
         <el-form-item label="介绍视频或图片" prop="media">
-          <SelectFile v-model="formData.media" />
+          <SelectMedia v-model="formData.media" />
           <div class="text-gray-500 text-xs mt-1">可上传多张图片或视频，用于活动介绍展示</div>
         </el-form-item>
         <el-form-item label="显示状态" prop="showStatus">
@@ -179,7 +179,7 @@ import { formatDate } from '@/utils/format'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ref, reactive } from 'vue'
 import SelectImage from '@/components/selectImage/selectImage.vue'
-import SelectFile from '@/components/selectFile/selectFile.vue'
+import SelectMedia from '@/components/selectMedia/selectMedia.vue'
 
 defineOptions({ name: 'ActivityGuide' })
 
