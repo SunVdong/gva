@@ -7,8 +7,8 @@ import (
 
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/ticket/model/request"
-	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 	"github.com/flipped-aurora/gin-vue-admin/server/service/system"
+	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -88,28 +88,30 @@ func (a *miniOrderApi) MyList(c *gin.Context) {
 	maxVisitMap, _ := svcOrder.GetMaxVisitDateByOrderIDs(orderIDs)
 	skuNamesMap, _ := svcOrder.GetSkuNamesByOrderIDs(orderIDs)
 	productNamesMap, _ := svcOrder.GetProductNamesByOrderIDs(orderIDs)
+	scenicImageMap, _ := svcOrder.GetScenicImageByOrderIDs(orderIDs)
 	items := make([]gin.H, 0, len(list))
 	for _, o := range list {
 		maxVisit := maxVisitMap[o.ID]
 		skuNames := skuNamesMap[o.ID]
 		productNames := productNamesMap[o.ID]
 		items = append(items, gin.H{
-			"id":          o.ID,
-			"orderNo":     o.OrderNo,
-			"userId":      o.UserID,
-			"bookerName":  o.BookerName,
-			"bookerPhone": o.BookerPhone,
-			"totalAmount": o.TotalAmount,
-			"payAmount":   o.PayAmount,
-			"status":      o.Status,
-			"payTime":     o.PayTime,
-			"verifiedAt":  o.VerifiedAt,
-			"createdAt":   o.CreatedAt,
-			"statusLabel": svcOrder.OrderStatusLabel(&o, maxVisit),
-			"skuNames":    skuNames,
-			"skuNameText": strings.Join(skuNames, "、"),
+			"id":              o.ID,
+			"orderNo":         o.OrderNo,
+			"userId":          o.UserID,
+			"bookerName":      o.BookerName,
+			"bookerPhone":     o.BookerPhone,
+			"totalAmount":     o.TotalAmount,
+			"payAmount":       o.PayAmount,
+			"status":          o.Status,
+			"payTime":         o.PayTime,
+			"verifiedAt":      o.VerifiedAt,
+			"createdAt":       o.CreatedAt,
+			"statusLabel":     svcOrder.OrderStatusLabel(&o, maxVisit),
+			"skuNames":        skuNames,
+			"skuNameText":     strings.Join(skuNames, "、"),
 			"productNames":    productNames,
 			"productNameText": strings.Join(productNames, "、"),
+			"productImage":    scenicImageMap[o.ID],
 		})
 	}
 	response.OkWithDetailed(response.PageResult{

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"regexp"
@@ -151,6 +152,41 @@ func (s *ticketOrder) GetProductNamesByOrderIDs(orderIDs []uint) (map[uint][]str
 		}
 		seen[r.OrderID][r.ProductName] = struct{}{}
 		m[r.OrderID] = append(m[r.OrderID], r.ProductName)
+	}
+	return m, nil
+}
+
+// GetScenicImageByOrderIDs 批量获取订单对应景区轮播图的第一张图片，返回 orderID -> imageURL
+func (s *ticketOrder) GetScenicImageByOrderIDs(orderIDs []uint) (map[uint]string, error) {
+	if len(orderIDs) == 0 {
+		return nil, nil
+	}
+	type row struct {
+		OrderID        uint   `gorm:"column:order_id"`
+		CarouselImages string `gorm:"column:carousel_images"`
+	}
+	var rows []row
+	if err := global.GVA_DB.Table(model.OrderItem{}.TableName()).
+		Select("DISTINCT order_items.order_id, scenic_spots.carousel_images").
+		Joins("LEFT JOIN ticket_sku ON ticket_sku.id = order_items.sku_id").
+		Joins("LEFT JOIN ticket_products ON ticket_products.id = ticket_sku.product_id").
+		Joins("LEFT JOIN scenic_spots ON scenic_spots.id = ticket_products.scenic_id").
+		Where("order_items.order_id IN ?", orderIDs).
+		Scan(&rows).Error; err != nil {
+		return nil, err
+	}
+	m := make(map[uint]string, len(orderIDs))
+	for _, r := range rows {
+		if _, ok := m[r.OrderID]; ok {
+			continue
+		}
+		if r.CarouselImages == "" {
+			continue
+		}
+		var imgs []string
+		if err := json.Unmarshal([]byte(r.CarouselImages), &imgs); err == nil && len(imgs) > 0 {
+			m[r.OrderID] = imgs[0]
+		}
 	}
 	return m, nil
 }
