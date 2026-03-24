@@ -6,6 +6,7 @@ import (
 
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
+	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/camping/model"
 	campingRequest "github.com/flipped-aurora/gin-vue-admin/server/plugin/camping/model/request"
 	"github.com/gin-gonic/gin"
@@ -436,12 +437,8 @@ func (a *reservationApi) DeleteReview(c *gin.Context) {
 }
 
 func getUserID(c *gin.Context) (uint, bool) {
-	uid, exists := c.Get("x-user-id")
-	if !exists {
-		return 0, false
-	}
-	u, ok := uid.(uint)
-	return u, ok
+	id := utils.GetUserID(c)
+	return id, id != 0
 }
 
 // combineDateAndTimeOnly 将日期与 TimeOnly 组合为本地时区的 time.Time

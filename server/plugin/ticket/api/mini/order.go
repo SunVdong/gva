@@ -7,6 +7,7 @@ import (
 
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/ticket/model/request"
+	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 	"github.com/flipped-aurora/gin-vue-admin/server/service/system"
 	"github.com/gin-gonic/gin"
 )
@@ -261,12 +262,7 @@ func (a *miniOrderApi) DeleteReview(c *gin.Context) {
 	response.OkWithMessage("删除成功", c)
 }
 
-// getUserID 从上下文中获取 OptionalJWTAuth 注入的用户 ID
 func getUserID(c *gin.Context) (uint, bool) {
-	uid, exists := c.Get("x-user-id")
-	if !exists || uid == nil {
-		return 0, false
-	}
-	u, ok := uid.(uint)
-	return u, ok
+	id := utils.GetUserID(c)
+	return id, id != 0
 }
