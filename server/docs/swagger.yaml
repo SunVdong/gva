@@ -6168,6 +6168,39 @@ paths:
       summary: 修改用户昵称与头像
       tags:
       - 小程序
+  /mini/user/uploadAvatar:
+    post:
+      consumes:
+      - multipart/form-data
+      description: 上传头像图片并自动更新当前用户头像，需先登录，请求头携带 x-token
+      parameters:
+      - description: 小程序登录后返回的 token
+        in: header
+        name: x-token
+        required: true
+        type: string
+      - description: 头像文件
+        in: formData
+        name: avatar
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: object
+                msg:
+                  type: string
+              type: object
+      summary: 上传用户头像
+      tags:
+      - 小程序
   /sysDictionary/createSysDictionary:
     post:
       consumes:

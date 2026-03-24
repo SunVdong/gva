@@ -8,7 +8,9 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/model/user"
 	"github.com/flipped-aurora/gin-vue-admin/server/service/mini"
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
+	"github.com/flipped-aurora/gin-vue-admin/server/utils/upload"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 type AuthApi struct{}
@@ -125,6 +127,47 @@ func (a *AuthApi) UpdateProfile(c *gin.Context) {
 		return
 	}
 	response.OkWithDetailed(miniUserResp(u), "更新成功", c)
+}
+
+// UploadAvatar 小程序-上传头像
+// @Tags        小程序
+// @Summary     上传用户头像
+// @Description 上传头像图片并自动更新当前用户头像，需先登录，请求头携带 x-token
+// @Accept      multipart/form-data
+// @Produce     json
+// @Param       x-token header string true  "小程序登录后返回的 token"
+// @Param       avatar  formData file   true  "头像文件"
+// @Success     200 {object} response.Response{data=object,msg=string}
+// @Router      /mini/user/uploadAvatar [post]
+func (a *AuthApi) UploadAvatar(c *gin.Context) {
+	userID := utils.GetUserID(c)
+	if userID == 0 {
+		response.FailWithMessage("请先登录", c)
+		return
+	}
+
+	_, header, err := c.Request.FormFile("avatar")
+	if err != nil {
+		global.GVA_LOG.Error("接收头像文件失败", zap.Error(err))
+		response.FailWithMessage("请上传头像文件", c)
+		return
+	}
+
+	oss := upload.NewOss()
+	filePath, _, uploadErr := oss.UploadFile(header)
+	if uploadErr != nil {
+		global.GVA_LOG.Error("上传头像失败", zap.Error(uploadErr))
+		response.FailWithMessage("上传头像失败", c)
+		return
+	}
+
+	if err := global.GVA_DB.Model(&user.User{}).Where("id = ?", userID).Update("avatar_url", filePath).Error; err != nil {
+		global.GVA_LOG.Error("更新头像失败", zap.Error(err))
+		response.FailWithMessage("更新头像失败", c)
+		return
+	}
+
+	response.OkWithDetailed(gin.H{"avatarUrl": filePath}, "上传成功", c)
 }
 
 func miniUserResp(user user.User) gin.H {
