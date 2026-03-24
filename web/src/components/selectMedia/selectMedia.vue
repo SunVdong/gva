@@ -5,9 +5,10 @@
       multiple
       :http-request="customUpload"
       :on-remove="handleRemove"
+      :before-upload="beforeUpload"
       list-type="picture-card"
       :limit="limit"
-      :accept="accept"
+      :accept="effectiveAccept"
       class="select-media-upload"
     >
       <el-icon><Plus /></el-icon>
@@ -68,17 +69,17 @@
 </template>
 
 <script setup>
-  import { ref, watch } from 'vue'
+  import { ref, watch, computed } from 'vue'
   import { ElMessage } from 'element-plus'
   import { Plus, ZoomIn, Delete, VideoPlay } from '@element-plus/icons-vue'
-  import { getUrl, isVideoExt } from '@/utils/image'
+  import { getUrl, isImageMime, isVideoExt } from '@/utils/image'
   import service from '@/utils/request'
 
   defineOptions({
     name: 'SelectMedia'
   })
 
-  defineProps({
+  const props = defineProps({
     limit: {
       type: Number,
       default: 20
@@ -86,8 +87,73 @@
     accept: {
       type: String,
       default: 'image/*,video/*'
+    },
+    /** 为 true 时允许图片；视频仅允许 MP4（活动指南等场景） */
+    restrictVideoToMp4: {
+      type: Boolean,
+      default: false
+    },
+    /** 与 restrictVideoToMp4 配合：单个视频最大体积（MB），0 表示不限制 */
+    maxVideoSizeMB: {
+      type: Number,
+      default: 50
     }
   })
+
+  const imageFilenameExt = /\.(jpe?g|png|gif|webp|svg|bmp)$/i
+
+  const effectiveAccept = computed(() =>
+    props.restrictVideoToMp4 ? 'image/*,video/mp4,.mp4' : props.accept
+  )
+
+  const beforeUpload = (rawFile) => {
+    if (!props.restrictVideoToMp4) {
+      return true
+    }
+    const name = (rawFile.name || '').toLowerCase()
+    const type = (rawFile.type || '').toLowerCase()
+
+    if (type.startsWith('image/') || isImageMime(type)) {
+      return true
+    }
+    if (imageFilenameExt.test(name)) {
+      return true
+    }
+
+    let asVideo = false
+    if (name.endsWith('.mp4')) {
+      if (
+        !type ||
+        type === 'video/mp4' ||
+        type === 'application/octet-stream'
+      ) {
+        asVideo = true
+      } else if (type.startsWith('video/') && type !== 'video/mp4') {
+        ElMessage.error('视频仅支持 MP4 格式')
+        return false
+      } else {
+        asVideo = true
+      }
+    } else if (type === 'video/mp4') {
+      asVideo = true
+    } else if (type.startsWith('video/')) {
+      ElMessage.error('视频仅支持 MP4 格式')
+      return false
+    } else {
+      ElMessage.error('请上传图片或 MP4 视频')
+      return false
+    }
+
+    if (
+      asVideo &&
+      props.maxVideoSizeMB > 0 &&
+      rawFile.size > props.maxVideoSizeMB * 1024 * 1024
+    ) {
+      ElMessage.error(`视频大小不能超过 ${props.maxVideoSizeMB}MB`)
+      return false
+    }
+    return true
+  }
 
   const model = defineModel({ type: Array })
   const emits = defineEmits(['on-success', 'on-error'])

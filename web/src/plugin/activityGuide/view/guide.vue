@@ -148,8 +148,8 @@
           <SelectImage v-model="formData.coverImage" :multiple="false" />
         </el-form-item>
         <el-form-item label="介绍视频或图片" prop="media">
-          <SelectMedia v-model="formData.media" />
-          <div class="text-gray-500 text-xs mt-1">可上传多张图片或视频，用于活动介绍展示</div>
+          <SelectMedia v-model="formData.media" restrict-video-to-mp4 />
+          <div class="text-gray-500 text-xs mt-1">支持多张图片；视频仅支持 MP4，单个不超过 50MB</div>
         </el-form-item>
         <el-form-item label="显示状态" prop="showStatus">
           <el-switch
@@ -183,8 +183,34 @@ import SelectMedia from '@/components/selectMedia/selectMedia.vue'
 
 defineOptions({ name: 'ActivityGuide' })
 
+const guideMediaImageExt = /\.(jpe?g|png|gif|webp|svg|bmp)$/i
+
+const isAllowedGuideMediaUrl = (url) => {
+  const p = (url || '').split('?')[0].toLowerCase()
+  if (p.endsWith('.mp4')) return true
+  return guideMediaImageExt.test(p)
+}
+
 const rule = reactive({
-  name: [{ required: true, message: '请输入活动名称', trigger: 'blur' }]
+  name: [{ required: true, message: '请输入活动名称', trigger: 'blur' }],
+  media: [
+    {
+      validator: (_rule, value, callback) => {
+        if (!value?.length) {
+          callback()
+          return
+        }
+        for (const item of value) {
+          if (!isAllowedGuideMediaUrl(item.url)) {
+            callback(new Error('仅支持常见图片格式或 MP4 视频'))
+            return
+          }
+        }
+        callback()
+      },
+      trigger: 'change'
+    }
+  ]
 })
 
 const formData = ref({
@@ -251,7 +277,7 @@ const handleSelectionChange = (val) => {
 const toggleShowStatus = async (row, val) => {
   try {
     const res = await updateGuide({
-      ...row,
+      ID: row.ID,
       showStatus: val
     })
     if (res.code === 0) {

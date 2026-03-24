@@ -20,6 +20,10 @@ func (a *guide) CreateGuide(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
+	if err := model.ValidateActivityGuideMedia(guide.Media); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
 	if err := serviceGuide.CreateGuide(&guide); err != nil {
 		global.GVA_LOG.Error("创建失败!", zap.Error(err))
 		response.FailWithMessage("创建失败", c)
@@ -54,6 +58,10 @@ func (a *guide) DeleteGuideByIds(c *gin.Context) {
 func (a *guide) UpdateGuide(c *gin.Context) {
 	var guide model.ActivityGuide
 	if err := c.ShouldBindJSON(&guide); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	if err := model.ValidateActivityGuideMedia(guide.Media); err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
