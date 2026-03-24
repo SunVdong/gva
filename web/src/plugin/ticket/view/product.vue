@@ -143,12 +143,17 @@
                 <el-input-number v-model="row.sort" :min="0" size="small" style="width:100%" />
               </template>
             </el-table-column>
-            <el-table-column label="状态" width="100">
+            <el-table-column label="状态" width="80">
               <template #default="{ row }">
                 <el-select v-model="row.status" size="small" style="width:100%">
                   <el-option label="启用" :value="1" />
                   <el-option label="禁用" :value="0" />
                 </el-select>
+              </template>
+            </el-table-column>
+            <el-table-column label="预定须知" min-width="200">
+              <template #default="{ row }">
+                <el-input v-model="row.bookingNotice" type="textarea" :rows="2" placeholder="预定须知" size="small" />
               </template>
             </el-table-column>
             <el-table-column label="操作" width="90" fixed="right">
@@ -332,7 +337,8 @@ function addSkuRow() {
     marketPrice: undefined,
     limitBuy: 0,
     sort: 0,
-    status: 1
+    status: 1,
+    bookingNotice: ''
   })
 }
 
@@ -363,7 +369,8 @@ const saveSkuAndRule = async () => {
       marketPrice: s.marketPrice != null ? Number(s.marketPrice) : null,
       limitBuy: Number(s.limitBuy) || 0,
       sort: Number(s.sort) || 0,
-      status: s.status ?? 1
+      status: s.status ?? 1,
+      bookingNotice: s.bookingNotice || ''
     }
     if (s.ID) {
       await updateSku({ ...payload, ID: s.ID })

@@ -13,8 +13,9 @@ type TicketSku struct {
 	MarketPrice *float64 `json:"marketPrice" form:"marketPrice" gorm:"column:market_price;type:decimal(10,2);comment:市场价格;"`
 	Stock       int     `json:"stock" form:"stock" gorm:"column:stock;default:0;comment:库存;"`
 	LimitBuy    int     `json:"limitBuy" form:"limitBuy" gorm:"column:limit_buy;default:0;comment:每人限购数量;"`
-	Sort        int     `json:"sort" form:"sort" gorm:"column:sort;default:0;comment:排序值越小越靠前;"`
-	Status      int     `json:"status" form:"status" gorm:"column:status;comment:状态1启用0禁用;default:1;"`
+	Sort          int     `json:"sort" form:"sort" gorm:"column:sort;default:0;comment:排序值越小越靠前;"`
+	Status        int     `json:"status" form:"status" gorm:"column:status;comment:状态1启用0禁用;default:1;"`
+	BookingNotice string  `json:"bookingNotice" form:"bookingNotice" gorm:"column:booking_notice;type:text;comment:预定须知;"`
 	CreatedBy   int     `json:"createdBy" form:"createdBy" gorm:"column:created_by;default:0;"`
 	UpdatedBy   int     `json:"updatedBy" form:"updatedBy" gorm:"column:updated_by;default:0;"`
 }
