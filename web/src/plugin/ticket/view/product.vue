@@ -138,6 +138,11 @@
                 <el-input-number v-model="row.limitBuy" :min="0" size="small" style="width:100%" />
               </template>
             </el-table-column>
+            <el-table-column label="排序" width="100">
+              <template #default="{ row }">
+                <el-input-number v-model="row.sort" :min="0" size="small" style="width:100%" />
+              </template>
+            </el-table-column>
             <el-table-column label="状态" width="100">
               <template #default="{ row }">
                 <el-select v-model="row.status" size="small" style="width:100%">
@@ -360,6 +365,7 @@ function addSkuRow() {
     price: 0,
     marketPrice: undefined,
     limitBuy: 0,
+    sort: 0,
     status: 1
   })
 }
@@ -434,6 +440,7 @@ const saveSkuAndRule = async () => {
       price: Number(s.price),
       marketPrice: s.marketPrice != null ? Number(s.marketPrice) : null,
       limitBuy: Number(s.limitBuy) || 0,
+      sort: Number(s.sort) || 0,
       status: s.status ?? 1
     }
     if (s.ID) {

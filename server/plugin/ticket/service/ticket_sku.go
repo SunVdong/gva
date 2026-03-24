@@ -21,7 +21,7 @@ func (s *ticketSku) DeleteByIds(ids []uint) error {
 }
 
 func (s *ticketSku) Update(m model.TicketSku) error {
-	return global.GVA_DB.Model(&model.TicketSku{}).Where("id = ?", m.ID).Updates(&m).Error
+	return global.GVA_DB.Model(&model.TicketSku{}).Where("id = ?", m.ID).Select("*").Omit("created_at").Updates(&m).Error
 }
 
 func (s *ticketSku) Get(id uint) (model.TicketSku, error) {
@@ -46,6 +46,6 @@ func (s *ticketSku) GetList(req request.TicketSkuSearch) (list []model.TicketSku
 	if limit != 0 {
 		db = db.Limit(limit).Offset(offset)
 	}
-	err = db.Order("id DESC").Find(&list).Error
+	err = db.Order("sort ASC, id DESC").Find(&list).Error
 	return
 }
