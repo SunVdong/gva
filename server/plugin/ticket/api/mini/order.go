@@ -23,7 +23,7 @@ type miniOrderApi struct{}
 // @Accept      json
 // @Produce     json
 // @Param       x-token header string true "小程序登录后返回的 token（必填，用于识别用户）"
-// @Param       data body request.MiniOrderCreate true "订单信息（bookerName、bookerPhone、items）"
+// @Param       data body request.MiniOrderCreate true "订单信息（bookerName、bookerPhone、skuId、quantity、visitDate）"
 // @Success     200  {object} response.Response{data=object,msg=string}
 // @Router      /ticket/mini/order/create [post]
 func (a *miniOrderApi) Create(c *gin.Context) {
@@ -80,37 +80,33 @@ func (a *miniOrderApi) MyList(c *gin.Context) {
 		response.FailWithMessage("获取失败", c)
 		return
 	}
-	// 批量查订单项最晚游玩日，用于生成 statusLabel
 	orderIDs := make([]uint, 0, len(list))
 	for _, o := range list {
 		orderIDs = append(orderIDs, o.ID)
 	}
-	maxVisitMap, _ := svcOrder.GetMaxVisitDateByOrderIDs(orderIDs)
-	skuNamesMap, _ := svcOrder.GetSkuNamesByOrderIDs(orderIDs)
-	productNamesMap, _ := svcOrder.GetProductNamesByOrderIDs(orderIDs)
+	productNameMap, _ := svcOrder.GetProductNamesByOrderIDs(orderIDs)
 	scenicImageMap, _ := svcOrder.GetScenicImageByOrderIDs(orderIDs)
 	items := make([]gin.H, 0, len(list))
 	for _, o := range list {
-		maxVisit := maxVisitMap[o.ID]
-		skuNames := skuNamesMap[o.ID]
-		productNames := productNamesMap[o.ID]
 		items = append(items, gin.H{
 			"id":              o.ID,
 			"orderNo":         o.OrderNo,
 			"userId":          o.UserID,
 			"bookerName":      o.BookerName,
 			"bookerPhone":     o.BookerPhone,
+			"skuId":           o.SkuID,
+			"price":           o.Price,
+			"quantity":        o.Quantity,
+			"visitDate":       o.VisitDate,
 			"totalAmount":     o.TotalAmount,
 			"payAmount":       o.PayAmount,
 			"status":          o.Status,
 			"payTime":         o.PayTime,
 			"verifiedAt":      o.VerifiedAt,
 			"createdAt":       o.CreatedAt,
-			"statusLabel":     svcOrder.OrderStatusLabel(&o, maxVisit),
-			"skuNames":        skuNames,
-			"skuNameText":     strings.Join(skuNames, "、"),
-			"productNames":    productNames,
-			"productNameText": strings.Join(productNames, "、"),
+			"statusLabel":     svcOrder.OrderStatusLabel(&o),
+			"skuNameText":     o.SkuName,
+			"productNameText": productNameMap[o.ID],
 			"productImage":    scenicImageMap[o.ID],
 		})
 	}
@@ -119,10 +115,10 @@ func (a *miniOrderApi) MyList(c *gin.Context) {
 	}, "获取成功", c)
 }
 
-// Detail 小程序-订单详情（含订单项，仅本人）
+// Detail 小程序-订单详情（仅本人）
 // @Tags        小程序-景点
 // @Summary     订单详情
-// @Description 小程序端获取订单详情及订单项，仅限当前登录用户自己的订单
+// @Description 小程序端获取订单详情，仅限当前登录用户自己的订单
 // @Accept      json
 // @Produce     json
 // @Param       x-token header string false "小程序登录后返回的 token"
@@ -142,7 +138,7 @@ func (a *miniOrderApi) Detail(c *gin.Context) {
 		response.FailWithMessage("参数错误", c)
 		return
 	}
-	order, items, err := svcOrder.GetByID(idReq.ID)
+	order, err := svcOrder.GetByID(idReq.ID)
 	if err != nil || order.ID == 0 {
 		response.FailWithMessage("订单不存在", c)
 		return
@@ -151,29 +147,19 @@ func (a *miniOrderApi) Detail(c *gin.Context) {
 		response.FailWithMessage("无权查看该订单", c)
 		return
 	}
-	data := gin.H{"order": order, "items": items}
+	data := gin.H{"order": order}
 
-	// 是否可退款 & 最晚退款时间（精确到小时）
-	// 规则：读取系统参数 refund_limit_hours，例如 24 表示距离“门票开始时间”不足 24 小时不允许退款
 	canRefund := false
 	var lastRefundAt interface{} = nil
 	limitHours := 0
 	if v, err := new(system.SysParamsService).GetSysParam("refund_limit_hours"); err == nil {
 		limitHours, _ = strconv.Atoi(strings.TrimSpace(v.Value))
 	}
-	if limitHours > 0 && len(items) > 0 {
-		// “门票开始时间”取该订单最早游玩日当天 00:00（本地时区）
-		minVisit := items[0].VisitDate
-		for i := 1; i < len(items); i++ {
-			if items[i].VisitDate.Before(minVisit) {
-				minVisit = items[i].VisitDate
-			}
-		}
-		startAt := time.Date(minVisit.Year(), minVisit.Month(), minVisit.Day(), 0, 0, 0, 0, time.Local)
+	if limitHours > 0 {
+		startAt := time.Date(order.VisitDate.Year(), order.VisitDate.Month(), order.VisitDate.Day(), 0, 0, 0, 0, time.Local)
 		last := startAt.Add(-time.Duration(limitHours) * time.Hour).Truncate(time.Hour)
 		lastRefundAt = last.Format("2006-01-02 15:00")
 
-		// 仅待核销且未核销的订单允许退款窗口判断（已核销/已取消/已过期/已关闭/待支付均不可退）
 		if order.Status == 1 && order.VerifiedAt == nil {
 			now := time.Now()
 			if now.Before(last) || now.Equal(last) {
@@ -184,7 +170,6 @@ func (a *miniOrderApi) Detail(c *gin.Context) {
 	data["canRefund"] = canRefund
 	data["lastRefundAt"] = lastRefundAt
 
-	// 已核销时附带评价信息（有则返回，无则 null）
 	if order.Status == 2 && order.VerifiedAt != nil {
 		review, _ := svcOrderReview.GetByOrderID(order.ID)
 		if review.ID != 0 {

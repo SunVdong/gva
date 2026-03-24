@@ -62,10 +62,10 @@
             <span :class="['status', ticketStatusClass(ticketOrder.status)]">{{ ticketStatusText(ticketOrder.status) }}</span>
           </li>
         </ul>
-        <ul class="detail-list" v-if="ticketItems && ticketItems.length">
-          <li v-for="it in ticketItems" :key="it.ID">
-            <span>{{ it.productName }} {{ (it.visitDate || '').slice(0, 10) }}</span>
-            <span>x {{ it.quantity }}</span>
+        <ul class="detail-list" v-if="ticketOrder.skuName">
+          <li>
+            <span>{{ ticketOrder.productName || ticketOrder.skuName }} {{ (ticketOrder.visitDate || '').slice(0, 10) }}</span>
+            <span>x {{ ticketOrder.quantity }}</span>
           </li>
         </ul>
         <div v-if="ticketOrder.status === 1" class="actions">
@@ -106,7 +106,6 @@ const loading = ref(false)
 const loadError = ref('')
 const detail = ref(null)
 const ticketOrder = ref(null)
-const ticketItems = ref([])
 const venueName = ref('')
 const timeslotLabel = ref('')
 const verifyLoading = ref(false)
@@ -234,12 +233,10 @@ async function loadTicketOrder() {
   loadError.value = ''
   loading.value = true
   ticketOrder.value = null
-  ticketItems.value = []
   try {
     const res = await getTicketOrderByCodePublic({ code: codeFromUrl.value })
     if (res.code === 0 && res.data) {
       ticketOrder.value = res.data.order
-      ticketItems.value = res.data.items || []
     } else {
       loadError.value = res.msg || '订单不存在或已失效'
     }
@@ -268,7 +265,6 @@ async function doVerify() {
       const res = await verifyTicketOrderByCodePublic({ code: codeFromUrl.value })
       if (res.code === 0 && res.data) {
         ticketOrder.value = res.data.order || ticketOrder.value
-        ticketItems.value = res.data.items || ticketItems.value
       } else if (res.code === 0 && !res.data) {
         ticketOrder.value = { ...ticketOrder.value, status: 2 }
       } else {

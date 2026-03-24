@@ -37,16 +37,14 @@ func (a *ticketOrderApi) Find(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	order, items, err := serviceOrder.GetByID(idReq.ID)
+	order, err := serviceOrder.GetByID(idReq.ID)
 	if err != nil {
 		response.FailWithMessage("查询失败", c)
 		return
 	}
 	data := gin.H{
 		"order": order,
-		"items": items,
 	}
-	// 已核销时附带评价信息（有则返回，无则 null）
 	if order.Status == 2 && order.VerifiedAt != nil {
 		review, _ := serviceOrderReview.GetByOrderID(order.ID)
 		if review.ID != 0 {
@@ -63,7 +61,7 @@ func (a *ticketOrderApi) Find(c *gin.Context) {
 	response.OkWithData(data, c)
 }
 
-// GetOrderByCodePublic 公开：根据订单号(code)查询门票订单及订单项（用于 H5 扫码核销）
+// GetOrderByCodePublic 公开：根据订单号(code)查询门票订单（用于 H5 扫码核销）
 // @Tags TicketOrder
 // @Summary 根据订单号查询门票订单(公开)
 // @Param code query string true "订单号"
@@ -75,14 +73,13 @@ func (a *ticketOrderApi) GetOrderByCodePublic(c *gin.Context) {
 		response.FailWithMessage("订单号不能为空", c)
 		return
 	}
-	order, items, err := serviceOrder.GetByOrderNoPublic(code)
+	order, err := serviceOrder.GetByOrderNoPublic(code)
 	if err != nil {
 		response.FailWithMessage("订单不存在或已失效", c)
 		return
 	}
 	response.OkWithData(gin.H{
 		"order": order,
-		"items": items,
 	}, c)
 }
 
@@ -102,9 +99,8 @@ func (a *ticketOrderApi) VerifyOrderByCodePublic(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	order, items, _ := serviceOrder.GetByOrderNoPublic(code)
+	order, _ := serviceOrder.GetByOrderNoPublic(code)
 	response.OkWithData(gin.H{
 		"order": order,
-		"items": items,
 	}, c)
 }

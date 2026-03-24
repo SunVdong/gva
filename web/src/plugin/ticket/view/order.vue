@@ -106,19 +106,13 @@
         </el-descriptions>
 
         <div class="text-sm font-medium mt-4">订单明细</div>
-        <el-table :data="detail.items" border size="small">
-          <el-table-column label="门票名称" prop="skuName" min-width="120" />
-          <el-table-column label="单价" width="90">
-            <template #default="{ row }">¥{{ (row.price ?? 0).toFixed(2) }}</template>
-          </el-table-column>
-          <el-table-column label="数量" prop="quantity" width="70" />
-          <el-table-column label="小计" width="90">
-            <template #default="{ row }">¥{{ ((row.price ?? 0) * (row.quantity ?? 0)).toFixed(2) }}</template>
-          </el-table-column>
-          <el-table-column label="游玩日期" width="120">
-            <template #default="{ row }">{{ row.visitDate ? formatVisitDate(row.visitDate) : '-' }}</template>
-          </el-table-column>
-        </el-table>
+        <el-descriptions :column="1" border>
+          <el-descriptions-item label="门票名称">{{ detail.order.productName || detail.order.skuName || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="单价">¥{{ (detail.order.price ?? 0).toFixed(2) }}</el-descriptions-item>
+          <el-descriptions-item label="数量">{{ detail.order.quantity ?? '-' }}</el-descriptions-item>
+          <el-descriptions-item label="小计">¥{{ ((detail.order.price ?? 0) * (detail.order.quantity ?? 0)).toFixed(2) }}</el-descriptions-item>
+          <el-descriptions-item label="游玩日期">{{ detail.order.visitDate ? formatVisitDate(detail.order.visitDate) : '-' }}</el-descriptions-item>
+        </el-descriptions>
 
         <div v-if="detail.order.status === 2" class="mt-4">
           <div class="text-sm font-medium mb-2">评价信息</div>
@@ -145,7 +139,7 @@ const pageSize = ref(10)
 const tableData = ref([])
 const searchInfo = ref({})
 const detailVisible = ref(false)
-const detail = ref({ order: null, items: [], review: null })
+const detail = ref({ order: null, review: null })
 
 function formatDate(d) {
   if (!d) return ''
@@ -181,7 +175,7 @@ const handleSizeChange = (val) => { pageSize.value = val; getTableData() }
 const showDetail = async (row) => {
   const res = await findOrder({ id: row.ID })
   if (res.code === 0 && res.data) {
-    detail.value = { order: res.data.order, items: res.data.items || [], review: res.data.review || null }
+    detail.value = { order: res.data.order, review: res.data.review || null }
     detailVisible.value = true
   }
 }
