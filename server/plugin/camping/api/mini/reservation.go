@@ -1,14 +1,15 @@
 package mini
 
 import (
+	"encoding/json"
 	"strconv"
 	"time"
 
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
-	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/camping/model"
 	campingRequest "github.com/flipped-aurora/gin-vue-admin/server/plugin/camping/model/request"
+	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -134,26 +135,32 @@ func (a *reservationApi) MyList(c *gin.Context) {
 	for _, r := range list {
 		venueName := ""
 		timeslotRange := ""
+		var image string
 		if v, _ := svcVenue.GetVenue(r.VenueID); v.ID != 0 {
 			venueName = v.Name
+			var imgs []string
+			if err := json.Unmarshal(v.CarouselImages, &imgs); err == nil && len(imgs) > 0 {
+				image = imgs[0]
+			}
 		}
 		if s, _ := svcVenueTimeslot.GetVenueTimeslot(r.TimeslotID); s.ID != 0 {
 			timeslotRange = s.StartTime.FormatHHMM() + "-" + s.EndTime.FormatHHMM()
 		}
 		items = append(items, gin.H{
-			"id":             r.ID,
-			"reservationNo":  r.ReservationNo,
-			"venueId":        r.VenueID,
-			"venueName":      venueName,
-			"timeslotId":     r.TimeslotID,
-			"timeslotRange":  timeslotRange,
-			"reserveDate":    r.ReserveDate,
-			"contactName":    r.ContactName,
-			"contactPhone":   r.ContactPhone,
-			"contactCount":   r.ContactCount,
-			"status":         r.Status,
-			"verifyCode":     r.VerifyCode,
-			"createdAt":      r.CreatedAt,
+			"id":            r.ID,
+			"reservationNo": r.ReservationNo,
+			"venueId":       r.VenueID,
+			"venueName":     venueName,
+			"venueImage":    image,
+			"timeslotId":    r.TimeslotID,
+			"timeslotRange": timeslotRange,
+			"reserveDate":   r.ReserveDate,
+			"contactName":   r.ContactName,
+			"contactPhone":  r.ContactPhone,
+			"contactCount":  r.ContactCount,
+			"status":        r.Status,
+			"verifyCode":    r.VerifyCode,
+			"createdAt":     r.CreatedAt,
 		})
 	}
 	response.OkWithDetailed(response.PageResult{
@@ -262,21 +269,21 @@ func (a *reservationApi) MyDetail(c *gin.Context) {
 	}
 
 	detail := gin.H{
-		"id":           res.ID,
+		"id":            res.ID,
 		"reservationNo": res.ReservationNo,
-		"venueId":      res.VenueID,
-		"venueName":    venueName,
-		"timeslotId":   res.TimeslotID,
+		"venueId":       res.VenueID,
+		"venueName":     venueName,
+		"timeslotId":    res.TimeslotID,
 		"timeslotRange": timeslotRange,
-		"reserveDate":  res.ReserveDate,
-		"contactName":  res.ContactName,
-		"contactPhone": res.ContactPhone,
-		"contactCount": res.ContactCount,
-		"status":       res.Status,
-		"verifyCode":   res.VerifyCode,
-		"createdAt":    res.CreatedAt,
-		"canChange":    canChange,
-		"lastChangeAt": lastChangeAt,
+		"reserveDate":   res.ReserveDate,
+		"contactName":   res.ContactName,
+		"contactPhone":  res.ContactPhone,
+		"contactCount":  res.ContactCount,
+		"status":        res.Status,
+		"verifyCode":    res.VerifyCode,
+		"createdAt":     res.CreatedAt,
+		"canChange":     canChange,
+		"lastChangeAt":  lastChangeAt,
 	}
 	// 已核销时附带评价信息（有则返回，无则 null）
 	if res.Status == 1 {
