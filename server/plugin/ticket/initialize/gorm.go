@@ -19,6 +19,7 @@ func Gorm(ctx context.Context) {
 		new(model.TicketRule),
 		new(model.TicketCalendar),
 		new(model.TicketOrder),
+		new(model.OrderVerifyRecord),
 		new(model.OrderReview),
 	)
 	if err != nil {

@@ -59,7 +59,11 @@
           <li><span>支付金额</span>{{ ticketOrder.payAmount }}</li>
           <li>
             <span>状态</span>
-            <span :class="['status', ticketStatusClass(ticketOrder.status)]">{{ ticketStatusText(ticketOrder.status) }}</span>
+            <span :class="['status', ticketOrderStatusClass(ticketOrder)]">{{ ticketOrderStatusText(ticketOrder) }}</span>
+          </li>
+          <li v-if="(ticketOrder.totalUseTimes || 1) > 1">
+            <span>核销进度</span>
+            <span>已核销 {{ ticketOrder.verifiedTimes || 0 }}/{{ ticketOrder.totalUseTimes }} 次，剩余 {{ ticketRemainingTimes }} 次</span>
           </li>
         </ul>
         <ul class="detail-list" v-if="ticketOrder.skuName">
@@ -68,11 +72,22 @@
             <span>x {{ ticketOrder.quantity }}</span>
           </li>
         </ul>
-        <div v-if="ticketOrder.status === 1" class="actions">
+        <div v-if="ticketOrder.status === 1 && ticketRemainingTimes > 0" class="actions">
           <button class="btn primary" :disabled="verifyLoading" @click="doVerify">确认核销</button>
         </div>
-        <div v-else-if="ticketOrder.status === 2" class="msg success">该订单已核销</div>
+        <div v-else-if="ticketOrder.status === 2" class="msg success">该订单已全部核销完毕</div>
+        <div v-else-if="ticketOrder.status === 1 && ticketRemainingTimes <= 0" class="msg success">该订单已核销完毕</div>
         <div v-else class="msg info">该订单当前状态不支持核销</div>
+
+        <div v-if="ticketVerifyRecords.length" class="verify-records">
+          <h3>核销记录</h3>
+          <ul class="detail-list">
+            <li v-for="r in ticketVerifyRecords" :key="r.ID">
+              <span>第 {{ r.verifyNo }} 次</span>
+              <span>{{ formatDateTime(r.verifiedAt) }}</span>
+            </li>
+          </ul>
+        </div>
       </template>
 
       <div v-else-if="loading" class="loading">加载中…</div>
@@ -106,6 +121,8 @@ const loading = ref(false)
 const loadError = ref('')
 const detail = ref(null)
 const ticketOrder = ref(null)
+const ticketRemainingTimes = ref(0)
+const ticketVerifyRecords = ref([])
 const venueName = ref('')
 const timeslotLabel = ref('')
 const verifyLoading = ref(false)
@@ -129,6 +146,18 @@ function ticketStatusClass(status) {
   if (s === 3 || s === 5) return 'cancel'
   if (s === 4) return 'expired'
   return ''
+}
+
+function ticketOrderStatusText(order) {
+  if (!order) return ''
+  if (order.status === 1 && (order.verifiedTimes || 0) > 0) return '核销中'
+  return ticketStatusText(order.status)
+}
+
+function ticketOrderStatusClass(order) {
+  if (!order) return ''
+  if (order.status === 1 && (order.verifiedTimes || 0) > 0) return 'pending'
+  return ticketStatusClass(order.status)
 }
 
 const statusText = computed(() => {
@@ -233,10 +262,14 @@ async function loadTicketOrder() {
   loadError.value = ''
   loading.value = true
   ticketOrder.value = null
+  ticketRemainingTimes.value = 0
+  ticketVerifyRecords.value = []
   try {
     const res = await getTicketOrderByCodePublic({ code: codeFromUrl.value })
     if (res.code === 0 && res.data) {
       ticketOrder.value = res.data.order
+      ticketRemainingTimes.value = res.data.remainingTimes ?? 0
+      ticketVerifyRecords.value = res.data.verifyRecords || []
     } else {
       loadError.value = res.msg || '订单不存在或已失效'
     }
@@ -245,6 +278,12 @@ async function loadTicketOrder() {
   } finally {
     loading.value = false
   }
+}
+
+function formatDateTime(d) {
+  if (!d) return '-'
+  if (typeof d === 'string') return d.slice(0, 19).replace('T', ' ')
+  return d
 }
 
 async function doVerify() {
@@ -261,12 +300,12 @@ async function doVerify() {
         loadError.value = res.msg || '核销失败'
       }
     } else if (typeFromUrl.value === 'ticket') {
-      if (!ticketOrder.value || ticketOrder.value.status !== 1) return
+      if (!ticketOrder.value || ticketOrder.value.status !== 1 || ticketRemainingTimes.value <= 0) return
       const res = await verifyTicketOrderByCodePublic({ code: codeFromUrl.value })
       if (res.code === 0 && res.data) {
         ticketOrder.value = res.data.order || ticketOrder.value
-      } else if (res.code === 0 && !res.data) {
-        ticketOrder.value = { ...ticketOrder.value, status: 2 }
+        ticketRemainingTimes.value = res.data.remainingTimes ?? 0
+        ticketVerifyRecords.value = res.data.verifyRecords || []
       } else {
         loadError.value = res.msg || '核销失败'
       }
@@ -391,4 +430,6 @@ onMounted(() => {
 .msg.success { background: #f0f9eb; color: #67c23a; }
 .msg.info { background: #f4f4f5; color: #909399; }
 .loading { text-align: center; padding: 24px; color: #666; }
+.verify-records { margin-top: 20px; }
+.verify-records h3 { font-size: 15px; font-weight: 600; margin: 0 0 8px; }
 </style>

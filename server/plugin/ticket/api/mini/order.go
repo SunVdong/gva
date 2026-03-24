@@ -88,6 +88,14 @@ func (a *miniOrderApi) MyList(c *gin.Context) {
 	scenicImageMap, _ := svcOrder.GetScenicImageByOrderIDs(orderIDs)
 	items := make([]gin.H, 0, len(list))
 	for _, o := range list {
+		totalUse := o.TotalUseTimes
+		if totalUse <= 0 {
+			totalUse = 1
+		}
+		remaining := totalUse - o.VerifiedTimes
+		if remaining < 0 {
+			remaining = 0
+		}
 		items = append(items, gin.H{
 			"id":              o.ID,
 			"orderNo":         o.OrderNo,
@@ -101,6 +109,9 @@ func (a *miniOrderApi) MyList(c *gin.Context) {
 			"totalAmount":     o.TotalAmount,
 			"payAmount":       o.PayAmount,
 			"status":          o.Status,
+			"totalUseTimes":   totalUse,
+			"verifiedTimes":   o.VerifiedTimes,
+			"remainingTimes":  remaining,
 			"payTime":         o.PayTime,
 			"verifiedAt":      o.VerifiedAt,
 			"createdAt":       o.CreatedAt,
@@ -147,7 +158,20 @@ func (a *miniOrderApi) Detail(c *gin.Context) {
 		response.FailWithMessage("无权查看该订单", c)
 		return
 	}
-	data := gin.H{"order": order}
+	totalUse := order.TotalUseTimes
+	if totalUse <= 0 {
+		totalUse = 1
+	}
+	remaining := totalUse - order.VerifiedTimes
+	if remaining < 0 {
+		remaining = 0
+	}
+	verifyRecords, _ := svcOrder.GetVerifyRecords(order.ID)
+	data := gin.H{
+		"order":          order,
+		"remainingTimes": remaining,
+		"verifyRecords":  verifyRecords,
+	}
 
 	canRefund := false
 	var lastRefundAt interface{} = nil
@@ -160,7 +184,8 @@ func (a *miniOrderApi) Detail(c *gin.Context) {
 		last := startAt.Add(-time.Duration(limitHours) * time.Hour).Truncate(time.Hour)
 		lastRefundAt = last.Format("2006-01-02 15:00")
 
-		if order.Status == 1 && order.VerifiedAt == nil {
+		// 多次票部分核销后 verified_at 仍为空，需同时要求未发生过核销才可退款
+		if order.Status == 1 && order.VerifiedAt == nil && order.VerifiedTimes == 0 {
 			now := time.Now()
 			if now.Before(last) || now.Equal(last) {
 				canRefund = true

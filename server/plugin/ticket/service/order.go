@@ -128,6 +128,9 @@ func (s *ticketOrder) OrderStatusLabel(order *model.TicketOrder) string {
 		if order.VisitDate.Format("2006-01-02") < today {
 			return "已过期"
 		}
+		if order.VerifiedTimes > 0 {
+			return "核销中"
+		}
 		return "待核销"
 	case 2:
 		return "已核销"
@@ -140,6 +143,12 @@ func (s *ticketOrder) OrderStatusLabel(order *model.TicketOrder) string {
 	default:
 		return "未知"
 	}
+}
+
+// GetVerifyRecords 查询订单的核销记录列表
+func (s *ticketOrder) GetVerifyRecords(orderID uint) (records []model.OrderVerifyRecord, err error) {
+	err = global.GVA_DB.Where("order_id = ?", orderID).Order("verify_no ASC").Find(&records).Error
+	return
 }
 
 func (s *ticketOrder) GetByID(id uint) (order model.TicketOrder, err error) {
@@ -213,20 +222,26 @@ func (s *ticketOrder) CreateOrder(userID uint, req request.MiniOrderCreate) (ord
 			return fmt.Errorf("门票 %s 所选日期库存不足", sku.Name)
 		}
 		totalAmount := sku.Price * float64(req.Quantity)
+		useTimes := sku.UseTimes
+		if useTimes <= 0 {
+			useTimes = 1
+		}
 		orderNo = "T" + time.Now().Format("20060102150405") + fmt.Sprintf("%04d", rand.Intn(10000))
 		order = model.TicketOrder{
-			OrderNo:     orderNo,
-			UserID:      userID,
-			BookerName:  strings.TrimSpace(req.BookerName),
-			BookerPhone: phone,
-			SkuID:       req.SkuID,
-			SkuName:     sku.Name,
-			Price:       sku.Price,
-			Quantity:    req.Quantity,
-			VisitDate:   visitDate,
-			TotalAmount: totalAmount,
-			PayAmount:   totalAmount,
-			Status:      0,
+			OrderNo:       orderNo,
+			UserID:        userID,
+			BookerName:    strings.TrimSpace(req.BookerName),
+			BookerPhone:   phone,
+			SkuID:         req.SkuID,
+			SkuName:       sku.Name,
+			Price:         sku.Price,
+			Quantity:      req.Quantity,
+			VisitDate:     visitDate,
+			TotalAmount:   totalAmount,
+			PayAmount:     totalAmount,
+			Status:        0,
+			TotalUseTimes: useTimes,
+			VerifiedTimes: 0,
 		}
 		return tx.Create(&order).Error
 	})
@@ -237,25 +252,49 @@ func (s *ticketOrder) CreateOrder(userID uint, req request.MiniOrderCreate) (ord
 	return
 }
 
-// VerifyOrder 核销订单（仅待核销状态的订单可核销，由后台或核销端调用）
+// VerifyOrder 核销订单（支持多次票累加核销，由后台或核销端调用）
 func (s *ticketOrder) VerifyOrder(orderID uint) error {
-	var order model.TicketOrder
-	if err := global.GVA_DB.Where("id = ?", orderID).First(&order).Error; err != nil || order.ID == 0 {
-		return fmt.Errorf("订单不存在")
-	}
-	if order.Status == 2 || order.VerifiedAt != nil {
-		return fmt.Errorf("该订单已核销")
-	}
-	if order.Status != 1 {
-		return fmt.Errorf("仅待核销订单可核销")
-	}
-	now := time.Now()
-	return global.GVA_DB.Model(&model.TicketOrder{}).
-		Where("id = ?", orderID).
-		Updates(map[string]any{
-			"verified_at": now,
-			"status":      2,
-		}).Error
+	return global.GVA_DB.Transaction(func(tx *gorm.DB) error {
+		var order model.TicketOrder
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			Where("id = ?", orderID).First(&order).Error; err != nil || order.ID == 0 {
+			return fmt.Errorf("订单不存在")
+		}
+		if order.Status == 2 {
+			return fmt.Errorf("该订单已核销完毕")
+		}
+		if order.Status != 1 {
+			return fmt.Errorf("仅待核销订单可核销")
+		}
+		totalUse := order.TotalUseTimes
+		if totalUse <= 0 {
+			totalUse = 1
+		}
+		if order.VerifiedTimes >= totalUse {
+			return fmt.Errorf("该订单已核销完毕")
+		}
+
+		newVerified := order.VerifiedTimes + 1
+		now := time.Now()
+
+		record := model.OrderVerifyRecord{
+			OrderID:    orderID,
+			VerifyNo:   newVerified,
+			VerifiedAt: now,
+		}
+		if err := tx.Create(&record).Error; err != nil {
+			return err
+		}
+
+		updates := map[string]any{
+			"verified_times": newVerified,
+		}
+		if newVerified >= totalUse {
+			updates["verified_at"] = now
+			updates["status"] = 2
+		}
+		return tx.Model(&model.TicketOrder{}).Where("id = ?", orderID).Updates(updates).Error
+	})
 }
 
 // VerifyOrderByOrderNoPublic 根据订单号核销订单（公开给 H5 核销使用）

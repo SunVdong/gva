@@ -42,9 +42,21 @@ func (a *ticketOrderApi) Find(c *gin.Context) {
 		response.FailWithMessage("查询失败", c)
 		return
 	}
-	data := gin.H{
-		"order": order,
+	totalUse := order.TotalUseTimes
+	if totalUse <= 0 {
+		totalUse = 1
 	}
+	remaining := totalUse - order.VerifiedTimes
+	if remaining < 0 {
+		remaining = 0
+	}
+	data := gin.H{
+		"order":          order,
+		"remainingTimes": remaining,
+	}
+	verifyRecords, _ := serviceOrder.GetVerifyRecords(order.ID)
+	data["verifyRecords"] = verifyRecords
+
 	if order.Status == 2 && order.VerifiedAt != nil {
 		review, _ := serviceOrderReview.GetByOrderID(order.ID)
 		if review.ID != 0 {
@@ -78,8 +90,19 @@ func (a *ticketOrderApi) GetOrderByCodePublic(c *gin.Context) {
 		response.FailWithMessage("订单不存在或已失效", c)
 		return
 	}
+	totalUse := order.TotalUseTimes
+	if totalUse <= 0 {
+		totalUse = 1
+	}
+	remaining := totalUse - order.VerifiedTimes
+	if remaining < 0 {
+		remaining = 0
+	}
+	verifyRecords, _ := serviceOrder.GetVerifyRecords(order.ID)
 	response.OkWithData(gin.H{
-		"order": order,
+		"order":          order,
+		"remainingTimes": remaining,
+		"verifyRecords":  verifyRecords,
 	}, c)
 }
 
@@ -100,7 +123,18 @@ func (a *ticketOrderApi) VerifyOrderByCodePublic(c *gin.Context) {
 		return
 	}
 	order, _ := serviceOrder.GetByOrderNoPublic(code)
+	totalUse := order.TotalUseTimes
+	if totalUse <= 0 {
+		totalUse = 1
+	}
+	remaining := totalUse - order.VerifiedTimes
+	if remaining < 0 {
+		remaining = 0
+	}
+	verifyRecords, _ := serviceOrder.GetVerifyRecords(order.ID)
 	response.OkWithData(gin.H{
-		"order": order,
+		"order":          order,
+		"remainingTimes": remaining,
+		"verifyRecords":  verifyRecords,
 	}, c)
 }

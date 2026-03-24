@@ -133,6 +133,19 @@
                 <el-input-number v-model="row.marketPrice" :min="0" :precision="2" size="small" style="width:100%" />
               </template>
             </el-table-column>
+            <el-table-column label="票种" width="110">
+              <template #default="{ row }">
+                <el-select v-model="row.ticketType" size="small" style="width:100%" @change="onTicketTypeChange(row)">
+                  <el-option label="单次票" :value="1" />
+                  <el-option label="多次票" :value="2" />
+                </el-select>
+              </template>
+            </el-table-column>
+            <el-table-column label="可核销次数" width="120">
+              <template #default="{ row }">
+                <el-input-number v-model="row.useTimes" :min="1" size="small" style="width:100%" :disabled="row.ticketType !== 2" />
+              </template>
+            </el-table-column>
             <el-table-column label="限购" width="100">
               <template #default="{ row }">
                 <el-input-number v-model="row.limitBuy" :min="0" size="small" style="width:100%" />
@@ -324,7 +337,7 @@ const openSkuDrawer = async (row) => {
     getSkuList({ productId: row.ID, page: 1, pageSize: 100 }),
     getRuleByProduct({ productId: row.ID })
   ])
-  skuList.value = (skuRes.code === 0 && skuRes.data.list) ? skuRes.data.list.map((s) => ({ ...s, marketPrice: s.marketPrice ?? undefined })) : []
+  skuList.value = (skuRes.code === 0 && skuRes.data.list) ? skuRes.data.list.map((s) => ({ ...s, marketPrice: s.marketPrice ?? undefined, ticketType: s.ticketType || 1, useTimes: s.useTimes || 1 })) : []
   ruleList.value = (ruleRes.code === 0 && ruleRes.data) ? ruleRes.data.map((r) => ({ ...r })) : []
   activeTab.value = 'sku'
 }
@@ -335,11 +348,19 @@ function addSkuRow() {
     name: '',
     price: 0,
     marketPrice: undefined,
+    ticketType: 1,
+    useTimes: 1,
     limitBuy: 0,
     sort: 0,
     status: 1,
     bookingNotice: ''
   })
+}
+
+function onTicketTypeChange(row) {
+  if (row.ticketType === 1) {
+    row.useTimes = 1
+  }
 }
 
 async function deleteSkuRow(row) {
@@ -367,6 +388,8 @@ const saveSkuAndRule = async () => {
       name: s.name,
       price: Number(s.price),
       marketPrice: s.marketPrice != null ? Number(s.marketPrice) : null,
+      ticketType: s.ticketType ?? 1,
+      useTimes: s.ticketType === 2 ? (Number(s.useTimes) || 1) : 1,
       limitBuy: Number(s.limitBuy) || 0,
       sort: Number(s.sort) || 0,
       status: s.status ?? 1,
