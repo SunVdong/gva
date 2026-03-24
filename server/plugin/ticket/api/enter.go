@@ -10,7 +10,6 @@ var (
 	serviceScenicOpenTime = service.Service.ScenicOpenTime
 	serviceProduct       = service.Service.Product
 	serviceSku           = service.Service.Sku
-	serviceAudience      = service.Service.Audience
 	serviceRule          = service.Service.Rule
 	serviceCalendar      = service.Service.Calendar
 	serviceUser          = service.Service.User
@@ -23,7 +22,6 @@ type api struct {
 	ScenicOpenTime scenicOpenTimeApi
 	Product        ticketProductApi
 	Sku            ticketSkuApi
-	Audience       ticketAudienceApi
 	Rule           ticketRuleApi
 	Calendar       ticketCalendarApi
 	User           ticketUserApi

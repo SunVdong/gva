@@ -16,7 +16,6 @@ func Gorm(ctx context.Context) {
 		new(model.ScenicOpenTime),
 		new(model.TicketProduct),
 		new(model.TicketSku),
-		new(model.TicketAudience),
 		new(model.TicketRule),
 		new(model.TicketCalendar),
 		new(model.TicketOrder),

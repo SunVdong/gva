@@ -7,7 +7,6 @@ type service struct {
 	ScenicOpenTime scenicOpenTime
 	Product        ticketProduct
 	Sku            ticketSku
-	Audience       ticketAudience
 	Rule           ticketRule
 	Calendar       ticketCalendar
 	User           ticketUser

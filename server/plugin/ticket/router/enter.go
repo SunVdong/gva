@@ -10,7 +10,6 @@ type router struct {
 	Product        productRouter
 	Sku            skuRouter
 	Rule           ruleRouter
-	Audience       audienceRouter
 	Calendar       calendarRouter
 	User           userRouter
 	Order          orderRouter
@@ -24,7 +23,6 @@ func (r *router) Init(public *gin.RouterGroup, private *gin.RouterGroup) {
 	r.Product.Init(public, private)
 	r.Sku.Init(public, private)
 	r.Rule.Init(public, private)
-	r.Audience.Init(public, private)
 	r.Calendar.Init(public, private)
 	r.User.Init(public, private)
 	r.Order.Init(public, private)

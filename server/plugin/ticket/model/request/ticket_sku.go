@@ -10,9 +10,3 @@ type TicketSkuSearch struct {
 	Status    *int `json:"status" form:"status"`
 	request.PageInfo
 }
-
-// TicketAudienceItem 适用人群项
-type TicketAudienceItem struct {
-	AudienceType string `json:"audienceType"`
-	Description  string `json:"description"`
-}

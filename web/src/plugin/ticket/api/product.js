@@ -20,9 +20,6 @@ export const getSkuList = (params) => service({ url: '/ticket/sku/getSkuList', m
 export const getRuleByProduct = (params) => service({ url: '/ticket/rule/getByProduct', method: 'get', params })
 export const saveRule = (data) => service({ url: '/ticket/rule/save', method: 'post', data })
 
-/** 适用人群 */
-export const getAudienceBySku = (params) => service({ url: '/ticket/audience/getBySku', method: 'get', params })
-export const saveAudience = (data) => service({ url: '/ticket/audience/save', method: 'post', data })
 
 /** 日历库存 */
 export const getCalendarBySku = (params) => service({ url: '/ticket/calendar/getBySku', method: 'get', params })
