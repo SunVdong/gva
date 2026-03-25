@@ -15,25 +15,40 @@
 
       <template #file="{ file }">
         <div class="file-card">
-          <template v-if="isVideo(file)">
-            <video
+          <template v-if="file._rawUrl">
+            <template v-if="isVideo(file)">
+              <video
+                :src="file.url"
+                class="thumb"
+                muted
+                preload="metadata"
+              />
+              <div class="video-badge">
+                <el-icon :size="16"><VideoPlay /></el-icon>
+              </div>
+            </template>
+            <el-image
+              v-else
               :src="file.url"
+              fit="cover"
               class="thumb"
-              muted
-              preload="metadata"
             />
-            <div class="video-badge">
-              <el-icon :size="16"><VideoPlay /></el-icon>
-            </div>
           </template>
-          <el-image
-            v-else
-            :src="file.url"
-            fit="cover"
-            class="thumb"
-          />
+          <div v-else class="file-card-loading">
+            <el-icon class="is-loading" :size="28">
+              <Loading />
+            </el-icon>
+            <span
+              v-if="file.status === 'uploading' && file.percentage != null"
+              class="upload-percent"
+            >{{ Math.round(file.percentage) }}%</span>
+          </div>
           <span class="actions">
-            <span class="action-btn" @click.stop="handlePreview(file)">
+            <span
+              v-if="file._rawUrl"
+              class="action-btn"
+              @click.stop="handlePreview(file)"
+            >
               <el-icon><ZoomIn /></el-icon>
             </span>
             <span class="action-btn" @click.stop="handleCardRemove(file)">
@@ -71,7 +86,7 @@
 <script setup>
   import { ref, watch, computed } from 'vue'
   import { ElMessage } from 'element-plus'
-  import { Plus, ZoomIn, Delete, VideoPlay } from '@element-plus/icons-vue'
+  import { Plus, ZoomIn, Delete, VideoPlay, Loading } from '@element-plus/icons-vue'
   import { getUrl, isImageMime, isVideoExt } from '@/utils/image'
   import service from '@/utils/request'
 
@@ -181,6 +196,9 @@
   const previewIsVideo = ref(false)
 
   const handlePreview = (file) => {
+    if (!file._rawUrl) {
+      return
+    }
     const url = file.url || getUrl(file._rawUrl)
     previewUrl.value = url
     previewIsVideo.value = isVideo(file)
@@ -272,6 +290,23 @@
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+.file-card-loading {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--el-fill-color-light);
+  color: var(--el-color-primary);
+}
+
+.file-card-loading .upload-percent {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
 }
 
 .file-card .video-badge {
