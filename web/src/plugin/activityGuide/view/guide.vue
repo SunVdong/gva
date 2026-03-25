@@ -274,10 +274,26 @@ const handleSelectionChange = (val) => {
   multipleSelection.value = val
 }
 
+const parseRowMedia = (media) => {
+  if (Array.isArray(media)) return media
+  if (media) {
+    try {
+      return JSON.parse(media)
+    } catch {
+      return []
+    }
+  }
+  return []
+}
+
 const toggleShowStatus = async (row, val) => {
   try {
     const res = await updateGuide({
       ID: row.ID,
+      name: row.name,
+      summary: row.summary,
+      coverImage: row.coverImage ?? '',
+      media: parseRowMedia(row.media),
       showStatus: val
     })
     if (res.code === 0) {
