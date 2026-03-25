@@ -138,9 +138,9 @@
           <el-input
             v-model="formData.summary"
             type="textarea"
-            :rows="3"
+            :rows="6"
             placeholder="请输入简介"
-            maxlength="500"
+            maxlength="300"
             show-word-limit
           />
         </el-form-item>
