@@ -19,6 +19,7 @@
   "/src/view/example/index.vue": "Example",
   "/src/view/example/upload/scanUpload.vue": "scanUpload",
   "/src/view/example/upload/upload.vue": "Upload",
+  "/src/view/feedback/index.vue": "Index",
   "/src/view/flowerGuide/index.vue": "FlowerGuide",
   "/src/view/init/index.vue": "Init",
   "/src/view/layout/aside/asideComponent/asyncSubmenu.vue": "AsyncSubmenu",

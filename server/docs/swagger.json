@@ -6161,6 +6161,114 @@
                 }
             }
         },
+        "/mini/feedback": {
+            "get": {
+                "description": "分页返回当前登录用户的反馈记录，仅本人；须请求头携带 x-token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "小程序"
+                ],
+                "summary": "本人反馈列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "小程序登录后返回的 token（必填）",
+                        "name": "x-token",
+                        "in": "header"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "页码，默认 1",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "每页条数，默认 10，最大 100",
+                        "name": "pageSize",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "data.list 为反馈列表项（含 ID、content、CreatedAt 等）",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.PageResult"
+                                        },
+                                        "msg": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "须先登录，请求头携带 x-token；正文 1～2000 字",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "小程序"
+                ],
+                "summary": "新增意见反馈",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "小程序登录后返回的 token（必填，与 wx 请求头一致）",
+                        "name": "x-token",
+                        "in": "header"
+                    },
+                    {
+                        "description": "请求体",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "提交成功",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "msg": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/mini/genToken": {
             "get": {
                 "description": "生成一个包含测试用户信息的 JWT，用于本地调试，可直接作为 x-token 使用",
@@ -9951,7 +10059,7 @@
                         "required": true
                     },
                     {
-                        "description": "订单信息（bookerName、bookerPhone、items）",
+                        "description": "订单信息（bookerName、bookerPhone、skuId、quantity、visitDate）",
                         "name": "data",
                         "in": "body",
                         "required": true,
@@ -9987,7 +10095,7 @@
         },
         "/ticket/mini/order/detail": {
             "get": {
-                "description": "小程序端获取订单详情及订单项，仅限当前登录用户自己的订单",
+                "description": "小程序端获取订单详情，仅限当前登录用户自己的订单",
                 "consumes": [
                     "application/json"
                 ],
@@ -12360,7 +12468,42 @@
             }
         },
         "model.Venue": {
-            "type": "object"
+            "type": "object",
+            "properties": {
+                "ID": {
+                    "description": "主键ID",
+                    "type": "integer"
+                },
+                "carouselImages": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "createdAt": {
+                    "description": "创建时间",
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "refundChangeHours": {
+                    "type": "integer"
+                },
+                "reserveRules": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "description": "更新时间",
+                    "type": "string"
+                }
+            }
         },
         "model.VenueCalendar": {
             "type": "object",
@@ -13203,7 +13346,9 @@
             "required": [
                 "bookerName",
                 "bookerPhone",
-                "items"
+                "quantity",
+                "skuId",
+                "visitDate"
             ],
             "properties": {
                 "bookerName": {
@@ -13212,23 +13357,6 @@
                 "bookerPhone": {
                     "type": "string"
                 },
-                "items": {
-                    "type": "array",
-                    "minItems": 1,
-                    "items": {
-                        "$ref": "#/definitions/request.MiniOrderItem"
-                    }
-                }
-            }
-        },
-        "request.MiniOrderItem": {
-            "type": "object",
-            "required": [
-                "quantity",
-                "skuId",
-                "visitDate"
-            ],
-            "properties": {
                 "quantity": {
                     "type": "integer",
                     "minimum": 1

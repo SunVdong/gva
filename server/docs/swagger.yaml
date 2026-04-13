@@ -921,6 +921,30 @@ definitions:
         type: integer
     type: object
   model.Venue:
+    properties:
+      ID:
+        description: 主键ID
+        type: integer
+      carouselImages:
+        items:
+          type: integer
+        type: array
+      createdAt:
+        description: 创建时间
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      refundChangeHours:
+        type: integer
+      reserveRules:
+        type: string
+      status:
+        type: integer
+      updatedAt:
+        description: 更新时间
+        type: string
     type: object
   model.VenueCalendar:
     properties:
@@ -1520,18 +1544,6 @@ definitions:
         type: string
       bookerPhone:
         type: string
-      items:
-        items:
-          $ref: '#/definitions/request.MiniOrderItem'
-        minItems: 1
-        type: array
-    required:
-    - bookerName
-    - bookerPhone
-    - items
-    type: object
-  request.MiniOrderItem:
-    properties:
       quantity:
         minimum: 1
         type: integer
@@ -1541,6 +1553,8 @@ definitions:
         description: YYYY-MM-DD
         type: string
     required:
+    - bookerName
+    - bookerPhone
     - quantity
     - skuId
     - visitDate
@@ -6001,6 +6015,71 @@ paths:
       summary: 更新菜单
       tags:
       - Menu
+  /mini/feedback:
+    get:
+      consumes:
+      - application/json
+      description: 分页返回当前登录用户的反馈记录，仅本人；须请求头携带 x-token
+      parameters:
+      - description: 小程序登录后返回的 token（必填）
+        in: header
+        name: x-token
+        type: string
+      - description: 页码，默认 1
+        in: query
+        name: page
+        type: integer
+      - description: 每页条数，默认 10，最大 100
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: data.list 为反馈列表项（含 ID、content、CreatedAt 等）
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.PageResult'
+                msg:
+                  type: string
+              type: object
+      summary: 本人反馈列表
+      tags:
+      - 小程序
+    post:
+      consumes:
+      - application/json
+      description: 须先登录，请求头携带 x-token；正文 1～2000 字
+      parameters:
+      - description: 小程序登录后返回的 token（必填，与 wx 请求头一致）
+        in: header
+        name: x-token
+        type: string
+      - description: 请求体
+        in: body
+        name: data
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 提交成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      summary: 新增意见反馈
+      tags:
+      - 小程序
   /mini/genToken:
     get:
       description: 生成一个包含测试用户信息的 JWT，用于本地调试，可直接作为 x-token 使用
@@ -8231,7 +8310,7 @@ paths:
         name: x-token
         required: true
         type: string
-      - description: 订单信息（bookerName、bookerPhone、items）
+      - description: 订单信息（bookerName、bookerPhone、skuId、quantity、visitDate）
         in: body
         name: data
         required: true
@@ -8258,7 +8337,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: 小程序端获取订单详情及订单项，仅限当前登录用户自己的订单
+      description: 小程序端获取订单详情，仅限当前登录用户自己的订单
       parameters:
       - description: 小程序登录后返回的 token
         in: header

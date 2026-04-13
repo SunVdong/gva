@@ -5,4 +5,5 @@ type ApiGroup struct {
 	CommonApi
 	AuthApi
 	PayApi
+	FeedbackApi
 }

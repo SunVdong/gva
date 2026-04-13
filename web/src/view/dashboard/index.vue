@@ -7,7 +7,7 @@
       bg-slate-100/70 text-slate-900 shadow-sm ring-1 ring-slate-200/70
       dark:bg-slate-900/40 dark:text-white dark:ring-slate-700/50 dark:shadow-none"
     >
-      欢迎光临乐享悦岛管理后台
+      欢迎光临乐享江岛管理后台
     </div>
   </div>
 </template>

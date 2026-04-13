@@ -57,6 +57,7 @@ func Routers() *gin.Engine {
 
 	systemRouter := router.RouterGroupApp.System
 	exampleRouter := router.RouterGroupApp.Example
+	feedbackRouter := router.RouterGroupApp.Feedback
 	miniRouter := router.RouterGroupApp.Mini
 	// 如果想要不使用nginx代理前端网页，可以修改 web/.env.production 下的
 	// VUE_APP_BASE_API = /
@@ -118,7 +119,7 @@ func Routers() *gin.Engine {
 		exampleRouter.InitFileUploadAndDownloadRouter(PrivateGroup)         // 文件上传下载功能路由
 		exampleRouter.InitAttachmentCategoryRouterRouter(PrivateGroup)      // 文件上传下载分类
 		miniRouter.Init(PublicGroup, PrivateGroup)                          // 小程序端接口（挂 public，无需 JWT）
-
+		feedbackRouter.InitFeedbackRouter(PrivateGroup)                     // 意见反馈（业务）
 	}
 
 	//插件路由安装
@@ -126,6 +127,9 @@ func Routers() *gin.Engine {
 
 	// 注册业务路由
 	initBizRouter(PrivateGroup, PublicGroup)
+
+	// 意见反馈 API 写入 sys_apis（与 activityGuide 的 RegisterApis 方式一致，便于已有库勾选权限）
+	RegisterFeedbackApis()
 
 	global.GVA_ROUTERS = Router.Routes()
 

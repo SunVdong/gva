@@ -47,6 +47,6 @@ var (
 	autoCodeTemplateApi = api.ApiGroupApp.SystemApiGroup.AutoCodeTemplateApi
 	exportTemplateApi   = api.ApiGroupApp.SystemApiGroup.SysExportTemplateApi
 	sysVersionApi       = api.ApiGroupApp.SystemApiGroup.SysVersionApi
-	sysErrorApi         = api.ApiGroupApp.SystemApiGroup.SysErrorApi
-	skillsApi           = api.ApiGroupApp.SystemApiGroup.SkillsApi
+	sysErrorApi = api.ApiGroupApp.SystemApiGroup.SysErrorApi
+	skillsApi   = api.ApiGroupApp.SystemApiGroup.SkillsApi
 )

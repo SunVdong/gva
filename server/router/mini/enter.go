@@ -10,9 +10,10 @@ type RouterGroup struct {
 }
 
 var (
-	commonApi = api.ApiGroupApp.MiniApiGroup.CommonApi
-	authApi   = api.ApiGroupApp.MiniApiGroup.AuthApi
-	payApi    = api.ApiGroupApp.MiniApiGroup.PayApi
+	commonApi    = api.ApiGroupApp.MiniApiGroup.CommonApi
+	authApi      = api.ApiGroupApp.MiniApiGroup.AuthApi
+	payApi       = api.ApiGroupApp.MiniApiGroup.PayApi
+	feedbackMini = api.ApiGroupApp.MiniApiGroup.FeedbackApi
 )
 
 // Init 注册小程序路由，供 initialize/router 调用
