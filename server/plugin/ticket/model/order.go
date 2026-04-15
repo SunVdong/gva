@@ -24,7 +24,8 @@ type TicketOrder struct {
 	Status        int        `json:"status" gorm:"column:status;comment:订单状态0待支付1待核销2已核销3已取消4已过期5已关闭;default:0;"`
 	TotalUseTimes int        `json:"totalUseTimes" gorm:"column:total_use_times;default:0;comment:总可核销次数;"`
 	VerifiedTimes int        `json:"verifiedTimes" gorm:"column:verified_times;default:0;comment:已核销次数;"`
-	PayTime       *time.Time `json:"payTime" gorm:"column:pay_time;comment:支付时间;"`
+	PayTime          *time.Time `json:"payTime" gorm:"column:pay_time;comment:支付时间;"`
+	WxTransactionID  string     `json:"wxTransactionId" gorm:"column:wx_transaction_id;size:64;index;comment:微信支付订单号transaction_id;"`
 	VerifiedAt    *time.Time `json:"verifiedAt" gorm:"column:verified_at;comment:核销时间;"`
 	ProductName string     `json:"productName" gorm:"-"`
 }

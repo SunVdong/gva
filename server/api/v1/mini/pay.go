@@ -114,31 +114,89 @@ func (a *PayApi) Notify(c *gin.Context) {
 	}
 }
 
-// applyTicketOrderPayNotify 验金额与订单一致后再置为已支付；已支付且金额一致则幂等通过。
+// applyTicketOrderPayNotify 验金额、微信订单号，更新或幂等；依赖 wx_transaction_id 区分「同一笔支付重复通知」与「不同支付」。
 func applyTicketOrderPayNotify(orderNo string, result *mini.PaidNotifyResult) error {
 	if result.TotalFee <= 0 {
 		return fmt.Errorf("回调金额无效")
+	}
+	if result.TransactionID == "" {
+		return fmt.Errorf("缺少微信订单号 transaction_id")
 	}
 	var order ticketModel.TicketOrder
 	if err := global.GVA_DB.Where("order_no = ?", orderNo).First(&order).Error; err != nil {
 		return fmt.Errorf("订单不存在")
 	}
+	if err := ticketPayNotifyAssertAmountAndTx(&order, result); err != nil {
+		return err
+	}
+	switch order.Status {
+	case 1:
+		return ticketPayNotifyIdempotentPaid(&order, result)
+	case 0:
+		now := time.Now()
+		res := global.GVA_DB.Model(&ticketModel.TicketOrder{}).
+			Where("order_no = ? AND status = ?", orderNo, 0).
+			Updates(map[string]interface{}{
+				"status":              1,
+				"pay_time":            now,
+				"wx_transaction_id":   result.TransactionID,
+			})
+		if res.Error != nil {
+			return res.Error
+		}
+		if res.RowsAffected > 0 {
+			return nil
+		}
+		// 并发：另一请求已把订单置为已支付
+		if err := global.GVA_DB.Where("order_no = ?", orderNo).First(&order).Error; err != nil {
+			return fmt.Errorf("订单不存在")
+		}
+		return ticketPayNotifyIdempotentPaid(&order, result)
+	default:
+		return fmt.Errorf("订单状态不允许确认支付: status=%d", order.Status)
+	}
+}
+
+func ticketPayNotifyAssertAmountAndTx(order *ticketModel.TicketOrder, result *mini.PaidNotifyResult) error {
 	expectedFen := int(math.Round(order.PayAmount * 100))
 	if result.TotalFee != expectedFen {
 		return fmt.Errorf("支付金额与订单不一致: 订单应付%d分, 通知%d分", expectedFen, result.TotalFee)
 	}
-	switch order.Status {
-	case 1: // 已支付，回调重复投递
-		return nil
-	case 0:
-		now := time.Now()
-		return global.GVA_DB.Model(&ticketModel.TicketOrder{}).
-			Where("order_no = ? AND status = ?", orderNo, 0).
-			Updates(map[string]interface{}{
-				"status":   1,
-				"pay_time": now,
-			}).Error
-	default:
-		return fmt.Errorf("订单状态不允许确认支付: status=%d", order.Status)
+	if order.WxTransactionID != "" && order.WxTransactionID != result.TransactionID {
+		return fmt.Errorf("微信订单号与已支付记录不一致")
 	}
+	return nil
+}
+
+// ticketPayNotifyIdempotentPaid 订单已为已支付：仅允许同一 transaction_id（或补写历史空字段）的重复通知。
+func ticketPayNotifyIdempotentPaid(order *ticketModel.TicketOrder, result *mini.PaidNotifyResult) error {
+	if order.Status != 1 {
+		return fmt.Errorf("订单状态异常: status=%d", order.Status)
+	}
+	if err := ticketPayNotifyAssertAmountAndTx(order, result); err != nil {
+		return err
+	}
+	if order.WxTransactionID == result.TransactionID {
+		return nil
+	}
+	if order.WxTransactionID != "" {
+		return fmt.Errorf("微信订单号与已支付记录不一致")
+	}
+	res := global.GVA_DB.Model(&ticketModel.TicketOrder{}).
+		Where("order_no = ? AND status = ? AND wx_transaction_id = ?", order.OrderNo, 1, "").
+		Update("wx_transaction_id", result.TransactionID)
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected > 0 {
+		return nil
+	}
+	var fresh ticketModel.TicketOrder
+	if err := global.GVA_DB.Where("order_no = ?", order.OrderNo).First(&fresh).Error; err != nil {
+		return fmt.Errorf("订单不存在")
+	}
+	if fresh.WxTransactionID != result.TransactionID {
+		return fmt.Errorf("微信订单号与已支付记录不一致")
+	}
+	return nil
 }
