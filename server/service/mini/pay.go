@@ -30,9 +30,8 @@ type JSAPIParams struct {
 const MockPaySign = "MOCK_SIMULATION"
 
 var (
-	wxV3Mu      sync.Mutex
-	wxV3Client  *wxv3.ClientV3
-	wxV3InitErr error
+	wxV3Mu     sync.Mutex
+	wxV3Client *wxv3.ClientV3
 )
 
 func loadMchPrivateKeyPEM(m *config.Miniprogram) (string, error) {
@@ -60,6 +59,8 @@ func isPayConfigured() bool {
 	return true
 }
 
+// getWxV3Client 懒加载微信 V3 客户端；仅在成功拉取平台证书后缓存。
+// 初始化失败不缓存错误：网络恢复或修正配置后，下一次请求会自动重试，无需重启进程。
 func getWxV3Client() (*wxv3.ClientV3, error) {
 	if !isPayConfigured() {
 		return nil, fmt.Errorf("微信支付未配置完整（需 app-id、mch-id、api-v3-key、mch-api-serial-no、notify-url 及商户私钥）")
@@ -69,23 +70,17 @@ func getWxV3Client() (*wxv3.ClientV3, error) {
 	if wxV3Client != nil {
 		return wxV3Client, nil
 	}
-	if wxV3InitErr != nil {
-		return nil, wxV3InitErr
-	}
 	pemStr, err := loadMchPrivateKeyPEM(&global.GVA_CONFIG.Miniprogram)
 	if err != nil {
-		wxV3InitErr = err
 		return nil, err
 	}
 	m := &global.GVA_CONFIG.Miniprogram
 	cli, err := wxv3.NewClientV3(m.MchID, m.MchAPIv3SerialNo, m.APIv3Key, pemStr)
 	if err != nil {
-		wxV3InitErr = err
 		return nil, err
 	}
 	if err := cli.AutoVerifySign(); err != nil {
-		wxV3InitErr = fmt.Errorf("同步微信平台证书失败（请检查商户号、证书序列号、私钥与网络）: %w", err)
-		return nil, wxV3InitErr
+		return nil, fmt.Errorf("同步微信平台证书失败（请检查商户号、证书序列号、私钥与网络）: %w", err)
 	}
 	wxV3Client = cli
 	return wxV3Client, nil
