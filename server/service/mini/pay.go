@@ -26,9 +26,6 @@ type JSAPIParams struct {
 	PaySign   string `json:"paySign"`
 }
 
-// MockPaySign 模拟支付时返回的 paySign，前端可据此判断为模拟、不调 wx.requestPayment
-const MockPaySign = "MOCK_SIMULATION"
-
 var (
 	wxV3Mu     sync.Mutex
 	wxV3Client *wxv3.ClientV3
@@ -87,16 +84,9 @@ func getWxV3Client() (*wxv3.ClientV3, error) {
 }
 
 // CreateJSAPI 使用微信支付 V3 创建 JSAPI/小程序预支付，返回 wx.requestPayment 所需参数。
-// 当支付未配置完整时返回模拟参数（PaySign 为 MOCK_SIMULATION），便于本地联调。
 func CreateJSAPI(outTradeNo string, totalFeeFen int64, body, openID, clientIP string) (*JSAPIParams, error) {
 	if !isPayConfigured() {
-		return &JSAPIParams{
-			TimeStamp: "0",
-			NonceStr:  "mock",
-			Package:   "prepay_id=mock",
-			SignType:  "RSA",
-			PaySign:   MockPaySign,
-		}, nil
+		return nil, fmt.Errorf("微信支付未配置完整（需 app-id、mch-id、api-v3-key、mch-api-serial-no、notify-url 及商户私钥）")
 	}
 	if totalFeeFen <= 0 {
 		return nil, fmt.Errorf("支付金额必须大于 0")

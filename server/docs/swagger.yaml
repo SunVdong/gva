@@ -6143,8 +6143,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: 根据订单类型与订单 ID 生成预支付单（微信 V3，signType RSA），返回小程序调起支付所需参数。需登录，请求头必带 x-token。未配置完整（app-id、mch-id、api-v3-key、mch-api-serial-no、notify-url、商户私钥）时返回模拟参数（data.mock=true），订单会直接置为已支付，便于联调；前端可根据
-        data.mock 或 data.paySign==\"MOCK_SIMULATION\" 跳过 wx.requestPayment 并提示模拟成功。
+      description: 根据订单类型与订单 ID 生成预支付单（微信 V3，signType RSA），返回小程序调起支付所需参数。需登录，请求头必带 x-token；须已完整配置微信支付，否则返回错误。
       parameters:
       - description: 小程序登录后返回的 token（必填）
         in: header
