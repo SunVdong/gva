@@ -1,7 +1,6 @@
 package mini
 
 import (
-	"io"
 	"time"
 
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
@@ -17,7 +16,7 @@ type PayApi struct{}
 // Create 调起微信支付（JSAPI），获取小程序 wx.requestPayment 所需参数
 // @Tags        小程序
 // @Summary     调起支付
-// @Description 根据订单类型与订单 ID 生成预支付单，返回小程序调起支付所需参数。需登录，请求头必带 x-token。未配置微信支付（mch-id/pay-key/notify-url）时返回模拟参数（data.mock=true），订单会直接置为已支付，便于联调；前端可根据 data.mock 或 data.paySign==\"MOCK_SIMULATION\" 跳过 wx.requestPayment 并提示模拟成功。
+// @Description 根据订单类型与订单 ID 生成预支付单（微信 V3），返回小程序调起支付所需参数（signType 为 RSA）。需登录，请求头必带 x-token。未配置完整（app-id、mch-id、api-v3-key、mch-api-serial-no、notify-url、商户私钥）时返回模拟参数（data.mock=true），订单会直接置为已支付，便于联调；前端可根据 data.mock 或 data.paySign==\"MOCK_SIMULATION\" 跳过 wx.requestPayment 并提示模拟成功。
 // @Accept      json
 // @Produce     json
 // @Param       x-token header string true "小程序登录后返回的 token（必填）"
@@ -91,16 +90,11 @@ func (a *PayApi) Create(c *gin.Context) {
 	}
 }
 
-// Notify 微信支付结果回调（由微信服务器调用，不展示在接口文档中）
+// Notify 微信支付 V3 结果回调（由微信服务器 POST JSON，不展示在接口文档中）
 func (a *PayApi) Notify(c *gin.Context) {
-	body, err := io.ReadAll(c.Request.Body)
+	result, err := mini.ParseAndVerifyPaidNotify(c.Request)
 	if err != nil {
-		c.XML(200, gin.H{"return_code": "FAIL", "return_msg": "读取body失败"})
-		return
-	}
-	result, err := mini.ParseAndVerifyPaidNotify(body)
-	if err != nil {
-		c.XML(200, gin.H{"return_code": "FAIL", "return_msg": err.Error()})
+		c.JSON(200, gin.H{"code": "FAIL", "message": err.Error()})
 		return
 	}
 	// 根据商户订单号更新业务订单（订单号前缀区分业务：T=门票）
@@ -114,9 +108,9 @@ func (a *PayApi) Notify(c *gin.Context) {
 				"pay_time": now,
 			})
 	}
-	c.Header("Content-Type", "application/xml")
-	c.Status(200)
+	c.Writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+	c.Writer.WriteHeader(200)
 	if err := mini.RespondPaidNotifySuccess(c.Writer); err != nil {
-		c.Writer.WriteString("<xml><return_code><![CDATA[FAIL]]></return_code><return_msg><![CDATA[响应失败]]></return_msg></xml>")
+		_, _ = c.Writer.Write([]byte(`{"code":"FAIL","message":"响应失败"}`))
 	}
 }

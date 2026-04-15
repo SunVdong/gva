@@ -278,11 +278,14 @@ cors:
           allow-credentials: true # 布尔值
 # 微信小程序（登录 + 支付，需在微信公众平台 / 微信支付商户平台配置）
 miniprogram:
-    app-id: ''       # 小程序 AppID
-    app-secret: ''   # 小程序 AppSecret
-    mch-id: ''       # 微信支付商户号（与小程序同主体）
-    pay-key: ''      # 支付 API 密钥（v2 密钥，商户平台设置）
-    notify-url: ''   # 支付结果回调地址，如 https://你的域名/api/mini/pay/notify
+    app-id: ''                    # 小程序 AppID
+    app-secret: ''              # 小程序 AppSecret
+    mch-id: ''                  # 微信支付商户号（与小程序同主体）
+    api-v3-key: ''              # APIv3 密钥（32 位，非 v2 的 pay-key）
+    mch-api-serial-no: ''       # 商户 API 证书序列号
+    mch-private-key: ''         # 商户 apiclient_key.pem 全文（可选，与 mch-private-key-file 二选一）
+    mch-private-key-file: ''    # 或填写私钥文件路径（相对工作目录或绝对路径）
+    notify-url: ''              # 支付结果回调，如 https://你的域名/api/mini/pay/notify
 
 mcp:
     name: GVA_MCP
