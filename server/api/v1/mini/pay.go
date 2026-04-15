@@ -1,6 +1,8 @@
 package mini
 
 import (
+	"fmt"
+	"math"
 	"time"
 
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
@@ -100,17 +102,43 @@ func (a *PayApi) Notify(c *gin.Context) {
 	// 根据商户订单号更新业务订单（订单号前缀区分业务：T=门票）
 	outTradeNo := result.OutTradeNo
 	if len(outTradeNo) >= 1 && outTradeNo[0] == 'T' {
-		now := time.Now()
-		global.GVA_DB.Model(&ticketModel.TicketOrder{}).
-			Where("order_no = ?", outTradeNo).
-			Updates(map[string]interface{}{
-				"status":   1,
-				"pay_time": now,
-			})
+		if err := applyTicketOrderPayNotify(outTradeNo, result); err != nil {
+			c.JSON(200, gin.H{"code": "FAIL", "message": err.Error()})
+			return
+		}
 	}
 	c.Writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 	c.Writer.WriteHeader(200)
 	if err := mini.RespondPaidNotifySuccess(c.Writer); err != nil {
 		_, _ = c.Writer.Write([]byte(`{"code":"FAIL","message":"响应失败"}`))
+	}
+}
+
+// applyTicketOrderPayNotify 验金额与订单一致后再置为已支付；已支付且金额一致则幂等通过。
+func applyTicketOrderPayNotify(orderNo string, result *mini.PaidNotifyResult) error {
+	if result.TotalFee <= 0 {
+		return fmt.Errorf("回调金额无效")
+	}
+	var order ticketModel.TicketOrder
+	if err := global.GVA_DB.Where("order_no = ?", orderNo).First(&order).Error; err != nil {
+		return fmt.Errorf("订单不存在")
+	}
+	expectedFen := int(math.Round(order.PayAmount * 100))
+	if result.TotalFee != expectedFen {
+		return fmt.Errorf("支付金额与订单不一致: 订单应付%d分, 通知%d分", expectedFen, result.TotalFee)
+	}
+	switch order.Status {
+	case 1: // 已支付，回调重复投递
+		return nil
+	case 0:
+		now := time.Now()
+		return global.GVA_DB.Model(&ticketModel.TicketOrder{}).
+			Where("order_no = ? AND status = ?", orderNo, 0).
+			Updates(map[string]interface{}{
+				"status":   1,
+				"pay_time": now,
+			}).Error
+	default:
+		return fmt.Errorf("订单状态不允许确认支付: status=%d", order.Status)
 	}
 }
