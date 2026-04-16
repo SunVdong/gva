@@ -63,6 +63,11 @@
             {{ row.CreatedAt ? formatDate(row.CreatedAt) : '-' }}
           </template>
         </el-table-column>
+        <el-table-column align="left" label="删除时间" width="170">
+          <template #default="{ row }">
+            {{ row.userDeletedAt ? formatDate(row.userDeletedAt) : '-' }}
+          </template>
+        </el-table-column>
         <el-table-column align="left" label="操作" fixed="right" width="100">
           <template #default="{ row }">
             <el-button type="primary" link @click="showDetail(row)">详情</el-button>
@@ -111,6 +116,7 @@
           </el-descriptions-item>
           <el-descriptions-item label="支付时间">{{ detail.order.payTime ? formatDate(detail.order.payTime) : '-' }}</el-descriptions-item>
           <el-descriptions-item label="创建时间">{{ detail.order.CreatedAt ? formatDate(detail.order.CreatedAt) : '-' }}</el-descriptions-item>
+          <el-descriptions-item label="用户删除时间">{{ detail.order.userDeletedAt ? formatDate(detail.order.userDeletedAt) : '-' }}</el-descriptions-item>
         </el-descriptions>
 
         <div class="text-sm font-medium mt-4">订单明细</div>
