@@ -29,9 +29,10 @@ type TicketOrder struct {
 	RefundNo         string     `json:"refundNo" gorm:"column:refund_no;size:64;index;comment:商户退款单号;"`
 	WxRefundID       string     `json:"wxRefundId" gorm:"column:wx_refund_id;size:64;comment:微信退款单号;"`
 	RefundTime       *time.Time `json:"refundTime" gorm:"column:refund_time;comment:退款时间;"`
-	VerifiedAt    *time.Time `json:"verifiedAt" gorm:"column:verified_at;comment:核销时间;"`
-	ProductName string     `json:"productName" gorm:"-"`
-	SkuTicketType int      `json:"skuTicketType" gorm:"-"`
+	VerifiedAt       *time.Time `json:"verifiedAt" gorm:"column:verified_at;comment:核销时间;"`
+	UserDeleted      bool       `json:"userDeleted" gorm:"column:user_deleted;default:false;comment:用户前台删除标记;"`
+	ProductName      string     `json:"productName" gorm:"-"`
+	SkuTicketType    int        `json:"skuTicketType" gorm:"-"`
 	SkuTicketTypeLabel string `json:"skuTicketTypeLabel" gorm:"-"`
 }
 

@@ -56,6 +56,41 @@ func (s *ticketOrder) GetList(req request.TicketOrderSearch) (list []model.Ticke
 	return
 }
 
+func (s *ticketOrder) GetMyList(req request.TicketOrderSearch) (list []model.TicketOrder, total int64, err error) {
+	db := global.GVA_DB.Model(&model.TicketOrder{}).Where("user_deleted = ?", false)
+	if req.OrderNo != "" {
+		db = db.Where("order_no LIKE ?", "%"+req.OrderNo+"%")
+	}
+	if req.UserID > 0 {
+		db = db.Where("user_id = ?", req.UserID)
+	}
+	if req.Status != nil {
+		db = db.Where("status = ?", *req.Status)
+	}
+	if req.OrderType != nil {
+		today := orderListToday()
+		switch *req.OrderType {
+		case "pending_payment", "待支付":
+			db = db.Where("status = ?", 0)
+		case "pending_verify", "待核销":
+			db = db.Where("status IN (?)", []int{1, 7}).
+				Where("visit_date >= ?", today)
+		case "completed", "已完成":
+			db = db.Where("status IN (?)", []int{2, 3, 4, 5, 6})
+		}
+	}
+	if err = db.Count(&total).Error; err != nil {
+		return
+	}
+	limit := req.PageSize
+	offset := req.PageSize * (req.Page - 1)
+	if limit != 0 {
+		db = db.Limit(limit).Offset(offset)
+	}
+	err = db.Order("id DESC").Find(&list).Error
+	return
+}
+
 // GetProductNamesByOrderIDs 批量获取订单对应的门票商品名称，返回 orderID -> productName
 func (s *ticketOrder) GetProductNamesByOrderIDs(orderIDs []uint) (map[uint]string, error) {
 	if len(orderIDs) == 0 {
@@ -157,6 +192,14 @@ func (s *ticketOrder) GetVerifyRecords(orderID uint) (records []model.OrderVerif
 
 func (s *ticketOrder) GetByID(id uint) (order model.TicketOrder, err error) {
 	if err = global.GVA_DB.Where("id = ?", id).First(&order).Error; err != nil {
+		return
+	}
+	s.fillProductName(&order)
+	return
+}
+
+func (s *ticketOrder) GetMyByID(id uint, userID uint) (order model.TicketOrder, err error) {
+	if err = global.GVA_DB.Where("id = ? AND user_id = ? AND user_deleted = ?", id, userID, false).First(&order).Error; err != nil {
 		return
 	}
 	s.fillProductName(&order)
@@ -328,7 +371,7 @@ func (s *ticketOrder) VerifyOrderByOrderNoPublic(orderNo string) error {
 	return s.VerifyOrder(order.ID)
 }
 
-// DeleteMyOrder 小程序端删除本人订单，仅允许删除已退款订单
+// DeleteMyOrder 小程序端删除本人订单，仅前台隐藏，后台仍保留
 func (s *ticketOrder) DeleteMyOrder(orderID uint, userID uint) error {
 	var order model.TicketOrder
 	if err := global.GVA_DB.Where("id = ?", orderID).First(&order).Error; err != nil || order.ID == 0 {
@@ -337,8 +380,13 @@ func (s *ticketOrder) DeleteMyOrder(orderID uint, userID uint) error {
 	if order.UserID != userID {
 		return fmt.Errorf("无权删除该订单")
 	}
+	if order.UserDeleted {
+		return fmt.Errorf("订单已删除")
+	}
 	if order.Status != 6 {
 		return fmt.Errorf("仅已退款订单可删除")
 	}
-	return global.GVA_DB.Delete(&model.TicketOrder{}, "id = ?", orderID).Error
+	return global.GVA_DB.Model(&model.TicketOrder{}).
+		Where("id = ? AND user_id = ?", orderID, userID).
+		Update("user_deleted", true).Error
 }

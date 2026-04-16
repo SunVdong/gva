@@ -70,7 +70,7 @@ func (a *miniOrderApi) MyList(c *gin.Context) {
 	if req.PageSize <= 0 || req.PageSize > 50 {
 		req.PageSize = 20
 	}
-	list, total, err := svcOrder.GetList(req)
+	list, total, err := svcOrder.GetMyList(req)
 	if err != nil {
 		response.FailWithMessage("获取失败", c)
 		return
@@ -147,13 +147,9 @@ func (a *miniOrderApi) Detail(c *gin.Context) {
 		response.FailWithMessage("参数错误", c)
 		return
 	}
-	order, err := svcOrder.GetByID(idReq.ID)
+	order, err := svcOrder.GetMyByID(idReq.ID, userID)
 	if err != nil || order.ID == 0 {
 		response.FailWithMessage("订单不存在", c)
-		return
-	}
-	if order.UserID != userID {
-		response.FailWithMessage("无权查看该订单", c)
 		return
 	}
 	totalUse := order.TotalUseTimes
@@ -195,7 +191,7 @@ func (a *miniOrderApi) Detail(c *gin.Context) {
 // Delete 小程序-删除订单（仅本人）
 // @Tags        小程序-景点
 // @Summary     删除订单
-// @Description 删除自己名下的订单，仅允许删除待支付或已取消订单
+// @Description 删除自己名下的订单，仅前台隐藏，后台仍保留，仅允许删除已退款订单
 // @Accept      json
 // @Produce     json
 // @Param       x-token header string false "小程序登录后返回的 token"
