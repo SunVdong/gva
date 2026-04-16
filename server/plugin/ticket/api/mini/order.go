@@ -1,13 +1,8 @@
 package mini
 
 import (
-	"strconv"
-	"strings"
-	"time"
-
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/ticket/model/request"
-	"github.com/flipped-aurora/gin-vue-admin/server/service/system"
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 	"github.com/gin-gonic/gin"
 )
@@ -173,27 +168,8 @@ func (a *miniOrderApi) Detail(c *gin.Context) {
 		"verifyRecords":  verifyRecords,
 	}
 
-	canRefund := false
-	var lastRefundAt interface{} = nil
-	limitHours := 0
-	if v, err := new(system.SysParamsService).GetSysParam("refund_limit_hours"); err == nil {
-		limitHours, _ = strconv.Atoi(strings.TrimSpace(v.Value))
-	}
-	if limitHours > 0 {
-		startAt := time.Date(order.VisitDate.Year(), order.VisitDate.Month(), order.VisitDate.Day(), 0, 0, 0, 0, time.Local)
-		last := startAt.Add(-time.Duration(limitHours) * time.Hour).Truncate(time.Hour)
-		lastRefundAt = last.Format("2006-01-02 15:00")
-
-		// 多次票部分核销后 verified_at 仍为空，需同时要求未发生过核销才可退款
-		if order.Status == 1 && order.VerifiedAt == nil && order.VerifiedTimes == 0 {
-			now := time.Now()
-			if now.Before(last) || now.Equal(last) {
-				canRefund = true
-			}
-		}
-	}
-	data["canRefund"] = canRefund
-	data["lastRefundAt"] = lastRefundAt
+	// 多次票部分核销后 verified_at 仍为空，需同时要求未发生过核销才可退款
+	data["canRefund"] = order.Status == 1 && order.VerifiedAt == nil && order.VerifiedTimes == 0
 
 	if order.Status == 2 && order.VerifiedAt != nil {
 		review, _ := svcOrderReview.GetByOrderID(order.ID)

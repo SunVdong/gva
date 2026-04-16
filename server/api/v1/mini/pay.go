@@ -3,7 +3,6 @@ package mini
 import (
 	"fmt"
 	"math"
-	"strconv"
 	"strings"
 	"time"
 
@@ -12,7 +11,6 @@ import (
 	userModel "github.com/flipped-aurora/gin-vue-admin/server/model/user"
 	ticketModel "github.com/flipped-aurora/gin-vue-admin/server/plugin/ticket/model"
 	"github.com/flipped-aurora/gin-vue-admin/server/service/mini"
-	"github.com/flipped-aurora/gin-vue-admin/server/service/system"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -206,7 +204,7 @@ func ticketPayNotifyIdempotentPaid(order *ticketModel.TicketOrder, result *mini.
 // Refund 申请退款（仅待核销且未发生过核销的订单可退，全额退款）
 // @Tags        小程序
 // @Summary     申请退款
-// @Description 对已支付但未核销的门票订单申请全额退款。需登录，请求头必带 x-token。若系统配置了 refund_limit_hours，则需在游玩日期前对应小时数之前申请。
+// @Description 对已支付但未核销的门票订单申请全额退款。需登录，请求头必带 x-token。
 // @Accept      json
 // @Produce     json
 // @Param       x-token header string true "小程序登录后返回的 token（必填）"
@@ -249,19 +247,6 @@ func (a *PayApi) Refund(c *gin.Context) {
 	if order.WxTransactionID == "" {
 		response.FailWithMessage("订单缺少微信支付信息，无法退款", c)
 		return
-	}
-
-	limitHours := 0
-	if v, err := new(system.SysParamsService).GetSysParam("refund_limit_hours"); err == nil {
-		limitHours, _ = strconv.Atoi(strings.TrimSpace(v.Value))
-	}
-	if limitHours > 0 {
-		startAt := time.Date(order.VisitDate.Year(), order.VisitDate.Month(), order.VisitDate.Day(), 0, 0, 0, 0, time.Local)
-		last := startAt.Add(-time.Duration(limitHours) * time.Hour).Truncate(time.Hour)
-		if time.Now().After(last) {
-			response.FailWithMessage(fmt.Sprintf("需在游玩日期前 %d 小时申请退款", limitHours), c)
-			return
-		}
 	}
 
 	totalFen := int(math.Round(order.PayAmount * 100))

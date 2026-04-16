@@ -6419,7 +6419,7 @@ const docTemplate = `{
         },
         "/mini/pay/refund": {
             "post": {
-                "description": "对已支付但未核销的门票订单申请全额退款。需登录，请求头必带 x-token。若系统配置了 refund_limit_hours，则需在游玩日期前对应小时数之前申请。",
+                "description": "对已支付但未核销的门票订单申请全额退款。需登录，请求头必带 x-token。",
                 "consumes": [
                     "application/json"
                 ],
