@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -45,22 +46,42 @@ func loadMchPrivateKeyPEM(m *config.Miniprogram) (string, error) {
 	return "", fmt.Errorf("未配置 mch-private-key 或 mch-private-key-file")
 }
 
-func isPayConfigured() bool {
+// payConfigMissingReason 若非空则说明支付配置未就绪，便于区分「写错文件」与「缺字段」。
+func payConfigMissingReason() string {
 	c := &global.GVA_CONFIG.Miniprogram
-	if c.AppID == "" || c.MchID == "" || c.NotifyURL == "" || c.APIv3Key == "" || c.MchAPIv3SerialNo == "" {
-		return false
+	var missing []string
+	if strings.TrimSpace(c.AppID) == "" {
+		missing = append(missing, "app-id")
 	}
-	if c.MchPrivateKey == "" && c.MchPrivateKeyFile == "" {
-		return false
+	if strings.TrimSpace(c.MchID) == "" {
+		missing = append(missing, "mch-id")
 	}
-	return true
+	if strings.TrimSpace(c.APIv3Key) == "" {
+		missing = append(missing, "api-v3-key")
+	}
+	if strings.TrimSpace(c.MchAPIv3SerialNo) == "" {
+		missing = append(missing, "mch-api-serial-no")
+	}
+	if strings.TrimSpace(c.NotifyURL) == "" {
+		missing = append(missing, "notify-url")
+	}
+	if strings.TrimSpace(c.MchPrivateKey) == "" && strings.TrimSpace(c.MchPrivateKeyFile) == "" {
+		missing = append(missing, "mch-private-key 或 mch-private-key-file")
+	}
+	if len(missing) == 0 {
+		return ""
+	}
+	return fmt.Sprintf(
+		"缺少或未生效字段: %s。请对照启动日志里「config 的路径」检查该文件中的 miniprogram 段；Gin release 且无 config.release.yaml 时会使用 config.yaml（不会自动读 config.debug.yaml）。可通过环境变量 GVA_CONFIG 或启动参数 -c 指向含支付配置的 yaml。",
+		strings.Join(missing, "、"),
+	)
 }
 
 // getWxV3Client 懒加载微信 V3 客户端；仅在成功拉取平台证书后缓存。
 // 初始化失败不缓存错误：网络恢复或修正配置后，下一次请求会自动重试，无需重启进程。
 func getWxV3Client() (*wxv3.ClientV3, error) {
-	if !isPayConfigured() {
-		return nil, fmt.Errorf("微信支付未配置完整（需 app-id、mch-id、api-v3-key、mch-api-serial-no、notify-url 及商户私钥）")
+	if r := payConfigMissingReason(); r != "" {
+		return nil, fmt.Errorf("微信支付未配置完整：%s", r)
 	}
 	wxV3Mu.Lock()
 	defer wxV3Mu.Unlock()
@@ -85,8 +106,8 @@ func getWxV3Client() (*wxv3.ClientV3, error) {
 
 // CreateJSAPI 使用微信支付 V3 创建 JSAPI/小程序预支付，返回 wx.requestPayment 所需参数。
 func CreateJSAPI(outTradeNo string, totalFeeFen int64, body, openID, clientIP string) (*JSAPIParams, error) {
-	if !isPayConfigured() {
-		return nil, fmt.Errorf("微信支付未配置完整（需 app-id、mch-id、api-v3-key、mch-api-serial-no、notify-url 及商户私钥）")
+	if r := payConfigMissingReason(); r != "" {
+		return nil, fmt.Errorf("微信支付未配置完整：%s", r)
 	}
 	if totalFeeFen <= 0 {
 		return nil, fmt.Errorf("支付金额必须大于 0")
@@ -149,8 +170,8 @@ type PaidNotifyResult struct {
 
 // ParseAndVerifyPaidNotify 解析并验签微信支付 V3 回调，解密 resource 后返回订单信息；失败返回 error。
 func ParseAndVerifyPaidNotify(req *http.Request) (*PaidNotifyResult, error) {
-	if !isPayConfigured() {
-		return nil, fmt.Errorf("微信支付未配置")
+	if r := payConfigMissingReason(); r != "" {
+		return nil, fmt.Errorf("微信支付未配置：%s", r)
 	}
 	client, err := getWxV3Client()
 	if err != nil {

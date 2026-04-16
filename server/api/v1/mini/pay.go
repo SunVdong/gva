@@ -130,9 +130,9 @@ func applyTicketOrderPayNotify(orderNo string, result *mini.PaidNotifyResult) er
 		res := global.GVA_DB.Model(&ticketModel.TicketOrder{}).
 			Where("order_no = ? AND status = ?", orderNo, 0).
 			Updates(map[string]interface{}{
-				"status":              1,
-				"pay_time":            now,
-				"wx_transaction_id":   result.TransactionID,
+				"status":            1,
+				"pay_time":          now,
+				"wx_transaction_id": result.TransactionID,
 			})
 		if res.Error != nil {
 			return res.Error
