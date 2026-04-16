@@ -11536,6 +11536,10 @@ const docTemplate = `{
                     "description": "支付结果回调，如 https://yourdomain.com/api/mini/pay/notify",
                     "type": "string"
                 },
+                "refund-notify-url": {
+                    "description": "退款结果回调，如 https://yourdomain.com/api/mini/pay/refund/notify（留空则由 notify-url 自动推导）",
+                    "type": "string"
+                },
                 "wx-pay-public-key": {
                     "description": "微信支付公钥内容（PEM）",
                     "type": "string"

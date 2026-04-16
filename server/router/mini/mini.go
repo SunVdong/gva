@@ -26,4 +26,5 @@ func (r *MiniRouter) Init(public, private *gin.RouterGroup) {
 	auth.POST("pay/create", payApi.Create) // 调起支付，需登录，返回 wx.requestPayment 参数
 	auth.POST("pay/refund", payApi.Refund) // 申请退款，需登录，仅待核销且未核销的订单可退
 	g.POST("pay/notify", payApi.Notify)    // 支付结果回调，由微信服务器调用
+	g.POST("pay/refund/notify", payApi.RefundNotify)
 }

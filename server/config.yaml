@@ -286,6 +286,7 @@ miniprogram:
     mch-private-key: ''         # 商户 apiclient_key.pem 全文（可选，与 mch-private-key-file 二选一）
     mch-private-key-file: ''    # 或填写私钥文件路径（相对工作目录或绝对路径）
     notify-url: ''              # 支付结果回调，如 https://你的域名/api/mini/pay/notify
+    refund-notify-url: ''       # 退款结果回调，如 https://你的域名/api/mini/pay/refund/notify（留空则根据 notify-url 自动推导）
     wx-pay-public-key: ''       # 微信支付公钥内容（PEM，商户平台-API安全申请）
     wx-pay-public-key-id: ''    # 微信支付公钥ID（需保留 PUB_KEY_ID_ 前缀）
 

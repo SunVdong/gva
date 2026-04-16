@@ -38,7 +38,7 @@ func (s *ticketOrder) GetList(req request.TicketOrderSearch) (list []model.Ticke
 		case "pending_payment", "待支付":
 			db = db.Where("status = ?", 0)
 		case "pending_verify", "待核销":
-			db = db.Where("status = ?", 1).
+			db = db.Where("status IN (?)", []int{1, 7}).
 				Where("visit_date >= ?", today)
 		case "completed", "已完成":
 			db = db.Where("status IN (?)", []int{2, 3, 4, 5, 6})
@@ -142,6 +142,8 @@ func (s *ticketOrder) OrderStatusLabel(order *model.TicketOrder) string {
 		return "已关闭"
 	case 6:
 		return "已退款"
+	case 7:
+		return "退款中"
 	default:
 		return "未知"
 	}

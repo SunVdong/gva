@@ -43,7 +43,7 @@ func (a *miniOrderApi) Create(c *gin.Context) {
 // MyList 小程序-我的订单列表（需登录）
 // @Tags        小程序-景点
 // @Summary     我的订单列表
-// @Description 按类型筛选：待支付、待核销、已完成（已完成含已核销/已取消/已过期/已关闭）；不传 orderType 返回全部。列表中每条订单带 statusLabel 表明状态。
+// @Description 按类型筛选：待支付、待核销、已完成（已完成含已核销/已取消/已过期/已关闭/已退款）；不传 orderType 返回全部。列表中每条订单带 statusLabel 表明状态。
 // @Accept      json
 // @Produce     json
 // @Param       x-token   header string false "小程序登录后返回的 token"

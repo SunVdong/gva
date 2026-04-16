@@ -248,6 +248,10 @@ func (a *PayApi) Refund(c *gin.Context) {
 		response.FailWithMessage("订单缺少微信支付信息，无法退款", c)
 		return
 	}
+	if order.RefundNo != "" {
+		response.FailWithMessage("退款处理中或已退款，请勿重复申请", c)
+		return
+	}
 
 	totalFen := int(math.Round(order.PayAmount * 100))
 	if totalFen <= 0 {
@@ -260,24 +264,162 @@ func (a *PayApi) Refund(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-
-	now := time.Now()
-	if err := global.GVA_DB.Model(&ticketModel.TicketOrder{}).
-		Where("id = ? AND status = ?", order.ID, 1).
-		Updates(map[string]interface{}{
-			"status":       6,
-			"refund_no":    refundNo,
-			"wx_refund_id": result.RefundID,
-			"refund_time":  now,
-		}).Error; err != nil {
-		response.FailWithMessage("退款成功但更新订单失败，请联系客服", c)
+	if err := ticketRefundMarkRequested(order.ID, refundNo, result.RefundID); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	if strings.ToUpper(result.Status) != "SUCCESS" {
+		response.OkWithMessage("退款申请已受理，请稍后查看结果", c)
+		return
+	}
+	if err := applyTicketOrderRefundSuccessByRefundNo(refundNo, result.RefundID, ""); err != nil {
+		response.FailWithMessage(err.Error(), c)
 		return
 	}
 
-	// 释放库存
-	global.GVA_DB.Model(&ticketModel.TicketCalendar{}).
-		Where("sku_id = ? AND visit_date = ?", order.SkuID, order.VisitDate).
-		UpdateColumn("sold", gorm.Expr("GREATEST(sold - ?, 0)", order.Quantity))
-
 	response.OkWithMessage("退款成功", c)
+}
+
+// RefundNotify 微信退款结果回调（由微信服务器 POST JSON，不展示在接口文档中）
+func (a *PayApi) RefundNotify(c *gin.Context) {
+	result, err := mini.ParseAndVerifyRefundNotify(c.Request)
+	if err != nil {
+		c.JSON(200, gin.H{"code": "FAIL", "message": err.Error()})
+		return
+	}
+	status := strings.ToUpper(strings.TrimSpace(result.RefundStatus))
+	switch status {
+	case "SUCCESS":
+		if err := applyTicketOrderRefundSuccessByRefundNo(result.OutRefundNo, result.RefundID, result.SuccessTime); err != nil {
+			c.JSON(200, gin.H{"code": "FAIL", "message": err.Error()})
+			return
+		}
+	case "CLOSED", "ABNORMAL":
+		if err := ticketRefundReleaseRequested(result.OutRefundNo); err != nil {
+			c.JSON(200, gin.H{"code": "FAIL", "message": err.Error()})
+			return
+		}
+	default:
+		// PROCESSING 等中间态，保持已受理状态，等待后续通知
+	}
+	c.JSON(200, gin.H{"code": "SUCCESS", "message": "成功"})
+}
+
+func ticketRefundMarkRequested(orderID uint, refundNo, wxRefundID string) error {
+	res := global.GVA_DB.Model(&ticketModel.TicketOrder{}).
+		Where("id = ? AND status = ? AND (refund_no = '' OR refund_no IS NULL OR refund_no = ?)", orderID, 1, refundNo).
+		Updates(map[string]interface{}{
+			"status":       7,
+			"refund_no":    refundNo,
+			"wx_refund_id": wxRefundID,
+		})
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected > 0 {
+		return nil
+	}
+
+	var fresh ticketModel.TicketOrder
+	if err := global.GVA_DB.Where("id = ?", orderID).First(&fresh).Error; err != nil {
+		return fmt.Errorf("订单不存在")
+	}
+	if fresh.Status == 6 {
+		return fmt.Errorf("订单已退款")
+	}
+	if fresh.Status == 7 && fresh.RefundNo == refundNo {
+		return nil
+	}
+	if fresh.RefundNo == refundNo {
+		return nil
+	}
+	if fresh.RefundNo != "" {
+		return fmt.Errorf("退款处理中或已退款，请勿重复申请")
+	}
+	return fmt.Errorf("订单状态已变更，请刷新后重试")
+}
+
+func ticketRefundReleaseRequested(refundNo string) error {
+	if strings.TrimSpace(refundNo) == "" {
+		return fmt.Errorf("缺少商户退款单号 out_refund_no")
+	}
+	res := global.GVA_DB.Model(&ticketModel.TicketOrder{}).
+		Where("refund_no = ? AND status = ?", refundNo, 7).
+		Updates(map[string]interface{}{
+			"status":       1,
+			"refund_no":    "",
+			"wx_refund_id": "",
+		})
+	if res.Error != nil {
+		return res.Error
+	}
+	return nil
+}
+
+func applyTicketOrderRefundSuccessByRefundNo(refundNo, refundID, successTime string) error {
+	if strings.TrimSpace(refundNo) == "" {
+		return fmt.Errorf("缺少商户退款单号 out_refund_no")
+	}
+	var order ticketModel.TicketOrder
+	if err := global.GVA_DB.Where("refund_no = ?", refundNo).First(&order).Error; err != nil {
+		return fmt.Errorf("退款对应订单不存在")
+	}
+
+	refundAt := time.Now()
+	if t, err := time.Parse(time.RFC3339, successTime); err == nil {
+		refundAt = t
+	}
+
+	if order.Status == 6 {
+		if order.WxRefundID != "" && refundID != "" && order.WxRefundID != refundID {
+			return fmt.Errorf("微信退款单号与已退款记录不一致")
+		}
+		if order.WxRefundID == "" && refundID != "" {
+			_ = global.GVA_DB.Model(&ticketModel.TicketOrder{}).Where("id = ?", order.ID).Update("wx_refund_id", refundID).Error
+		}
+		return nil
+	}
+	if order.Status != 1 && order.Status != 7 {
+		return fmt.Errorf("订单状态不允许确认退款: status=%d", order.Status)
+	}
+
+	return global.GVA_DB.Transaction(func(tx *gorm.DB) error {
+		updateRes := tx.Model(&ticketModel.TicketOrder{}).
+			Where("id = ? AND status IN (?) AND refund_no = ?", order.ID, []int{1, 7}, refundNo).
+			Updates(map[string]interface{}{
+				"status":       6,
+				"wx_refund_id": refundID,
+				"refund_time":  refundAt,
+			})
+		if updateRes.Error != nil {
+			return updateRes.Error
+		}
+		if updateRes.RowsAffected == 0 {
+			var fresh ticketModel.TicketOrder
+			if err := tx.Where("id = ?", order.ID).First(&fresh).Error; err != nil {
+				return fmt.Errorf("订单不存在")
+			}
+			if fresh.Status == 6 {
+				if fresh.WxRefundID != "" && refundID != "" && fresh.WxRefundID != refundID {
+					return fmt.Errorf("微信退款单号与已退款记录不一致")
+				}
+				return nil
+			}
+			if fresh.Status == 7 {
+				return fmt.Errorf("退款结果处理中，请稍后重试")
+			}
+			return fmt.Errorf("订单状态已变更，请刷新后重试")
+		}
+
+		calendarRes := tx.Model(&ticketModel.TicketCalendar{}).
+			Where("sku_id = ? AND visit_date = ? AND sold >= ?", order.SkuID, order.VisitDate, order.Quantity).
+			UpdateColumn("sold", gorm.Expr("sold - ?", order.Quantity))
+		if calendarRes.Error != nil {
+			return calendarRes.Error
+		}
+		if calendarRes.RowsAffected == 0 {
+			return fmt.Errorf("退款成功但回退库存失败，请联系客服")
+		}
+		return nil
+	})
 }

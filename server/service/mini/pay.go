@@ -110,6 +110,20 @@ func getWxV3Client() (*wxv3.ClientV3, error) {
 	return wxV3Client, nil
 }
 
+func refundNotifyURL() string {
+	if u := strings.TrimSpace(global.GVA_CONFIG.Miniprogram.RefundNotifyURL); u != "" {
+		return u
+	}
+	u := strings.TrimSpace(global.GVA_CONFIG.Miniprogram.NotifyURL)
+	if u == "" {
+		return ""
+	}
+	if strings.Contains(u, "/pay/notify") {
+		return strings.Replace(u, "/pay/notify", "/pay/refund/notify", 1)
+	}
+	return ""
+}
+
 // CreateJSAPI 使用微信支付 V3 创建 JSAPI/小程序预支付，返回 wx.requestPayment 所需参数。
 func CreateJSAPI(outTradeNo string, totalFeeFen int64, body, openID, clientIP string) (*JSAPIParams, error) {
 	if r := payConfigMissingReason(); r != "" {
@@ -235,6 +249,9 @@ func CreateRefund(transactionID, outRefundNo string, totalFen, refundFen int, re
 	bm := make(gopay.BodyMap)
 	bm.Set("transaction_id", transactionID).
 		Set("out_refund_no", outRefundNo)
+	if notifyURL := refundNotifyURL(); notifyURL != "" {
+		bm.Set("notify_url", notifyURL)
+	}
 	if reason != "" {
 		bm.Set("reason", reason)
 	}
@@ -257,5 +274,44 @@ func CreateRefund(transactionID, outRefundNo string, totalFen, refundFen int, re
 		RefundID:    wxRsp.Response.RefundId,
 		OutRefundNo: wxRsp.Response.OutRefundNo,
 		Status:      wxRsp.Response.Status,
+	}, nil
+}
+
+// RefundNotifyResult 退款回调解析结果
+type RefundNotifyResult struct {
+	OutRefundNo   string
+	RefundID      string
+	TransactionID string
+	RefundStatus  string
+	SuccessTime   string
+}
+
+// ParseAndVerifyRefundNotify 解析并验签微信支付 V3 退款回调。
+func ParseAndVerifyRefundNotify(req *http.Request) (*RefundNotifyResult, error) {
+	if r := payConfigMissingReason(); r != "" {
+		return nil, fmt.Errorf("微信支付未配置：%s", r)
+	}
+	client, err := getWxV3Client()
+	if err != nil {
+		return nil, err
+	}
+	notifyReq, err := wxv3.V3ParseNotify(req)
+	if err != nil {
+		return nil, fmt.Errorf("解析回调失败: %w", err)
+	}
+	if err := notifyReq.VerifySignByPKMap(client.WxPublicKeyMap()); err != nil {
+		return nil, fmt.Errorf("签名验证失败: %w", err)
+	}
+	m := &global.GVA_CONFIG.Miniprogram
+	refundRes, err := notifyReq.DecryptRefundCipherText(m.APIv3Key)
+	if err != nil {
+		return nil, fmt.Errorf("解密退款回调数据失败: %w", err)
+	}
+	return &RefundNotifyResult{
+		OutRefundNo:   refundRes.OutRefundNo,
+		RefundID:      refundRes.RefundId,
+		TransactionID: refundRes.TransactionId,
+		RefundStatus:  refundRes.RefundStatus,
+		SuccessTime:   refundRes.SuccessTime,
 	}, nil
 }
