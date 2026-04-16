@@ -12,8 +12,8 @@ const docTemplate = `{
         "contact": {},
         "version": "{{.Version}}"
     },
-    "host": "{{.Host}}",
-    "basePath": "{{.BasePath}}",
+    "host": "ac.whaoot.com",
+    "basePath": "/api",
     "paths": {
         "/activityGuide/mini/guide/detail": {
             "get": {

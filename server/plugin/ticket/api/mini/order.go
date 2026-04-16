@@ -88,6 +88,9 @@ func (a *miniOrderApi) MyList(c *gin.Context) {
 			totalUse = 1
 		}
 		remaining := totalUse - o.VerifiedTimes
+		if o.Status == 6 || o.Status == 7 {
+			remaining = 0
+		}
 		if remaining < 0 {
 			remaining = 0
 		}
@@ -158,6 +161,9 @@ func (a *miniOrderApi) Detail(c *gin.Context) {
 		totalUse = 1
 	}
 	remaining := totalUse - order.VerifiedTimes
+	if order.Status == 6 || order.Status == 7 {
+		remaining = 0
+	}
 	if remaining < 0 {
 		remaining = 0
 	}
