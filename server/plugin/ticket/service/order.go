@@ -53,6 +53,12 @@ func (s *ticketOrder) GetList(req request.TicketOrderSearch) (list []model.Ticke
 		db = db.Limit(limit).Offset(offset)
 	}
 	err = db.Order("id DESC").Find(&list).Error
+	if err != nil {
+		return
+	}
+	for i := range list {
+		s.fillProductName(&list[i])
+	}
 	return
 }
 
@@ -88,6 +94,12 @@ func (s *ticketOrder) GetMyList(req request.TicketOrderSearch) (list []model.Tic
 		db = db.Limit(limit).Offset(offset)
 	}
 	err = db.Order("id DESC").Find(&list).Error
+	if err != nil {
+		return
+	}
+	for i := range list {
+		s.fillProductName(&list[i])
+	}
 	return
 }
 

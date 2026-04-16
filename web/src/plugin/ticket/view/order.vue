@@ -31,6 +31,17 @@
         <el-table-column align="left" label="联系人" prop="bookerName" width="110" show-overflow-tooltip />
         <el-table-column align="left" label="联系电话" prop="bookerPhone" width="130" show-overflow-tooltip />
         <el-table-column align="left" label="用户ID" prop="userId" width="90" />
+        <el-table-column align="left" label="SKU名称" prop="skuName" min-width="140" show-overflow-tooltip />
+        <el-table-column align="left" label="票种" width="100">
+          <template #default="{ row }">
+            {{ row.skuTicketTypeLabel || '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column align="left" label="核销次数" width="110">
+          <template #default="{ row }">
+            {{ row.verifiedTimes ?? 0 }}/{{ row.totalUseTimes ?? 0 }}
+          </template>
+        </el-table-column>
         <el-table-column align="left" label="订单金额" width="100">
           <template #default="{ row }">
             ¥{{ (row.totalAmount ?? 0).toFixed(2) }}
@@ -126,6 +137,10 @@
         <div class="text-sm font-medium mt-4">订单明细</div>
         <el-descriptions :column="1" border>
           <el-descriptions-item label="门票名称">{{ detail.order.productName || detail.order.skuName || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="SKU名称">{{ detail.order.skuName || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="票种">{{ detail.order.skuTicketTypeLabel || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="总可核销次数">{{ detail.order.totalUseTimes ?? 0 }}</el-descriptions-item>
+          <el-descriptions-item label="已核销次数">{{ detail.order.verifiedTimes ?? 0 }}</el-descriptions-item>
           <el-descriptions-item label="单价">¥{{ (detail.order.price ?? 0).toFixed(2) }}</el-descriptions-item>
           <el-descriptions-item label="数量">{{ detail.order.quantity ?? '-' }}</el-descriptions-item>
           <el-descriptions-item label="小计">¥{{ ((detail.order.price ?? 0) * (detail.order.quantity ?? 0)).toFixed(2) }}</el-descriptions-item>
