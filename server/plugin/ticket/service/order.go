@@ -177,6 +177,17 @@ func (s *ticketOrder) fillProductName(order *model.TicketOrder) {
 		return
 	}
 	order.ProductName = product.Name
+	order.SkuTicketType = sku.TicketType
+	order.SkuTicketTypeLabel = ticketTypeLabel(sku.TicketType)
+}
+
+func ticketTypeLabel(ticketType int) string {
+	switch ticketType {
+	case 2:
+		return "多次票"
+	default:
+		return "单次票"
+	}
 }
 
 // GetByOrderNoPublic 根据订单号查询订单（公开给 H5 核销使用）

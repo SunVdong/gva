@@ -31,6 +31,8 @@ type TicketOrder struct {
 	RefundTime       *time.Time `json:"refundTime" gorm:"column:refund_time;comment:退款时间;"`
 	VerifiedAt    *time.Time `json:"verifiedAt" gorm:"column:verified_at;comment:核销时间;"`
 	ProductName string     `json:"productName" gorm:"-"`
+	SkuTicketType int      `json:"skuTicketType" gorm:"-"`
+	SkuTicketTypeLabel string `json:"skuTicketTypeLabel" gorm:"-"`
 }
 
 // TableName 表名

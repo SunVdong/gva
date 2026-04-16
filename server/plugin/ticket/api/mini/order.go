@@ -168,8 +168,7 @@ func (a *miniOrderApi) Detail(c *gin.Context) {
 		"verifyRecords":  verifyRecords,
 	}
 
-	// 多次票部分核销后 verified_at 仍为空，需同时要求未发生过核销才可退款
-	data["canRefund"] = order.Status == 1 && order.VerifiedAt == nil && order.VerifiedTimes == 0
+	data["canRefund"] = order.Status == 1
 
 	if order.Status == 2 && order.VerifiedAt != nil {
 		review, _ := svcOrderReview.GetByOrderID(order.ID)
