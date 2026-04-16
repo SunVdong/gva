@@ -8,6 +8,9 @@
         <el-form-item label="用户ID">
           <el-input-number v-model="searchInfo.userId" :min="0" placeholder="用户ID" clearable style="width: 120px" />
         </el-form-item>
+        <el-form-item label="联系电话">
+          <el-input v-model="searchInfo.bookerPhone" placeholder="联系电话" clearable />
+        </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="searchInfo.status" placeholder="全部" clearable style="width: 130px">
             <el-option label="待支付" :value="0" />
@@ -16,6 +19,8 @@
             <el-option label="已取消" :value="3" />
             <el-option label="已过期" :value="4" />
             <el-option label="已关闭" :value="5" />
+            <el-option label="已退款" :value="6" />
+            <el-option label="退款中" :value="7" />
           </el-select>
         </el-form-item>
         <el-form-item>

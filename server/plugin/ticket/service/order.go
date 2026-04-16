@@ -26,6 +26,9 @@ func (s *ticketOrder) GetList(req request.TicketOrderSearch) (list []model.Ticke
 	if req.OrderNo != "" {
 		db = db.Where("order_no LIKE ?", "%"+req.OrderNo+"%")
 	}
+	if req.BookerPhone != "" {
+		db = db.Where("booker_phone LIKE ?", "%"+req.BookerPhone+"%")
+	}
 	if req.UserID > 0 {
 		db = db.Where("user_id = ?", req.UserID)
 	}
@@ -66,6 +69,9 @@ func (s *ticketOrder) GetMyList(req request.TicketOrderSearch) (list []model.Tic
 	db := global.GVA_DB.Model(&model.TicketOrder{}).Where("user_deleted_at IS NULL")
 	if req.OrderNo != "" {
 		db = db.Where("order_no LIKE ?", "%"+req.OrderNo+"%")
+	}
+	if req.BookerPhone != "" {
+		db = db.Where("booker_phone LIKE ?", "%"+req.BookerPhone+"%")
 	}
 	if req.UserID > 0 {
 		db = db.Where("user_id = ?", req.UserID)
