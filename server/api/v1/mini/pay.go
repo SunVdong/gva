@@ -67,8 +67,8 @@ func (a *PayApi) Create(c *gin.Context) {
 			response.FailWithMessage("订单状态不允许支付", c)
 			return
 		}
-		// 金额转为分，微信单位是分
-		fen := int64(order.PayAmount * 100)
+		// 金额转为分，微信单位是分；须与 ticketPayNotifyAssertAmountAndTx 中 math.Round 一致，避免 float 误差导致下单与回调金额不一致
+		fen := int64(math.Round(order.PayAmount * 100))
 		if fen <= 0 {
 			response.FailWithMessage("订单金额异常", c)
 			return
