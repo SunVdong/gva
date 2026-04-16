@@ -11,4 +11,6 @@ type Miniprogram struct {
 	MchPrivateKey      string `mapstructure:"mch-private-key" json:"mch-private-key" yaml:"mch-private-key"`                 // 商户 API 私钥 PEM（apiclient_key.pem 全文，与 file 二选一）
 	MchPrivateKeyFile  string `mapstructure:"mch-private-key-file" json:"mch-private-key-file" yaml:"mch-private-key-file"` // 或填写私钥文件路径
 	NotifyURL          string `mapstructure:"notify-url" json:"notify-url" yaml:"notify-url"`                                 // 支付结果回调，如 https://yourdomain.com/api/mini/pay/notify
+	WxPayPublicKey     string `mapstructure:"wx-pay-public-key" json:"wx-pay-public-key" yaml:"wx-pay-public-key"`           // 微信支付公钥内容（PEM）
+	WxPayPublicKeyID   string `mapstructure:"wx-pay-public-key-id" json:"wx-pay-public-key-id" yaml:"wx-pay-public-key-id"` // 微信支付公钥ID（含 PUB_KEY_ID_ 前缀）
 }

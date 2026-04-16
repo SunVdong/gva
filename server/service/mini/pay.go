@@ -65,6 +65,12 @@ func payConfigMissingReason() string {
 	if strings.TrimSpace(c.NotifyURL) == "" {
 		missing = append(missing, "notify-url")
 	}
+	if strings.TrimSpace(c.WxPayPublicKey) == "" {
+		missing = append(missing, "wx-pay-public-key")
+	}
+	if strings.TrimSpace(c.WxPayPublicKeyID) == "" {
+		missing = append(missing, "wx-pay-public-key-id")
+	}
 	if strings.TrimSpace(c.MchPrivateKey) == "" && strings.TrimSpace(c.MchPrivateKeyFile) == "" {
 		missing = append(missing, "mch-private-key 或 mch-private-key-file")
 	}
@@ -97,8 +103,8 @@ func getWxV3Client() (*wxv3.ClientV3, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := cli.AutoVerifySign(); err != nil {
-		return nil, fmt.Errorf("同步微信平台证书失败（请检查商户号、证书序列号、私钥与网络）: %w", err)
+	if err := cli.AutoVerifySignByPublicKey([]byte(m.WxPayPublicKey), m.WxPayPublicKeyID); err != nil {
+		return nil, fmt.Errorf("加载微信支付公钥失败（请检查 wx-pay-public-key 与 wx-pay-public-key-id）: %w", err)
 	}
 	wxV3Client = cli
 	return wxV3Client, nil
