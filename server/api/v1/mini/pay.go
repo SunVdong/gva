@@ -3,6 +3,7 @@ package mini
 import (
 	"fmt"
 	"math"
+	"strings"
 	"time"
 
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
@@ -73,7 +74,9 @@ func (a *PayApi) Create(c *gin.Context) {
 			response.FailWithMessage("订单金额异常", c)
 			return
 		}
-		params, err := mini.CreateJSAPI(order.OrderNo, fen, "景点门票-"+order.OrderNo, openID, c.ClientIP())
+		// 每次发起支付使用不同的 out_trade_no，避免微信预支付单过期后同号不可复用
+		outTradeNo := fmt.Sprintf("%s_%d", order.OrderNo, time.Now().Unix())
+		params, err := mini.CreateJSAPI(outTradeNo, fen, "景点门票-"+order.OrderNo, openID, c.ClientIP())
 		if err != nil {
 			response.FailWithMessage(err.Error(), c)
 			return
@@ -92,19 +95,22 @@ func (a *PayApi) Notify(c *gin.Context) {
 		c.JSON(200, gin.H{"code": "FAIL", "message": err.Error()})
 		return
 	}
-	// 根据商户订单号更新业务订单（订单号前缀区分业务：T=门票）
-	outTradeNo := result.OutTradeNo
-	if len(outTradeNo) >= 1 && outTradeNo[0] == 'T' {
-		if err := applyTicketOrderPayNotify(outTradeNo, result); err != nil {
+	// 从 out_trade_no 提取真实订单号（pay/create 追加了 _unix 后缀以支持重复发起支付）
+	orderNo := result.OutTradeNo
+	if idx := strings.Index(orderNo, "_"); idx > 0 {
+		orderNo = orderNo[:idx]
+	}
+	// 根据订单号前缀区分业务：T=门票
+	if len(orderNo) >= 1 && orderNo[0] == 'T' {
+		if err := applyTicketOrderPayNotify(orderNo, result); err != nil {
 			c.JSON(200, gin.H{"code": "FAIL", "message": err.Error()})
 			return
 		}
+	} else {
+		c.JSON(200, gin.H{"code": "FAIL", "message": "未知的订单类型: " + result.OutTradeNo})
+		return
 	}
-	c.Writer.Header().Set("Content-Type", "application/json; charset=utf-8")
-	c.Writer.WriteHeader(200)
-	if err := mini.RespondPaidNotifySuccess(c.Writer); err != nil {
-		_, _ = c.Writer.Write([]byte(`{"code":"FAIL","message":"响应失败"}`))
-	}
+	c.JSON(200, gin.H{"code": "SUCCESS", "message": "成功"})
 }
 
 // applyTicketOrderPayNotify 验金额、微信订单号，更新或幂等；依赖 wx_transaction_id 区分「同一笔支付重复通知」与「不同支付」。

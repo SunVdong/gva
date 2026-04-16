@@ -203,6 +203,13 @@ func (s *ticketOrder) CreateOrder(userID uint, req request.MiniOrderCreate) (ord
 		if e != nil {
 			return fmt.Errorf("游玩日期格式错误")
 		}
+		{
+			now := time.Now()
+			today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
+			if visitDate.Before(today) {
+				return fmt.Errorf("游玩日期不能早于今天")
+			}
+		}
 		if sku.LimitBuy > 0 && req.Quantity > sku.LimitBuy {
 			return fmt.Errorf("门票 %s 每单限购 %d 张", sku.Name, sku.LimitBuy)
 		}
@@ -226,7 +233,7 @@ func (s *ticketOrder) CreateOrder(userID uint, req request.MiniOrderCreate) (ord
 		if useTimes <= 0 {
 			useTimes = 1
 		}
-		orderNo = "T" + time.Now().Format("20060102150405") + fmt.Sprintf("%04d", rand.Intn(10000))
+		orderNo = fmt.Sprintf("T%s%06d", time.Now().Format("20060102150405"), rand.Intn(1000000))
 		order = model.TicketOrder{
 			OrderNo:       orderNo,
 			UserID:        userID,
