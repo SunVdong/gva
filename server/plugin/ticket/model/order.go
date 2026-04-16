@@ -7,7 +7,7 @@ import (
 )
 
 // TicketOrder 订单表（一单一SKU，原 order_items 字段已合并）
-// 状态：0待支付 1待核销 2已核销 3已取消 4已过期 5已关闭（核销后 VerifiedAt 不为空，仅已核销订单可评价）
+// 状态：0待支付 1待核销 2已核销 3已取消 4已过期 5已关闭 6已退款（核销后 VerifiedAt 不为空，仅已核销订单可评价）
 type TicketOrder struct {
 	global.GVA_MODEL
 	OrderNo     string     `json:"orderNo" gorm:"column:order_no;comment:订单号;size:64;uniqueIndex;"`
@@ -21,11 +21,14 @@ type TicketOrder struct {
 	VisitDate   time.Time  `json:"visitDate" gorm:"column:visit_date;type:date;comment:游玩日期;"`
 	TotalAmount float64    `json:"totalAmount" gorm:"column:total_amount;type:decimal(10,2);comment:订单总金额;"`
 	PayAmount   float64    `json:"payAmount" gorm:"column:pay_amount;type:decimal(10,2);comment:支付金额;"`
-	Status        int        `json:"status" gorm:"column:status;comment:订单状态0待支付1待核销2已核销3已取消4已过期5已关闭;default:0;"`
+	Status        int        `json:"status" gorm:"column:status;comment:订单状态0待支付1待核销2已核销3已取消4已过期5已关闭6已退款;default:0;"`
 	TotalUseTimes int        `json:"totalUseTimes" gorm:"column:total_use_times;default:0;comment:总可核销次数;"`
 	VerifiedTimes int        `json:"verifiedTimes" gorm:"column:verified_times;default:0;comment:已核销次数;"`
 	PayTime          *time.Time `json:"payTime" gorm:"column:pay_time;comment:支付时间;"`
 	WxTransactionID  string     `json:"wxTransactionId" gorm:"column:wx_transaction_id;size:64;index;comment:微信支付订单号transaction_id;"`
+	RefundNo         string     `json:"refundNo" gorm:"column:refund_no;size:64;index;comment:商户退款单号;"`
+	WxRefundID       string     `json:"wxRefundId" gorm:"column:wx_refund_id;size:64;comment:微信退款单号;"`
+	RefundTime       *time.Time `json:"refundTime" gorm:"column:refund_time;comment:退款时间;"`
 	VerifiedAt    *time.Time `json:"verifiedAt" gorm:"column:verified_at;comment:核销时间;"`
 	ProductName string     `json:"productName" gorm:"-"`
 }

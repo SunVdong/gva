@@ -3,6 +3,7 @@ package mini
 import (
 	"fmt"
 	"math"
+	"strconv"
 	"strings"
 	"time"
 
@@ -11,7 +12,9 @@ import (
 	userModel "github.com/flipped-aurora/gin-vue-admin/server/model/user"
 	ticketModel "github.com/flipped-aurora/gin-vue-admin/server/plugin/ticket/model"
 	"github.com/flipped-aurora/gin-vue-admin/server/service/mini"
+	"github.com/flipped-aurora/gin-vue-admin/server/service/system"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 type PayApi struct{}
@@ -198,4 +201,98 @@ func ticketPayNotifyIdempotentPaid(order *ticketModel.TicketOrder, result *mini.
 		return fmt.Errorf("微信订单号与已支付记录不一致")
 	}
 	return nil
+}
+
+// Refund 申请退款（仅待核销且未发生过核销的订单可退，全额退款）
+// @Tags        小程序
+// @Summary     申请退款
+// @Description 对已支付但未核销的门票订单申请全额退款。需登录，请求头必带 x-token。若系统配置了 refund_limit_hours，则需在游玩日期前对应小时数之前申请。
+// @Accept      json
+// @Produce     json
+// @Param       x-token header string true "小程序登录后返回的 token（必填）"
+// @Param       data body object true "请求体" example({"orderId":1})
+// @Success     200 {object} response.Response{msg=string}
+// @Router      /mini/pay/refund [post]
+func (a *PayApi) Refund(c *gin.Context) {
+	userIDVal, exists := c.Get("x-user-id")
+	if !exists || userIDVal == nil {
+		response.FailWithMessage("请先登录", c)
+		return
+	}
+	userID, _ := userIDVal.(uint)
+	if userID == 0 {
+		response.FailWithMessage("请先登录", c)
+		return
+	}
+
+	var req struct {
+		OrderID uint `json:"orderId" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.FailWithMessage("参数错误", c)
+		return
+	}
+
+	var order ticketModel.TicketOrder
+	if err := global.GVA_DB.Where("id = ? AND user_id = ?", req.OrderID, userID).First(&order).Error; err != nil {
+		response.FailWithMessage("订单不存在或无权操作", c)
+		return
+	}
+	if order.Status != 1 {
+		response.FailWithMessage("当前订单状态不允许退款", c)
+		return
+	}
+	if order.VerifiedTimes > 0 {
+		response.FailWithMessage("已发生核销的订单不可退款", c)
+		return
+	}
+	if order.WxTransactionID == "" {
+		response.FailWithMessage("订单缺少微信支付信息，无法退款", c)
+		return
+	}
+
+	limitHours := 0
+	if v, err := new(system.SysParamsService).GetSysParam("refund_limit_hours"); err == nil {
+		limitHours, _ = strconv.Atoi(strings.TrimSpace(v.Value))
+	}
+	if limitHours > 0 {
+		startAt := time.Date(order.VisitDate.Year(), order.VisitDate.Month(), order.VisitDate.Day(), 0, 0, 0, 0, time.Local)
+		last := startAt.Add(-time.Duration(limitHours) * time.Hour).Truncate(time.Hour)
+		if time.Now().After(last) {
+			response.FailWithMessage(fmt.Sprintf("需在游玩日期前 %d 小时申请退款", limitHours), c)
+			return
+		}
+	}
+
+	totalFen := int(math.Round(order.PayAmount * 100))
+	if totalFen <= 0 {
+		response.FailWithMessage("订单金额异常", c)
+		return
+	}
+	refundNo := fmt.Sprintf("R%s_%d", order.OrderNo, time.Now().Unix())
+	result, err := mini.CreateRefund(order.WxTransactionID, refundNo, totalFen, totalFen, "用户申请退款")
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+
+	now := time.Now()
+	if err := global.GVA_DB.Model(&ticketModel.TicketOrder{}).
+		Where("id = ? AND status = ?", order.ID, 1).
+		Updates(map[string]interface{}{
+			"status":       6,
+			"refund_no":    refundNo,
+			"wx_refund_id": result.RefundID,
+			"refund_time":  now,
+		}).Error; err != nil {
+		response.FailWithMessage("退款成功但更新订单失败，请联系客服", c)
+		return
+	}
+
+	// 释放库存
+	global.GVA_DB.Model(&ticketModel.TicketCalendar{}).
+		Where("sku_id = ? AND visit_date = ?", order.SkuID, order.VisitDate).
+		UpdateColumn("sold", gorm.Expr("GREATEST(sold - ?, 0)", order.Quantity))
+
+	response.OkWithMessage("退款成功", c)
 }

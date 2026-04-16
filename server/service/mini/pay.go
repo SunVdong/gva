@@ -217,3 +217,45 @@ func ParseAndVerifyPaidNotify(req *http.Request) (*PaidNotifyResult, error) {
 func RespondPaidNotifySuccess(w io.Writer) error {
 	return json.NewEncoder(w).Encode(&wxv3.V3NotifyRsp{Code: "SUCCESS", Message: "成功"})
 }
+
+// RefundResult 退款结果
+type RefundResult struct {
+	RefundID    string // 微信退款单号
+	OutRefundNo string // 商户退款单号
+	Status      string // SUCCESS / CLOSED / PROCESSING / ABNORMAL
+}
+
+// CreateRefund 调用微信支付 V3 申请退款，全额退款。
+func CreateRefund(transactionID, outRefundNo string, totalFen, refundFen int, reason string) (*RefundResult, error) {
+	client, err := getWxV3Client()
+	if err != nil {
+		return nil, err
+	}
+	ctx := context.Background()
+	bm := make(gopay.BodyMap)
+	bm.Set("transaction_id", transactionID).
+		Set("out_refund_no", outRefundNo)
+	if reason != "" {
+		bm.Set("reason", reason)
+	}
+	bm.SetBodyMap("amount", func(bm gopay.BodyMap) {
+		bm.Set("refund", refundFen).
+			Set("total", totalFen).
+			Set("currency", "CNY")
+	})
+	wxRsp, err := client.V3Refund(ctx, bm)
+	if err != nil {
+		return nil, fmt.Errorf("调起微信退款失败: %w", err)
+	}
+	if wxRsp.Code != wxv3.Success {
+		return nil, fmt.Errorf("微信退款失败: http=%d %s", wxRsp.Code, wxRsp.Error)
+	}
+	if wxRsp.Response == nil {
+		return nil, fmt.Errorf("微信退款未返回结果")
+	}
+	return &RefundResult{
+		RefundID:    wxRsp.Response.RefundId,
+		OutRefundNo: wxRsp.Response.OutRefundNo,
+		Status:      wxRsp.Response.Status,
+	}, nil
+}

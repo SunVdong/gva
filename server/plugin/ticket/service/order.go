@@ -41,7 +41,7 @@ func (s *ticketOrder) GetList(req request.TicketOrderSearch) (list []model.Ticke
 			db = db.Where("status = ?", 1).
 				Where("visit_date >= ?", today)
 		case "completed", "已完成":
-			db = db.Where("status IN (?)", []int{2, 3, 4, 5})
+			db = db.Where("status IN (?)", []int{2, 3, 4, 5, 6})
 		}
 	}
 	if err = db.Count(&total).Error; err != nil {
@@ -140,6 +140,8 @@ func (s *ticketOrder) OrderStatusLabel(order *model.TicketOrder) string {
 		return "已过期"
 	case 5:
 		return "已关闭"
+	case 6:
+		return "已退款"
 	default:
 		return "未知"
 	}
