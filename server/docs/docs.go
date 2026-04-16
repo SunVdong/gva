@@ -12,8 +12,8 @@ const docTemplate = `{
         "contact": {},
         "version": "{{.Version}}"
     },
-    "host": "ac.whaoot.com",
-    "basePath": "/api",
+    "host": "{{.Host}}",
+    "basePath": "{{.BasePath}}",
     "paths": {
         "/activityGuide/mini/guide/detail": {
             "get": {
@@ -10209,7 +10209,7 @@ const docTemplate = `{
         },
         "/ticket/mini/order/myList": {
             "get": {
-                "description": "按类型筛选：待支付、待核销、已完成（已完成含已核销/已取消/已过期/已关闭）；不传 orderType 返回全部。列表中每条订单带 statusLabel 表明状态。",
+                "description": "按类型筛选：待支付、待核销、已完成（已完成含已核销/已取消/已过期/已关闭/已退款）；不传 orderType 返回全部。列表中每条订单带 statusLabel 表明状态。",
                 "consumes": [
                     "application/json"
                 ],

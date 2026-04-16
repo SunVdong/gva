@@ -221,7 +221,8 @@ definitions:
         description: 支付结果回调，如 https://yourdomain.com/api/mini/pay/notify
         type: string
       refund-notify-url:
-        description: 退款结果回调，如 https://yourdomain.com/api/mini/pay/refund/notify（留空则由 notify-url 自动推导）
+        description: 退款结果回调，如 https://yourdomain.com/api/mini/pay/refund/notify（留空则由
+          notify-url 自动推导）
         type: string
       wx-pay-public-key:
         description: 微信支付公钥内容（PEM）
@@ -8395,7 +8396,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: 按类型筛选：待支付、待核销、已完成（已完成含已核销/已取消/已过期/已关闭）；不传 orderType 返回全部。列表中每条订单带
+      description: 按类型筛选：待支付、待核销、已完成（已完成含已核销/已取消/已过期/已关闭/已退款）；不传 orderType 返回全部。列表中每条订单带
         statusLabel 表明状态。
       parameters:
       - description: 小程序登录后返回的 token
