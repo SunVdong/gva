@@ -12,8 +12,8 @@ const docTemplate = `{
         "contact": {},
         "version": "{{.Version}}"
     },
-    "host": "{{.Host}}",
-    "basePath": "{{.BasePath}}",
+    "host": "ac.whaoot.com",
+    "basePath": "/api",
     "paths": {
         "/activityGuide/mini/guide/detail": {
             "get": {
@@ -6363,7 +6363,7 @@ const docTemplate = `{
         },
         "/mini/pay/create": {
             "post": {
-                "description": "根据订单类型与订单 ID 生成预支付单（微信 V3，signType RSA），返回小程序调起支付所需参数。需登录，请求头必带 x-token；须已完整配置微信支付，否则返回错误。",
+                "description": "根据订单类型与订单 ID 生成预支付单（微信 V3），返回小程序调起支付所需参数（signType 为 RSA）。需登录，请求头必带 x-token；须已完整配置微信支付，否则返回错误。",
                 "consumes": [
                     "application/json"
                 ],
@@ -6406,6 +6406,59 @@ const docTemplate = `{
                                         "data": {
                                             "type": "object"
                                         },
+                                        "msg": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/mini/pay/refund": {
+            "post": {
+                "description": "对已支付但未核销的门票订单申请全额退款。需登录，请求头必带 x-token。若系统配置了 refund_limit_hours，则需在游玩日期前对应小时数之前申请。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "小程序"
+                ],
+                "summary": "申请退款",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "小程序登录后返回的 token（必填）",
+                        "name": "x-token",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "请求体",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
                                         "msg": {
                                             "type": "string"
                                         }
@@ -11451,6 +11504,10 @@ const docTemplate = `{
         "config.Miniprogram": {
             "type": "object",
             "properties": {
+                "api-v3-key": {
+                    "description": "APIv3 密钥（32 位）",
+                    "type": "string"
+                },
                 "app-id": {
                     "description": "小程序 AppID",
                     "type": "string"
@@ -11459,28 +11516,32 @@ const docTemplate = `{
                     "description": "小程序 AppSecret",
                     "type": "string"
                 },
-                "mch-id": {
-                    "description": "微信支付商户号（与小程序同主体，APIv3）",
-                    "type": "string"
-                },
-                "api-v3-key": {
-                    "description": "微信支付 APIv3 密钥",
-                    "type": "string"
-                },
                 "mch-api-serial-no": {
                     "description": "商户 API 证书序列号",
                     "type": "string"
                 },
+                "mch-id": {
+                    "description": "微信支付 APIv3（小程序 JSAPI，与小程序同主体）",
+                    "type": "string"
+                },
                 "mch-private-key": {
-                    "description": "商户 API 私钥 PEM（与 mch-private-key-file 二选一）",
+                    "description": "商户 API 私钥 PEM（apiclient_key.pem 全文，与 file 二选一）",
                     "type": "string"
                 },
                 "mch-private-key-file": {
-                    "description": "商户 API 私钥文件路径",
+                    "description": "或填写私钥文件路径",
                     "type": "string"
                 },
                 "notify-url": {
-                    "description": "支付结果回调地址，如 https://yourdomain.com/api/mini/pay/notify",
+                    "description": "支付结果回调，如 https://yourdomain.com/api/mini/pay/notify",
+                    "type": "string"
+                },
+                "wx-pay-public-key": {
+                    "description": "微信支付公钥内容（PEM）",
+                    "type": "string"
+                },
+                "wx-pay-public-key-id": {
+                    "description": "微信支付公钥ID（含 PUB_KEY_ID_ 前缀）",
                     "type": "string"
                 }
             }
@@ -12488,42 +12549,7 @@ const docTemplate = `{
             }
         },
         "model.Venue": {
-            "type": "object",
-            "properties": {
-                "ID": {
-                    "description": "主键ID",
-                    "type": "integer"
-                },
-                "carouselImages": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "createdAt": {
-                    "description": "创建时间",
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "refundChangeHours": {
-                    "type": "integer"
-                },
-                "reserveRules": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "integer"
-                },
-                "updatedAt": {
-                    "description": "更新时间",
-                    "type": "string"
-                }
-            }
+            "type": "object"
         },
         "model.VenueCalendar": {
             "type": "object",
