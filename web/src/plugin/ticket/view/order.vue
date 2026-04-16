@@ -50,6 +50,8 @@
             <el-tag v-else-if="row.status === 3" type="info">已取消</el-tag>
             <el-tag v-else-if="row.status === 4" type="danger">已过期</el-tag>
             <el-tag v-else-if="row.status === 5" type="info">已关闭</el-tag>
+            <el-tag v-else-if="row.status === 6" type="success">已退款</el-tag>
+            <el-tag v-else-if="row.status === 7" type="warning">退款中</el-tag>
             <el-tag v-else>未知</el-tag>
           </template>
         </el-table-column>
@@ -106,6 +108,8 @@
             <el-tag v-else-if="detail.order.status === 3" type="info">已取消</el-tag>
             <el-tag v-else-if="detail.order.status === 4" type="danger">已过期</el-tag>
             <el-tag v-else-if="detail.order.status === 5" type="info">已关闭</el-tag>
+            <el-tag v-else-if="detail.order.status === 6" type="success">已退款</el-tag>
+            <el-tag v-else-if="detail.order.status === 7" type="warning">退款中</el-tag>
             <span v-else>未知</span>
           </el-descriptions-item>
           <el-descriptions-item label="核销进度">
