@@ -36,7 +36,7 @@
         <el-table-column align="left" label="联系人" prop="bookerName" width="110" show-overflow-tooltip />
         <el-table-column align="left" label="联系电话" prop="bookerPhone" width="130" show-overflow-tooltip />
         <el-table-column align="left" label="用户ID" prop="userId" width="90" />
-        <el-table-column align="left" label="SKU名称" prop="skuName" min-width="140" show-overflow-tooltip />
+        <el-table-column align="left" label="SKU名称" prop="skuName" width="150" show-overflow-tooltip />
         <el-table-column align="left" label="票种" width="100">
           <template #default="{ row }">
             {{ row.skuTicketTypeLabel || '-' }}
@@ -86,9 +86,18 @@
             {{ row.userDeletedAt ? formatDate(row.userDeletedAt) : '-' }}
           </template>
         </el-table-column>
-        <el-table-column align="left" label="操作" fixed="right" width="100">
+        <el-table-column align="left" label="操作" fixed="right" width="140">
           <template #default="{ row }">
             <el-button type="primary" link @click="showDetail(row)">详情</el-button>
+            <el-popconfirm
+              v-if="row.status === 1 && row.skuTicketType === 2"
+              title="确定对该订单执行退款吗？"
+              @confirm="handleRefund(row)"
+            >
+              <template #reference>
+                <el-button type="warning" link>退款</el-button>
+              </template>
+            </el-popconfirm>
           </template>
         </el-table-column>
       </el-table>
@@ -179,7 +188,8 @@
 </template>
 
 <script setup>
-import { getOrderList, findOrder } from '@/plugin/ticket/api/order'
+import { findOrder, getOrderList, refundOrder } from '@/plugin/ticket/api/order'
+import { ElMessage } from 'element-plus'
 import { ref } from 'vue'
 
 defineOptions({ name: 'TicketOrder' })
@@ -228,6 +238,17 @@ const showDetail = async (row) => {
   if (res.code === 0 && res.data) {
     detail.value = { order: res.data.order, review: res.data.review || null, verifyRecords: res.data.verifyRecords || [] }
     detailVisible.value = true
+  }
+}
+
+const handleRefund = async (row) => {
+  const res = await refundOrder({ id: row.ID })
+  if (res.code === 0) {
+    ElMessage.success(res.msg || '退款成功')
+    if (detailVisible.value && detail.value.order?.ID === row.ID) {
+      await showDetail(row)
+    }
+    await getTableData()
   }
 }
 

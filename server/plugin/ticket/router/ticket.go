@@ -83,6 +83,7 @@ func (r *userRouter) Init(public, private *gin.RouterGroup) {
 
 func (r *orderRouter) Init(public, private *gin.RouterGroup) {
 	g := private.Group("ticket").Group("order")
+	g.Use(middleware.OperationRecord()).POST("refundOrder", apiOrder.Refund)
 	g.GET("getOrderList", apiOrder.GetList)
 	g.GET("findOrder", apiOrder.Find)
 

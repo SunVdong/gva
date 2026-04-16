@@ -21,6 +21,37 @@ func orderListToday() string {
 	return time.Now().Format("2006-01-02")
 }
 
+// RefundPendingVerifyMultiTicket 后台退款：仅多次票订单(ticket_type=2)且状态为待核销(status=1)可操作
+func (s *ticketOrder) RefundPendingVerifyMultiTicket(orderID uint) error {
+	return global.GVA_DB.Transaction(func(tx *gorm.DB) error {
+		var order model.TicketOrder
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			Where("id = ?", orderID).
+			First(&order).Error; err != nil || order.ID == 0 {
+			return fmt.Errorf("订单不存在")
+		}
+		if order.Status != 1 {
+			return fmt.Errorf("仅待核销订单可退款")
+		}
+		if order.SkuID == 0 {
+			return fmt.Errorf("订单SKU信息缺失")
+		}
+		var sku model.TicketSku
+		if err := tx.Where("id = ?", order.SkuID).First(&sku).Error; err != nil || sku.ID == 0 {
+			return fmt.Errorf("门票SKU不存在")
+		}
+		if sku.TicketType != 2 {
+			return fmt.Errorf("仅多次票订单可退款")
+		}
+		now := time.Now()
+		updates := map[string]any{
+			"status":      6,
+			"refund_time": &now,
+		}
+		return tx.Model(&model.TicketOrder{}).Where("id = ?", orderID).Updates(updates).Error
+	})
+}
+
 func (s *ticketOrder) GetList(req request.TicketOrderSearch) (list []model.TicketOrder, total int64, err error) {
 	db := global.GVA_DB.Model(&model.TicketOrder{})
 	if req.OrderNo != "" {

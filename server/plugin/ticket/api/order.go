@@ -10,6 +10,21 @@ var Order = new(ticketOrderApi)
 
 type ticketOrderApi struct{}
 
+func (a *ticketOrderApi) Refund(c *gin.Context) {
+	var idReq struct {
+		ID uint `form:"id" binding:"required"`
+	}
+	if err := c.ShouldBindQuery(&idReq); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	if err := serviceOrder.RefundPendingVerifyMultiTicket(idReq.ID); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithMessage("退款成功", c)
+}
+
 func (a *ticketOrderApi) GetList(c *gin.Context) {
 	var req ticketRequest.TicketOrderSearch
 	if err := c.ShouldBindQuery(&req); err != nil {
