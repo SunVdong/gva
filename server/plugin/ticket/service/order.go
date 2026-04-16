@@ -327,3 +327,18 @@ func (s *ticketOrder) VerifyOrderByOrderNoPublic(orderNo string) error {
 	}
 	return s.VerifyOrder(order.ID)
 }
+
+// DeleteMyOrder 小程序端删除本人订单，仅允许删除未支付或已取消订单
+func (s *ticketOrder) DeleteMyOrder(orderID uint, userID uint) error {
+	var order model.TicketOrder
+	if err := global.GVA_DB.Where("id = ?", orderID).First(&order).Error; err != nil || order.ID == 0 {
+		return fmt.Errorf("订单不存在")
+	}
+	if order.UserID != userID {
+		return fmt.Errorf("无权删除该订单")
+	}
+	if order.Status != 0 && order.Status != 3 {
+		return fmt.Errorf("仅待支付或已取消订单可删除")
+	}
+	return global.GVA_DB.Delete(&model.TicketOrder{}, "id = ?", orderID).Error
+}

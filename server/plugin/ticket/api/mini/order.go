@@ -192,6 +192,40 @@ func (a *miniOrderApi) Detail(c *gin.Context) {
 	response.OkWithData(data, c)
 }
 
+// Delete 小程序-删除订单（仅本人）
+// @Tags        小程序-景点
+// @Summary     删除订单
+// @Description 删除自己名下的订单，仅允许删除待支付或已取消订单
+// @Accept      json
+// @Produce     json
+// @Param       x-token header string false "小程序登录后返回的 token"
+// @Param       id query int true "订单ID"
+// @Success     200 {object} response.Response{msg=string}
+// @Router      /ticket/mini/order/delete [post]
+func (a *miniOrderApi) Delete(c *gin.Context) {
+	userID, ok := getUserID(c)
+	if !ok || userID == 0 {
+		response.FailWithMessage("请先登录", c)
+		return
+	}
+	var idReq struct {
+		ID uint `form:"id" json:"id" binding:"required"`
+	}
+	_ = c.ShouldBindJSON(&idReq)
+	if idReq.ID == 0 {
+		_ = c.ShouldBindQuery(&idReq)
+	}
+	if idReq.ID == 0 {
+		response.FailWithMessage("请传入订单 id", c)
+		return
+	}
+	if err := svcOrder.DeleteMyOrder(idReq.ID, userID); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithMessage("删除成功", c)
+}
+
 // CreateReview 小程序-发布订单评价（仅核销后的订单，一单一评）
 // @Tags        小程序-景点
 // @Summary     发布订单评价
