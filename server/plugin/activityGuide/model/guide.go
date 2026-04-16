@@ -13,11 +13,12 @@ import (
 // ActivityGuide 活动指南 结构体
 type ActivityGuide struct {
 	global.GVA_MODEL
-	Name       string         `json:"name" form:"name" gorm:"column:name;comment:活动名称;size:128;"`                    // 活动名称
-	Summary    string         `json:"summary" form:"summary" gorm:"column:summary;comment:简介;type:text;"`            // 简介
-	CoverImage string         `json:"coverImage" form:"coverImage" gorm:"column:cover_image;comment:封面图;size:512;"`    // 封面图
+	Name       string         `json:"name" form:"name" gorm:"column:name;comment:活动名称;size:128;"`                             // 活动名称
+	Summary    string         `json:"summary" form:"summary" gorm:"column:summary;comment:简介;type:text;"`                     // 简介
+	CoverImage string         `json:"coverImage" form:"coverImage" gorm:"column:cover_image;comment:封面图;size:512;"`         // 封面图
 	Media      datatypes.JSON `json:"media" form:"media" gorm:"column:media;comment:介绍视频或图片;" swaggertype:"array,object"` // 介绍媒体 [{url,name}]，图片或仅 MP4 视频
-	ShowStatus *bool          `json:"showStatus" form:"showStatus" gorm:"column:show_status;comment:显示状态;default:true;"`   // 显示状态
+	IsPreview  *bool          `json:"isPreview" form:"isPreview" gorm:"column:is_preview;comment:是否活动预告;default:false;"`   // 是否活动预告
+	ShowStatus *bool          `json:"showStatus" form:"showStatus" gorm:"column:show_status;comment:显示状态;default:true;"`    // 显示状态
 }
 
 // TableName 活动指南自定义表名
@@ -54,6 +55,13 @@ func ValidateActivityGuideMedia(m datatypes.JSON) error {
 		if !isAllowedActivityGuideMediaExt(ext) {
 			return errors.New("仅支持常见图片格式或 MP4 视频")
 		}
+	}
+	return nil
+}
+
+func ValidateActivityGuideCoverImage(coverImage string) error {
+	if strings.TrimSpace(coverImage) == "" {
+		return errors.New("封面图必填")
 	}
 	return nil
 }

@@ -34,6 +34,17 @@
             <el-option label="隐藏" :value="false" />
           </el-select>
         </el-form-item>
+        <el-form-item label="活动预告">
+          <el-select
+            v-model="searchInfo.isPreview"
+            placeholder="全部"
+            clearable
+            style="width: 100px"
+          >
+            <el-option label="是" :value="true" />
+            <el-option label="否" :value="false" />
+          </el-select>
+        </el-form-item>
         <el-form-item>
           <el-button type="primary" icon="Search" @click="onSubmit">查询</el-button>
           <el-button icon="Refresh" @click="onReset">重置</el-button>
@@ -83,6 +94,13 @@
         </el-table-column>
         <el-table-column align="left" label="活动名称" prop="name" min-width="140" show-overflow-tooltip />
         <el-table-column align="left" label="简介" prop="summary" min-width="200" show-overflow-tooltip />
+        <el-table-column align="left" label="活动预告" width="100">
+          <template #default="scope">
+            <el-tag :type="scope.row.isPreview ? 'warning' : 'info'">
+              {{ scope.row.isPreview ? '是' : '否' }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column align="left" label="显示状态" width="100">
           <template #default="scope">
             <el-switch
@@ -151,6 +169,15 @@
           <SelectMedia v-model="formData.media" restrict-video-to-mp4 />
           <div class="text-gray-500 text-xs mt-1">支持多张图片；视频仅支持 MP4，单个不超过 50MB</div>
         </el-form-item>
+        <el-form-item label="活动预告" prop="isPreview">
+          <el-switch
+            v-model="formData.isPreview"
+            :active-value="true"
+            :inactive-value="false"
+            active-text="是"
+            inactive-text="否"
+          />
+        </el-form-item>
         <el-form-item label="显示状态" prop="showStatus">
           <el-switch
             v-model="formData.showStatus"
@@ -193,6 +220,7 @@ const isAllowedGuideMediaUrl = (url) => {
 
 const rule = reactive({
   name: [{ required: true, message: '请输入活动名称', trigger: 'blur' }],
+  coverImage: [{ required: true, message: '请上传封面图', trigger: 'change' }],
   media: [
     {
       validator: (_rule, value, callback) => {
@@ -218,6 +246,7 @@ const formData = ref({
   summary: '',
   coverImage: '',
   media: [],
+  isPreview: false,
   showStatus: true
 })
 
@@ -257,6 +286,7 @@ const getTableData = async () => {
     ...searchInfo.value
   }
   if (params.showStatus === undefined || params.showStatus === null) delete params.showStatus
+  if (params.isPreview === undefined || params.isPreview === null) delete params.isPreview
   if (params.ID === undefined || params.ID === null || params.ID === '' || Number.isNaN(params.ID)) delete params.ID
   const res = await getGuideList(params)
   if (res.code === 0) {
@@ -294,6 +324,7 @@ const toggleShowStatus = async (row, val) => {
       summary: row.summary,
       coverImage: row.coverImage ?? '',
       media: parseRowMedia(row.media),
+      isPreview: row.isPreview ?? false,
       showStatus: val
     })
     if (res.code === 0) {
@@ -368,6 +399,7 @@ const openDialog = () => {
     summary: '',
     coverImage: '',
     media: [],
+    isPreview: false,
     showStatus: true
   }
   dialogFormVisible.value = true
@@ -380,6 +412,7 @@ const closeDialog = () => {
     summary: '',
     coverImage: '',
     media: [],
+    isPreview: false,
     showStatus: true
   }
 }

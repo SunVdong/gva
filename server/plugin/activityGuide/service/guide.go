@@ -11,6 +11,10 @@ var Guide = new(guide)
 type guide struct{}
 
 func (s *guide) CreateGuide(guide *model.ActivityGuide) (err error) {
+	if guide.IsPreview == nil {
+		f := false
+		guide.IsPreview = &f
+	}
 	if guide.ShowStatus == nil {
 		t := true
 		guide.ShowStatus = &t
@@ -32,7 +36,7 @@ func (s *guide) DeleteGuideByIds(IDs []string) (err error) {
 func (s *guide) UpdateGuide(guide model.ActivityGuide) (err error) {
 	// Select 指定列后，零值也会写入（否则 coverImage 传 "" 无法清空封面）
 	err = global.GVA_DB.Model(&model.ActivityGuide{}).Where("id = ?", guide.ID).
-		Select("name", "summary", "cover_image", "media", "show_status").
+		Select("name", "summary", "cover_image", "media", "is_preview", "show_status").
 		Updates(&guide).Error
 	return err
 }
@@ -53,6 +57,9 @@ func (s *guide) GetGuideList(search request.GuideSearch) (list []model.ActivityG
 	}
 	if search.ID != nil {
 		db = db.Where("id = ?", *search.ID)
+	}
+	if search.IsPreview != nil {
+		db = db.Where("is_preview = ?", *search.IsPreview)
 	}
 	if search.ShowStatus != nil {
 		db = db.Where("show_status = ?", *search.ShowStatus)
