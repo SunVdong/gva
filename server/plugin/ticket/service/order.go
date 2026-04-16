@@ -57,7 +57,7 @@ func (s *ticketOrder) GetList(req request.TicketOrderSearch) (list []model.Ticke
 }
 
 func (s *ticketOrder) GetMyList(req request.TicketOrderSearch) (list []model.TicketOrder, total int64, err error) {
-	db := global.GVA_DB.Model(&model.TicketOrder{}).Where("user_deleted = ?", false)
+	db := global.GVA_DB.Model(&model.TicketOrder{}).Where("user_deleted_at IS NULL")
 	if req.OrderNo != "" {
 		db = db.Where("order_no LIKE ?", "%"+req.OrderNo+"%")
 	}
@@ -199,7 +199,7 @@ func (s *ticketOrder) GetByID(id uint) (order model.TicketOrder, err error) {
 }
 
 func (s *ticketOrder) GetMyByID(id uint, userID uint) (order model.TicketOrder, err error) {
-	if err = global.GVA_DB.Where("id = ? AND user_id = ? AND user_deleted = ?", id, userID, false).First(&order).Error; err != nil {
+	if err = global.GVA_DB.Where("id = ? AND user_id = ? AND user_deleted_at IS NULL", id, userID).First(&order).Error; err != nil {
 		return
 	}
 	s.fillProductName(&order)
@@ -380,13 +380,14 @@ func (s *ticketOrder) DeleteMyOrder(orderID uint, userID uint) error {
 	if order.UserID != userID {
 		return fmt.Errorf("无权删除该订单")
 	}
-	if order.UserDeleted {
+	if order.UserDeletedAt != nil {
 		return fmt.Errorf("订单已删除")
 	}
 	if order.Status != 6 {
 		return fmt.Errorf("仅已退款订单可删除")
 	}
+	now := time.Now()
 	return global.GVA_DB.Model(&model.TicketOrder{}).
 		Where("id = ? AND user_id = ?", orderID, userID).
-		Update("user_deleted", true).Error
+		Update("user_deleted_at", &now).Error
 }
