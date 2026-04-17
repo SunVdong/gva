@@ -3,6 +3,8 @@ package initialize
 import (
 	"fmt"
 	"github.com/flipped-aurora/gin-vue-admin/server/task"
+	ticketService "github.com/flipped-aurora/gin-vue-admin/server/plugin/ticket/service"
+	"time"
 
 	"github.com/robfig/cron/v3"
 
@@ -20,6 +22,20 @@ func Timer() {
 				fmt.Println("timer error:", err)
 			}
 		}, "定时清理数据库【日志，黑名单】内容", option...)
+		if err != nil {
+			fmt.Println("add timer error:", err)
+		}
+
+		_, err = global.GVA_Timer.AddTaskByFuncWithSecond("TicketOrderTimeoutClose", "0 */1 * * * *", func() {
+			closed, closeErr := ticketService.Service.Order.CloseTimeoutUnpaidOrders(15*time.Minute, 200)
+			if closeErr != nil {
+				fmt.Println("ticket timeout close error:", closeErr)
+				return
+			}
+			if closed > 0 {
+				fmt.Printf("ticket timeout close success, closed=%d\n", closed)
+			}
+		}, "门票订单超时未支付自动关闭")
 		if err != nil {
 			fmt.Println("add timer error:", err)
 		}

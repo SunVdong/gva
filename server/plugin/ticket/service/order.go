@@ -11,6 +11,7 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/ticket/model"
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/ticket/model/request"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -439,4 +440,76 @@ func (s *ticketOrder) DeleteMyOrder(orderID uint, userID uint) error {
 	return global.GVA_DB.Model(&model.TicketOrder{}).
 		Where("id = ? AND user_id = ?", orderID, userID).
 		Update("user_deleted_at", &now).Error
+}
+
+// CloseTimeoutUnpaidOrders 关闭超时未支付订单（status=0 -> 5），并回退对应日历已售库存
+func (s *ticketOrder) CloseTimeoutUnpaidOrders(timeout time.Duration, batchSize int) (int, error) {
+	if timeout <= 0 {
+		timeout = 15 * time.Minute
+	}
+	if batchSize <= 0 {
+		batchSize = 100
+	}
+	deadline := time.Now().Add(-timeout)
+
+	var pending []model.TicketOrder
+	if err := global.GVA_DB.
+		Where("status = ? AND created_at <= ?", 0, deadline).
+		Order("id ASC").
+		Limit(batchSize).
+		Find(&pending).Error; err != nil {
+		return 0, err
+	}
+	if len(pending) == 0 {
+		return 0, nil
+	}
+
+	closedCount := 0
+	for _, item := range pending {
+		err := global.GVA_DB.Transaction(func(tx *gorm.DB) error {
+			var order model.TicketOrder
+			if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+				Where("id = ?", item.ID).
+				First(&order).Error; err != nil {
+				return err
+			}
+			// 仅处理仍是待支付且已超时的订单，避免和支付回调并发冲突
+			if order.Status != 0 || order.CreatedAt.After(deadline) {
+				return nil
+			}
+
+			calendarRes := tx.Model(&model.TicketCalendar{}).
+				Where("sku_id = ? AND visit_date = ? AND sold >= ?", order.SkuID, order.VisitDate, order.Quantity).
+				UpdateColumn("sold", gorm.Expr("sold - ?", order.Quantity))
+			if calendarRes.Error != nil {
+				return calendarRes.Error
+			}
+			if calendarRes.RowsAffected == 0 {
+				// 部分历史数据可能已被人工调整或库存行缺失；此时不阻断关单，避免定时任务反复卡在同一订单。
+				global.GVA_LOG.Warn("ticket timeout close inventory rollback skipped",
+					zap.Uint("order_id", order.ID),
+					zap.Uint("sku_id", order.SkuID),
+					zap.Time("visit_date", order.VisitDate),
+					zap.Int("quantity", order.Quantity),
+				)
+			}
+
+			res := tx.Model(&model.TicketOrder{}).
+				Where("id = ? AND status = ?", order.ID, 0).
+				Update("status", 5)
+			if res.Error != nil {
+				return res.Error
+			}
+			if res.RowsAffected == 0 {
+				return nil
+			}
+
+			closedCount++
+			return nil
+		})
+		if err != nil {
+			return closedCount, err
+		}
+	}
+	return closedCount, nil
 }
