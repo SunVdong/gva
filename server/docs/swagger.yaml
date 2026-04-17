@@ -6164,7 +6164,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: 对已支付但未核销的门票订单申请全额退款。需登录，请求头必带 x-token。
+      description: 对已支付且待核销、且尚未产生核销次数的门票订单申请全额退款（多次票若已核销过任一次则不可退）。需登录，请求头必带 x-token。
       parameters:
       - description: 小程序登录后返回的 token（必填）
         in: header
@@ -8322,6 +8322,36 @@ paths:
                   type: string
               type: object
       summary: 日历可售
+      tags:
+      - 小程序-景点
+  /ticket/mini/order/closePending:
+    post:
+      consumes:
+      - application/json
+      description: 仅允许关闭当前登录用户自己的待支付订单（status=0），且必须在下单后15分钟内，关闭后订单状态改为5（已关闭）并回退库存
+      parameters:
+      - description: 小程序登录后返回的 token
+        in: header
+        name: x-token
+        type: string
+      - description: 订单ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      summary: 关闭待支付订单
       tags:
       - 小程序-景点
   /ticket/mini/order/create:

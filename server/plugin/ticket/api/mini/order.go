@@ -5,6 +5,7 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/ticket/model/request"
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 	"github.com/gin-gonic/gin"
+	"time"
 )
 
 var Order = new(miniOrderApi)
@@ -221,6 +222,40 @@ func (a *miniOrderApi) Delete(c *gin.Context) {
 		return
 	}
 	response.OkWithMessage("删除成功", c)
+}
+
+// ClosePending 小程序-手动关闭待支付订单（仅本人、且未超时）
+// @Tags        小程序-景点
+// @Summary     关闭待支付订单
+// @Description 仅允许关闭当前登录用户自己的待支付订单（status=0），且必须在下单后15分钟内，关闭后订单状态改为5（已关闭）并回退库存
+// @Accept      json
+// @Produce     json
+// @Param       x-token header string false "小程序登录后返回的 token"
+// @Param       id query int true "订单ID"
+// @Success     200 {object} response.Response{msg=string}
+// @Router      /ticket/mini/order/closePending [post]
+func (a *miniOrderApi) ClosePending(c *gin.Context) {
+	userID, ok := getUserID(c)
+	if !ok || userID == 0 {
+		response.FailWithMessage("请先登录", c)
+		return
+	}
+	var idReq struct {
+		ID uint `form:"id" json:"id" binding:"required"`
+	}
+	_ = c.ShouldBindJSON(&idReq)
+	if idReq.ID == 0 {
+		_ = c.ShouldBindQuery(&idReq)
+	}
+	if idReq.ID == 0 {
+		response.FailWithMessage("请传入订单 id", c)
+		return
+	}
+	if err := svcOrder.CloseMyPendingOrder(idReq.ID, userID, 15*time.Minute); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithMessage("关闭成功", c)
 }
 
 // CreateReview 小程序-发布订单评价（仅核销后的订单，一单一评）

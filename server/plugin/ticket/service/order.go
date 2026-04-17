@@ -442,6 +442,50 @@ func (s *ticketOrder) DeleteMyOrder(orderID uint, userID uint) error {
 		Update("user_deleted_at", &now).Error
 }
 
+// CloseMyPendingOrder 小程序端手动关闭本人待支付订单（仅允许未超时订单）
+func (s *ticketOrder) CloseMyPendingOrder(orderID uint, userID uint, timeout time.Duration) error {
+	if timeout <= 0 {
+		timeout = 15 * time.Minute
+	}
+	deadline := time.Now().Add(-timeout)
+
+	return global.GVA_DB.Transaction(func(tx *gorm.DB) error {
+		var order model.TicketOrder
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			Where("id = ? AND user_id = ?", orderID, userID).
+			First(&order).Error; err != nil || order.ID == 0 {
+			return fmt.Errorf("订单不存在")
+		}
+		if order.Status != 0 {
+			return fmt.Errorf("仅待支付订单可关闭")
+		}
+		if !order.CreatedAt.After(deadline) {
+			return fmt.Errorf("订单已超时，请刷新后重试")
+		}
+
+		calendarRes := tx.Model(&model.TicketCalendar{}).
+			Where("sku_id = ? AND visit_date = ? AND sold >= ?", order.SkuID, order.VisitDate, order.Quantity).
+			UpdateColumn("sold", gorm.Expr("sold - ?", order.Quantity))
+		if calendarRes.Error != nil {
+			return calendarRes.Error
+		}
+		if calendarRes.RowsAffected == 0 {
+			return fmt.Errorf("库存回退失败，请联系客服")
+		}
+
+		res := tx.Model(&model.TicketOrder{}).
+			Where("id = ? AND user_id = ? AND status = ?", orderID, userID, 0).
+			Update("status", 5)
+		if res.Error != nil {
+			return res.Error
+		}
+		if res.RowsAffected == 0 {
+			return fmt.Errorf("订单状态已变更，请刷新后重试")
+		}
+		return nil
+	})
+}
+
 // CloseTimeoutUnpaidOrders 关闭超时未支付订单（status=0 -> 5），并回退对应日历已售库存
 func (s *ticketOrder) CloseTimeoutUnpaidOrders(timeout time.Duration, batchSize int) (int, error) {
 	if timeout <= 0 {

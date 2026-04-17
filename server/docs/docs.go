@@ -6419,7 +6419,7 @@ const docTemplate = `{
         },
         "/mini/pay/refund": {
             "post": {
-                "description": "对已支付但未核销的门票订单申请全额退款。需登录，请求头必带 x-token。",
+                "description": "对已支付且待核销、且尚未产生核销次数的门票订单申请全额退款（多次票若已核销过任一次则不可退）。需登录，请求头必带 x-token。",
                 "consumes": [
                     "application/json"
                 ],
@@ -10087,6 +10087,56 @@ const docTemplate = `{
                                         "data": {
                                             "type": "object"
                                         },
+                                        "msg": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/ticket/mini/order/closePending": {
+            "post": {
+                "description": "仅允许关闭当前登录用户自己的待支付订单（status=0），且必须在下单后15分钟内，关闭后订单状态改为5（已关闭）并回退库存",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "小程序-景点"
+                ],
+                "summary": "关闭待支付订单",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "小程序登录后返回的 token",
+                        "name": "x-token",
+                        "in": "header"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "订单ID",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
                                         "msg": {
                                             "type": "string"
                                         }
