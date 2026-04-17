@@ -42,6 +42,7 @@
             {{ row.skuTicketTypeLabel || '-' }}
           </template>
         </el-table-column>
+        <el-table-column align="left" label="购买数量" prop="quantity" width="90" />
         <el-table-column align="left" label="核销次数" width="110">
           <template #default="{ row }">
             {{ row.verifiedTimes ?? 0 }}/{{ row.totalUseTimes ?? 0 }}
