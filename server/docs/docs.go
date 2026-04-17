@@ -10154,6 +10154,56 @@ const docTemplate = `{
                 }
             }
         },
+        "/ticket/mini/order/delete": {
+            "post": {
+                "description": "删除自己名下的订单，仅前台隐藏，后台仍保留，仅允许删除已退款订单",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "小程序-景点"
+                ],
+                "summary": "删除订单",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "小程序登录后返回的 token",
+                        "name": "x-token",
+                        "in": "header"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "订单ID",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "msg": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/ticket/mini/order/detail": {
             "get": {
                 "description": "小程序端获取订单详情，仅限当前登录用户自己的订单",

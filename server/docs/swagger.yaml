@@ -8360,6 +8360,36 @@ paths:
       summary: 提交订单
       tags:
       - 小程序-景点
+  /ticket/mini/order/delete:
+    post:
+      consumes:
+      - application/json
+      description: 删除自己名下的订单，仅前台隐藏，后台仍保留，仅允许删除已退款订单
+      parameters:
+      - description: 小程序登录后返回的 token
+        in: header
+        name: x-token
+        type: string
+      - description: 订单ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      summary: 删除订单
+      tags:
+      - 小程序-景点
   /ticket/mini/order/detail:
     get:
       consumes:
