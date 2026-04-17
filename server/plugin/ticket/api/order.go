@@ -76,7 +76,7 @@ func (a *ticketOrderApi) Find(c *gin.Context) {
 		review, _ := serviceOrderReview.GetByOrderID(order.ID)
 		if review.ID != 0 {
 			data["review"] = gin.H{
-				"id":        review.ID,
+				"ID":        review.ID,
 				"rating":    review.Rating,
 				"content":   review.Content,
 				"createdAt": review.CreatedAt,
