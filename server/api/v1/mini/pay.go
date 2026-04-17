@@ -201,10 +201,10 @@ func ticketPayNotifyIdempotentPaid(order *ticketModel.TicketOrder, result *mini.
 	return nil
 }
 
-// Refund 申请退款（仅待核销且未发生过核销的订单可退，全额退款）
+// Refund 申请退款（仅待核销且 verified_times=0 可退；多次票部分核销后不可退，全额退款）
 // @Tags        小程序
 // @Summary     申请退款
-// @Description 对已支付但未核销的门票订单申请全额退款。需登录，请求头必带 x-token。
+// @Description 对已支付且待核销、且尚未产生核销次数的门票订单申请全额退款（多次票若已核销过任一次则不可退）。需登录，请求头必带 x-token。
 // @Accept      json
 // @Produce     json
 // @Param       x-token header string true "小程序登录后返回的 token（必填）"
@@ -241,7 +241,7 @@ func (a *PayApi) Refund(c *gin.Context) {
 		return
 	}
 	if order.VerifiedTimes > 0 {
-		response.FailWithMessage("已发生核销的订单不可退款", c)
+		response.FailWithMessage("订单已产生核销记录（含多次票已使用次数），不可退款", c)
 		return
 	}
 	if order.WxTransactionID == "" {

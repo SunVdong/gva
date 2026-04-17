@@ -170,7 +170,8 @@ func (a *miniOrderApi) Detail(c *gin.Context) {
 		"verifyRecords":  verifyRecords,
 	}
 
-	data["canRefund"] = order.Status == 1
+	// 与 POST /mini/pay/refund 一致：待核销且未产生核销次数才可申请退款（多次票部分核销后 status 仍为 1）
+	data["canRefund"] = order.Status == 1 && order.VerifiedTimes == 0
 
 	if order.Status == 2 && order.VerifiedAt != nil {
 		review, _ := svcOrderReview.GetByOrderID(order.ID)
