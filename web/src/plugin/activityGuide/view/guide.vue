@@ -93,6 +93,12 @@
           </template>
         </el-table-column>
         <el-table-column align="left" label="活动名称" prop="name" min-width="140" show-overflow-tooltip />
+        <el-table-column align="left" label="活动时间" prop="activityTime" width="180">
+          <template #default="scope">
+            <span v-if="scope.row.activityTime">{{ formatDate(scope.row.activityTime) }}</span>
+            <span v-else class="text-gray-400">—</span>
+          </template>
+        </el-table-column>
         <el-table-column align="left" label="简介" prop="summary" min-width="200" show-overflow-tooltip />
         <el-table-column align="left" label="活动预告" width="100">
           <template #default="scope">
@@ -160,6 +166,16 @@
             placeholder="请输入简介"
             maxlength="300"
             show-word-limit
+          />
+        </el-form-item>
+        <el-form-item label="活动时间" prop="activityTime">
+          <el-date-picker
+            v-model="formData.activityTime"
+            type="datetime"
+            placeholder="请选择活动时间"
+            format="YYYY-MM-DD HH:mm"
+            clearable
+            style="width: 240px"
           />
         </el-form-item>
         <el-form-item label="封面图" prop="coverImage">
@@ -246,6 +262,7 @@ const formData = ref({
   summary: '',
   coverImage: '',
   media: [],
+  activityTime: null,
   isPreview: false,
   showStatus: true
 })
@@ -324,6 +341,7 @@ const toggleShowStatus = async (row, val) => {
       summary: row.summary,
       coverImage: row.coverImage ?? '',
       media: parseRowMedia(row.media),
+      activityTime: row.activityTime ?? null,
       isPreview: row.isPreview ?? false,
       showStatus: val
     })
@@ -375,7 +393,8 @@ const updateGuideFunc = async (row) => {
     const data = res.data
     formData.value = {
       ...data,
-      media: Array.isArray(data.media) ? data.media : data.media ? JSON.parse(data.media) : []
+      media: Array.isArray(data.media) ? data.media : data.media ? JSON.parse(data.media) : [],
+      activityTime: data.activityTime ? new Date(data.activityTime) : null
     }
     dialogFormVisible.value = true
   }
@@ -399,6 +418,7 @@ const openDialog = () => {
     summary: '',
     coverImage: '',
     media: [],
+    activityTime: null,
     isPreview: false,
     showStatus: true
   }
@@ -412,6 +432,7 @@ const closeDialog = () => {
     summary: '',
     coverImage: '',
     media: [],
+    activityTime: null,
     isPreview: false,
     showStatus: true
   }

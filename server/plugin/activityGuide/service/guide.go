@@ -36,7 +36,7 @@ func (s *guide) DeleteGuideByIds(IDs []string) (err error) {
 func (s *guide) UpdateGuide(guide model.ActivityGuide) (err error) {
 	// Select 指定列后，零值也会写入（否则 coverImage 传 "" 无法清空封面）
 	err = global.GVA_DB.Model(&model.ActivityGuide{}).Where("id = ?", guide.ID).
-		Select("name", "summary", "cover_image", "media", "is_preview", "show_status").
+		Select("name", "summary", "cover_image", "media", "activity_time", "is_preview", "show_status").
 		Updates(&guide).Error
 	return err
 }
