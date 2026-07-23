@@ -1,12 +1,14 @@
 # Frontend Development Guidelines
 
-> Best practices for frontend development in this project.
+> gin-vue-admin 前端约定。仓库现状为 **Vue 3 + JavaScript（无 TypeScript）**。
 
 ---
 
 ## Overview
 
-This directory contains guidelines for frontend development. Fill in each file with your project's specific conventions.
+前端根目录：`web/`。技术栈：Vue 3.5 + Vite + Pinia + Element Plus + UnoCSS + Vue Router + Axios + VueUse。
+
+依赖链：`页面/组件 → api 封装 → @/utils/request → 后端`。
 
 ---
 
@@ -14,26 +16,28 @@ This directory contains guidelines for frontend development. Fill in each file w
 
 | Guide | Description | Status |
 |-------|-------------|--------|
-| [Directory Structure](./directory-structure.md) | Module organization and file layout | To fill |
-| [Component Guidelines](./component-guidelines.md) | Component patterns, props, composition | To fill |
-| [Hook Guidelines](./hook-guidelines.md) | Custom hooks, data fetching patterns | To fill |
-| [State Management](./state-management.md) | Local state, global state, server state | To fill |
-| [Quality Guidelines](./quality-guidelines.md) | Code standards, forbidden patterns | To fill |
-| [Type Safety](./type-safety.md) | Type patterns, validation | To fill |
+| [Directory Structure](./directory-structure.md) | `src/` 与插件目录 | Filled |
+| [Component Guidelines](./component-guidelines.md) | SFC、`script setup`、Element Plus | Filled |
+| [Hook Guidelines](./hook-guidelines.md) | `src/hooks` 组合式函数 | Filled |
+| [State Management](./state-management.md) | Pinia setup store | Filled |
+| [Type Safety](./type-safety.md) | JS + JSDoc / 字段一致性（非 TS） | Filled |
+| [Quality Guidelines](./quality-guidelines.md) | 命名、样式、API 注释 | Filled |
 
 ---
 
-## How to Fill These Guidelines
+## Golden Paths
 
-For each guideline file:
-
-1. Document your project's **actual conventions** (not ideals)
-2. Include **code examples** from your codebase
-3. List **forbidden patterns** and why
-4. Add **common mistakes** your team has made
-
-The goal is to help AI assistants and new team members understand how YOUR project works.
+| 主题 | 锚定文件 |
+|------|----------|
+| Axios 封装 | `web/src/utils/request.js` |
+| 插件 API | `web/src/plugin/ticket/api/order.js` |
+| 插件页面 | `web/src/plugin/ticket/view/order.vue` |
+| Pinia | `web/src/pinia/modules/user.js` |
+| Hooks | `web/src/hooks/useDict.js` |
 
 ---
 
-**Language**: All documentation should be written in **English**.
+## Source of Conventions
+
+- `.claude/rules/project_rules.md` 前端章节
+- `web/src` 真实代码（全量 `.vue` 为 `<script setup>`，无 `.ts`）

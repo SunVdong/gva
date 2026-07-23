@@ -1,54 +1,81 @@
 # Directory Structure
 
-> How frontend code is organized in this project.
+> 前端代码组织方式。
 
 ---
 
 ## Overview
 
-<!--
-Document your project's frontend directory structure here.
+应用在 `web/src/`。业务分：
 
-Questions to answer:
-- Where do components live?
-- How are features/modules organized?
-- Where are shared utilities?
-- How are assets organized?
--->
-
-(To be filled by the team)
+1. **核心**：`api/`、`view/`、`components/`、`pinia/`、`hooks/`
+2. **插件**：`web/src/plugin/<name>/`（api + view，可选 components/form）
 
 ---
 
-## Directory Layout
+## `src/` Layout
 
 ```
-<!-- Replace with your actual structure -->
-src/
-├── ...
-└── ...
+web/src/
+├── api/              # 核心后端接口封装（全 .js）
+├── assets/
+├── components/       # 通用组件
+├── core/             # gin-vue-admin 核心配置
+├── directive/
+├── hooks/            # 组合式 hooks
+├── pinia/
+│   ├── index.js
+│   └── modules/      # user/app/router/dictionary/params
+├── plugin/           # 前端插件
+├── router/           # index.js（动态路由为主）
+├── style/
+├── utils/            # request.js、dictionary、bus 等
+├── view/             # 核心业务页面
+├── App.vue
+└── main.js
 ```
 
----
-
-## Module Organization
-
-<!-- How should new features be organized? -->
-
-(To be filled by the team)
+路径别名：`@/*` → `src/*`（`jsconfig.json`）。
 
 ---
 
-## Naming Conventions
+## Plugin Layout
 
-<!-- File and folder naming rules -->
+```
+web/src/plugin/<name>/
+├── api/           # *.js，走 @/utils/request
+├── view/          # 业务页面 *.vue
+├── components/    # 可选
+├── form/          # 可选（如 announcement）
+└── config.js      # 可选
+```
 
-(To be filled by the team)
+现有插件示例：`ticket`、`camping`、`announcement`、`email`、`activityGuide`。
+
+Ticket 现状（精简）：
+
+- `web/src/plugin/ticket/api/{order,product,scenic,user}.js`
+- `web/src/plugin/ticket/view/{order,product,scenic,user,calendar}.vue`
+
+插件一般**不**自建 Pinia；菜单路由多由后端动态下发。硬编码路由例外少见（如 camping H5 在 `web/src/router/index.js`）。
 
 ---
 
-## Examples
+## Where New Code Goes
 
-<!-- Link to well-organized modules as examples -->
+| 变更类型 | 放置位置 |
+|----------|----------|
+| 系统级接口 | `web/src/api/` |
+| 系统级页面 | `web/src/view/<module>/` |
+| 可复用 UI | `web/src/components/` |
+| 插件功能 | `web/src/plugin/<name>/` |
+| 全局状态 | `web/src/pinia/modules/` |
+| 可复用组合逻辑 | `web/src/hooks/` |
 
-(To be filled by the team)
+---
+
+## Anti-patterns
+
+- 页面里直接 `axios`，绕过 `@/utils/request` 与 `api/`
+- 插件页面去改无关核心模块造成耦合
+- 在 `components/` 塞仅某插件使用的页面级大文件（应放 plugin 内）
