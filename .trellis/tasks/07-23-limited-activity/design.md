@@ -10,7 +10,7 @@
 ```
 
 - **新插件包名**：`limitedActivity`（避免与 `activityGuide` 冲突）。
-- **职责内**：活动 CRUD、报名订单、名额、核销记录、后台按比例退款、mini/公开 API、管理端页面、H5 type 扩展。
+- **职责内**：活动 CRUD、Banner CRUD、报名订单、名额、核销记录、后台按比例退款、mini/公开 API、管理端页面、H5 type 扩展。
 - **职责外复用**：`service/mini` 微信支付；现有 `#/h5/verify` 页；用户体系 `users` + `x-token`。
 - **分层**：Router → API → Service → Model；API 不直接写 DB。
 
@@ -48,6 +48,21 @@
 
 `order_id`, `verify_no`, `verified_at`（对齐 ticket `OrderVerifyRecord`）。
 
+### Banner（活动列表轮播）
+
+表名：`limited_activity_banners`。
+
+| 字段 | 说明 |
+|------|------|
+| title | 后台识别用标题（小程序可不展示） |
+| image | 轮播图 URL（必填） |
+| detail_image | 详情长图 URL（必填；点击轮播图后展示） |
+| sort | 排序，越小越靠前 |
+| status | `1` 显示 / `0` 隐藏 |
+| 审计 | `GVA_MODEL` + created_by / updated_by |
+
+**无** 跳转类型、activity_id、link_path、start_time / end_time。
+
 ## Key Flows
 
 ### 报名占用
@@ -75,12 +90,18 @@
 3. 调 `mini.CreateRefund`；标记 `status=7`；回调成功 → `status=6`，写 `refund_amount`，`sold -= remaining`；此后不可核销。
 4. **不**对用户开放 `/mini/pay/refund` 活动分支（避免自助退）；仅管理端 API。
 
+### Banner 下发
+
+1. Admin CRUD；保存时校验 `image`、`detail_image` 均非空。
+2. Mini 列表：`status=1`，按 `sort ASC, id ASC`。
+3. 返回 `image`、`detailImage` 等字段；点击后展示长图由小程序完成，本仓不实现 UI。
+
 ## API Surface（摘要）
 
 | 端 | 能力 |
 |----|------|
-| Admin | 活动 CRUD；订单列表/详情/核销记录；后台退款 |
-| Mini | 活动列表/详情；下单；我的订单列表/详情（含核销进度、群二维码、客服二维码） |
+| Admin | 活动 CRUD；Banner CRUD；订单列表/详情/核销记录；后台退款 |
+| Mini | Banner 列表；活动列表/详情；下单；我的订单列表/详情（含核销进度、群二维码、客服二维码） |
 | Public | 按 code 查询、核销 |
 | Pay | Create/Notify 增加 `limitedActivity`；RefundNotify 增加活动订单成功处理 |
 

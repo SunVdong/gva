@@ -7,11 +7,13 @@ var Router = new(router)
 type router struct {
 	Activity activityRouter
 	Order    orderRouter
+	Banner   bannerRouter
 	Mini     miniRouter
 }
 
 func (r *router) Init(public *gin.RouterGroup, private *gin.RouterGroup) {
 	r.Activity.Init(public, private)
 	r.Order.Init(public, private)
+	r.Banner.Init(public, private)
 	r.Mini.Init(public, private)
 }

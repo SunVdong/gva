@@ -34,6 +34,14 @@ func Menu(ctx context.Context) {
 			Sort:      2,
 			Meta:      model.Meta{Title: "活动订单", Icon: "list"},
 		},
+		{
+			Path:      "limitedActivityBanner",
+			Name:      "limitedActivityBanner",
+			Hidden:    false,
+			Component: "plugin/limitedActivity/view/banner.vue",
+			Sort:      3,
+			Meta:      model.Meta{Title: "Banner 管理", Icon: "picture"},
+		},
 	}
 	utils.RegisterMenus(entities...)
 }

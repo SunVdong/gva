@@ -15,6 +15,7 @@ func Gorm(ctx context.Context) {
 		new(model.Activity),
 		new(model.ActivityOrder),
 		new(model.ActivityOrderVerifyRecord),
+		new(model.Banner),
 	)
 	if err != nil {
 		err = errors.Wrap(err, "限时活动插件表迁移失败")

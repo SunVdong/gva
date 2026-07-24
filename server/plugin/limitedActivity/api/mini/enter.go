@@ -7,4 +7,5 @@ import (
 var (
 	svcActivity = service.Service.Activity
 	svcOrder    = service.Service.Order
+	svcBanner   = service.Service.Banner
 )

@@ -18,6 +18,12 @@ func Api(ctx context.Context) {
 		{Path: "/limitedActivity/order/getOrderList", Description: "活动订单列表", ApiGroup: "限时活动", Method: "GET"},
 		{Path: "/limitedActivity/order/findOrder", Description: "活动订单详情", ApiGroup: "限时活动", Method: "GET"},
 		{Path: "/limitedActivity/order/refundOrder", Description: "活动订单退款", ApiGroup: "限时活动", Method: "POST"},
+		{Path: "/limitedActivity/banner/createBanner", Description: "创建Banner", ApiGroup: "限时活动", Method: "POST"},
+		{Path: "/limitedActivity/banner/deleteBanner", Description: "删除Banner", ApiGroup: "限时活动", Method: "DELETE"},
+		{Path: "/limitedActivity/banner/deleteBannerByIds", Description: "批量删除Banner", ApiGroup: "限时活动", Method: "DELETE"},
+		{Path: "/limitedActivity/banner/updateBanner", Description: "更新Banner", ApiGroup: "限时活动", Method: "PUT"},
+		{Path: "/limitedActivity/banner/findBanner", Description: "查询Banner", ApiGroup: "限时活动", Method: "GET"},
+		{Path: "/limitedActivity/banner/getBannerList", Description: "Banner列表", ApiGroup: "限时活动", Method: "GET"},
 	}
 	utils.RegisterApis(entities...)
 }

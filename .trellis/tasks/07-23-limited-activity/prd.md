@@ -2,7 +2,7 @@
 
 ## Goal
 
-新增独立「限时活动」插件：后台配置活动并管理参与订单；用户在活动时间内于小程序报名并微信支付；支付成功后展示参与二维码；线下公开 H5 按人次多次核销；退款由客服在后台按未核销比例发起（用户通过固定客服二维码联系，不接企微 API）。
+新增独立「限时活动」插件：后台配置活动并管理参与订单；用户在活动时间内于小程序报名并微信支付；支付成功后展示参与二维码；线下公开 H5 按人次多次核销；退款由客服在后台按未核销比例发起（用户通过固定客服二维码联系，不接企微 API）。活动列表页支持运营可配的 Banner 轮播。
 
 ## Background / Context
 
@@ -10,6 +10,7 @@
 - 支付复用公共层：`POST /mini/pay/create` + `server/service/mini/pay.go`；扩展新 `orderType` 与订单号前缀，不重写微信支付封装。
 - 本仓库含：后端插件、管理端 `web` 插件、公开 H5 核销扩展。小程序 UI 不在本仓库，仅提供 mini API 契约（对齐 ticket/camping）。
 - 开发分支：`feature/limited-activity`。
+- Banner 不采用活动字段内嵌 JSON（区别于 ticket/camping 景区轮播），独立表以便运营单独上下架与详情长图配置。
 
 ## Confirmed Facts
 
@@ -20,6 +21,7 @@
 - 客服：订单详情分别展示群二维码与客服二维码；不对接企微 API。
 - 活动结束后：不可新报名；已支付待核销单仍可核销；不因结束自动过期已支付单。
 - 退款：仅后台客服操作；退款金额按未核销比例：`PayAmount × (totalUseTimes - verifiedTimes) / totalUseTimes`（分单位四舍五入）；已核销次数用尽不可退；退成功后不可再核销，并回退未核销人次对应名额。
+- Banner：独立表；轮播图 + 详情长图（均必填）；用户点击轮播图后展示详情长图（无页面跳转/关联活动/自定义路径）；仅 status + sort 控制，无生效时间窗；后台标题仅供运营识别，小程序可不展示。
 
 ## Requirements
 
@@ -42,6 +44,13 @@
 - 后台对「待核销且仍有未核销次数」的订单按未核销比例发起微信退款。
 - 退款中/已退款状态与回调幂等对齐 ticket 模式。
 
+### R5 活动列表 Banner 轮播
+- 小程序活动列表页顶部展示可运营配置的 Banner 轮播图。
+- 独立数据表 + 后台 CRUD 菜单（限时活动下「Banner 管理」）。
+- mini API 拉取启用中的 Banner（`status=1`，按 `sort` 升序），返回轮播图与详情长图 URL。
+- 交互：点击轮播图 → 展示对应详情长图（展示逻辑在小程序侧；本仓只交付字段与接口）。
+- 字段：标题、轮播图（必填）、详情长图（必填）、排序、显示状态、创建人/更新人、时间戳；**无**跳转类型、活动关联、自定义路径、生效时间窗。
+
 ## Acceptance Criteria
 
 - [ ] AC1：后台可维护活动信息与显示状态，列表/详情可见审计字段。
@@ -53,6 +62,8 @@
 - [ ] AC7：后台可按未核销比例退款；全核销不可退；退款成功后不可再核销，名额按未核销人次回退。
 - [ ] AC8：支付/退款回调幂等，不重复入账或重复退款。
 - [ ] AC9：H5 核销页支持新业务 type，工作人员可扫码完成活动订单核销。
+- [ ] AC10：后台可 CRUD Banner（标题、轮播图必填、详情长图必填、排序、显示状态），菜单挂在限时活动下；缺少轮播图或详情长图时不可保存。
+- [ ] AC11：mini Banner 列表仅返回显示中项，含 image 与 detailImage，按 sort 升序。
 
 ## Out of Scope
 
@@ -62,10 +73,12 @@
 - 本仓库内小程序页面实现（仅 mini API）。
 - 并入 `ticket` 或复用门票 SKU/日历模型。
 - 逐人实名名单、证件号采集。
+- Banner 生效时间窗、外链 H5、点击统计、跳转活动/自定义路径。
 
 ## Technical Notes
 
 - 插件：`server/plugin/limitedActivity/`、`web/src/plugin/limitedActivity/`。
 - 支付：扩展 `server/api/v1/mini/pay.go`；订单号前缀建议 `A`（区别 ticket 的 `T`）。
 - 核销 H5：扩展 `web/src/plugin/camping/view/h5Verify.vue`。
+- Banner 表名：`limited_activity_banners`；样板对齐本插件 activity CRUD。
 - 样板：`server/plugin/ticket/`（订单/核销/支付回调）、`web/src/plugin/ticket/view/order.vue`、camping H5 核销。

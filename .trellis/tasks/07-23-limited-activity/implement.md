@@ -33,8 +33,14 @@
    - `web/src/plugin/limitedActivity/`：活动管理、订单管理页面与 api。  
    - initialize Menu 注册。
 
-9. **验证**  
-   - 见下方 Validation；修问题后再请 `task.py start` 后的 check。
+9. **Banner 轮播（增量）**  
+   - Model `Banner`（title/image/detailImage/sort/status）+ AutoMigrate；Admin CRUD。  
+   - Mini：`GET .../mini/banner/list`（显示中 + sort）。  
+   - 管理端 `banner.vue` + api；菜单「Banner 管理」。  
+   - 验收 AC10–AC11。
+
+10. **验证**  
+   - 见下方 Validation；修问题后再请 check。
 
 ## Validation Commands
 
@@ -50,7 +56,7 @@ cd web && npm run build
 # 或至少保证相关 vue/js 无语法错误
 ```
 
-手工验收对照 `prd.md` AC1–AC9（支付/退款需调试环境微信配置）。
+手工验收对照 `prd.md` AC1–AC11（支付/退款需调试环境微信配置；Banner 可用后台造数 + mini 接口验排序与字段）。
 
 ## Risky Files / Rollback Points
 

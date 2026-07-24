@@ -12,6 +12,7 @@ func (r *miniRouter) Init(public, private *gin.RouterGroup) {
 	g := public.Group("limitedActivity").Group("mini").Use(middleware.OptionalJWTAuth())
 	g.GET("activity/list", mini.Activity.List)
 	g.GET("activity/detail", mini.Activity.Detail)
+	g.GET("banner/list", mini.Banner.List)
 
 	auth := public.Group("limitedActivity").Group("mini").Use(middleware.JWTAuth())
 	auth.POST("order/create", mini.Order.Create)
