@@ -977,6 +977,32 @@ definitions:
       updatedBy:
         type: integer
     type: object
+  model.Banner:
+    properties:
+      ID:
+        description: 主键ID
+        type: integer
+      createdAt:
+        description: 创建时间
+        type: string
+      createdBy:
+        type: integer
+      detailImage:
+        type: string
+      image:
+        type: string
+      sort:
+        type: integer
+      status:
+        type: integer
+      title:
+        type: string
+      updatedAt:
+        description: 更新时间
+        type: string
+      updatedBy:
+        type: integer
+    type: object
   model.Info:
     properties:
       ID:
@@ -5992,6 +6018,184 @@ paths:
       summary: 更新限时活动
       tags:
       - LimitedActivity
+  /limitedActivity/banner/createBanner:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Banner 信息
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/model.Banner'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 创建成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 创建 Banner
+      tags:
+      - LimitedActivityBanner
+  /limitedActivity/banner/deleteBanner:
+    delete:
+      parameters:
+      - description: Banner ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 删除 Banner
+      tags:
+      - LimitedActivityBanner
+  /limitedActivity/banner/deleteBannerByIds:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID列表
+        in: body
+        name: data
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 批量删除 Banner
+      tags:
+      - LimitedActivityBanner
+  /limitedActivity/banner/findBanner:
+    get:
+      parameters:
+      - description: Banner ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 查询成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.Banner'
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 查询 Banner
+      tags:
+      - LimitedActivityBanner
+  /limitedActivity/banner/getBannerList:
+    get:
+      parameters:
+      - description: 关键字
+        in: query
+        name: keyword
+        type: string
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页大小
+        in: query
+        name: pageSize
+        type: integer
+      - in: query
+        name: status
+        type: integer
+      - in: query
+        name: title
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.PageResult'
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Banner 列表
+      tags:
+      - LimitedActivityBanner
+  /limitedActivity/banner/updateBanner:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Banner 信息
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/model.Banner'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 更新 Banner
+      tags:
+      - LimitedActivityBanner
   /limitedActivity/mini/activity/detail:
     get:
       consumes:
@@ -6053,6 +6257,30 @@ paths:
                   type: string
               type: object
       summary: 活动列表
+      tags:
+      - 小程序-限时活动
+  /limitedActivity/mini/banner/list:
+    get:
+      consumes:
+      - application/json
+      description: 返回显示中的 Banner（status=1），含 image 与 detailImage，按 sort 升序
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    type: object
+                  type: array
+                msg:
+                  type: string
+              type: object
+      summary: Banner 列表
       tags:
       - 小程序-限时活动
   /limitedActivity/mini/order/create:
