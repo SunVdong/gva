@@ -22,6 +22,7 @@
 | [Logging Guidelines](./logging-guidelines.md) | `global.GVA_LOG` / zap | Filled |
 | [Quality Guidelines](./quality-guidelines.md) | 分层、Swagger、禁止项 | Filled |
 | [Mini Pay Integration](./mini-pay-integration.md) | 插件接入 `/mini/pay`、订单前缀、退款边界 | Filled |
+| [Ticket Multi-Venue Verify](./ticket-multi-venue-verify.md) | 多次票多场合快照、公开核销 venue、列表筛选 | Filled |
 
 ---
 

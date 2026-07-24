@@ -72,6 +72,14 @@
             <span>x {{ ticketOrder.quantity }}</span>
           </li>
         </ul>
+        <div v-if="ticketOrder.status === 1 && ticketRemainingTimes > 0 && ticketOrder.supportMultiVenue" class="venue-select">
+          <label>核销场合</label>
+          <select v-model="ticketVenue" class="input" @change="ticketVerifyError = ''">
+            <option value="">请选择场合</option>
+            <option v-for="v in ticketVenueOptions" :key="v.code" :value="v.code">{{ v.label }}</option>
+          </select>
+        </div>
+        <p v-if="ticketVerifyError" class="error">{{ ticketVerifyError }}</p>
         <div v-if="ticketOrder.status === 1 && ticketRemainingTimes > 0" class="actions">
           <button class="btn primary" :disabled="verifyLoading" @click="doVerify">确认核销</button>
         </div>
@@ -84,7 +92,10 @@
           <ul class="detail-list">
             <li v-for="r in ticketVerifyRecords" :key="r.ID">
               <span>第 {{ r.verifyNo }} 次</span>
-              <span>{{ formatDateTime(r.verifiedAt) }}</span>
+              <span>
+                {{ formatDateTime(r.verifiedAt) }}
+                <template v-if="ticketOrder.supportMultiVenue"> · {{ ticketVenueLabel(r.venue) || '—' }}</template>
+              </span>
             </li>
           </ul>
         </div>
@@ -162,6 +173,14 @@ const detail = ref(null)
 const ticketOrder = ref(null)
 const ticketRemainingTimes = ref(0)
 const ticketVerifyRecords = ref([])
+const ticketVenue = ref('')
+const ticketVerifyError = ref('')
+const ticketVenueOptions = [
+  { code: 'zhongshanling', label: '中山陵' },
+  { code: 'zhaozhao', label: '爪爪' },
+  { code: 'lululand', label: 'lululand' },
+  { code: 'hongshan', label: '红山' }
+]
 const activityOrder = ref(null)
 const activityRemainingTimes = ref(0)
 const activityVerifyRecords = ref([])
@@ -202,6 +221,12 @@ function ticketOrderStatusClass(order) {
   if (!order) return ''
   if (order.status === 1 && (order.verifiedTimes || 0) > 0) return 'pending'
   return ticketStatusClass(order.status)
+}
+
+function ticketVenueLabel(code) {
+  if (!code) return ''
+  const hit = ticketVenueOptions.find((v) => v.code === code)
+  return hit ? hit.label : code
 }
 
 const statusText = computed(() => {
@@ -313,6 +338,8 @@ async function loadTicketOrder() {
   ticketOrder.value = null
   ticketRemainingTimes.value = 0
   ticketVerifyRecords.value = []
+  ticketVenue.value = ''
+  ticketVerifyError.value = ''
   try {
     const res = await getTicketOrderByCodePublic({ code: codeFromUrl.value })
     if (res.code === 0 && res.data) {
@@ -360,7 +387,15 @@ function formatDateTime(d) {
 
 async function doVerify() {
   if (!codeFromUrl.value) return
+  if (typeFromUrl.value === 'ticket') {
+    if (!ticketOrder.value || ticketOrder.value.status !== 1 || ticketRemainingTimes.value <= 0) return
+    if (ticketOrder.value.supportMultiVenue && !ticketVenue.value) {
+      ticketVerifyError.value = '请选择核销场合'
+      return
+    }
+  }
   verifyLoading.value = true
+  ticketVerifyError.value = ''
   try {
     if (typeFromUrl.value === 'reservation') {
       if (!detail.value || detail.value.status !== 0) return
@@ -372,14 +407,19 @@ async function doVerify() {
         loadError.value = res.msg || '核销失败'
       }
     } else if (typeFromUrl.value === 'ticket') {
-      if (!ticketOrder.value || ticketOrder.value.status !== 1 || ticketRemainingTimes.value <= 0) return
-      const res = await verifyTicketOrderByCodePublic({ code: codeFromUrl.value })
+      const payload = { code: codeFromUrl.value }
+      if (ticketOrder.value.supportMultiVenue) {
+        payload.venue = ticketVenue.value
+      }
+      const res = await verifyTicketOrderByCodePublic(payload)
       if (res.code === 0 && res.data) {
         ticketOrder.value = res.data.order || ticketOrder.value
         ticketRemainingTimes.value = res.data.remainingTimes ?? 0
         ticketVerifyRecords.value = res.data.verifyRecords || []
+        ticketVenue.value = ''
+        ticketVerifyError.value = ''
       } else {
-        loadError.value = res.msg || '核销失败'
+        ticketVerifyError.value = res.msg || '核销失败'
       }
     } else if (typeFromUrl.value === 'limitedActivity') {
       if (!activityOrder.value || activityOrder.value.status !== 1 || activityRemainingTimes.value <= 0) return
@@ -393,7 +433,11 @@ async function doVerify() {
       }
     }
   } catch (_) {
-    loadError.value = '核销请求失败，请重试'
+    if (typeFromUrl.value === 'ticket') {
+      ticketVerifyError.value = '核销请求失败，请重试'
+    } else {
+      loadError.value = '核销请求失败，请重试'
+    }
   } finally {
     verifyLoading.value = false
   }
@@ -510,6 +554,12 @@ onMounted(() => {
 .status.cancel { color: #909399; }
 .status.expired { color: #f56c6c; }
 .actions { margin-top: 20px; }
+.venue-select { margin: 12px 0 0; }
+.venue-select label {
+  display: block;
+  color: #666;
+  margin-bottom: 8px;
+}
 .msg { text-align: center; padding: 12px; border-radius: 8px; }
 .msg.success { background: #f0f9eb; color: #67c23a; }
 .msg.info { background: #f4f4f5; color: #909399; }

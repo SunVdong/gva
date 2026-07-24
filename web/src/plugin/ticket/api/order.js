@@ -9,5 +9,10 @@ export const refundOrder = (params) => service({ url: '/ticket/order/refundOrder
 export const getTicketOrderByCodePublic = (params) =>
   service({ url: '/ticket/order/getOrderByCodePublic', method: 'get', params })
 
-export const verifyTicketOrderByCodePublic = (params) =>
-  service({ url: '/ticket/order/verifyOrderByCodePublic', method: 'post', params })
+export const verifyTicketOrderByCodePublic = ({ code, venue } = {}) =>
+  service({
+    url: '/ticket/order/verifyOrderByCodePublic',
+    method: 'post',
+    params: { code },
+    ...(venue ? { data: { venue } } : {})
+  })

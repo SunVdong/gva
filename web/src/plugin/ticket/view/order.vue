@@ -23,6 +23,17 @@
             <el-option label="退款中" :value="7" />
           </el-select>
         </el-form-item>
+        <el-form-item label="票种">
+          <el-select v-model="searchInfo.ticketType" placeholder="全部" clearable style="width: 120px">
+            <el-option label="单次票" :value="1" />
+            <el-option label="多次票" :value="2" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="核销场合">
+          <el-select v-model="searchInfo.venue" placeholder="全部" clearable style="width: 130px">
+            <el-option v-for="v in venueOptions" :key="v.code" :label="v.label" :value="v.code" />
+          </el-select>
+        </el-form-item>
         <el-form-item>
           <el-button type="primary" icon="Search" @click="onSubmit">查询</el-button>
           <el-button icon="Refresh" @click="onReset">重置</el-button>
@@ -169,6 +180,9 @@
             <el-table-column label="核销时间" min-width="170">
               <template #default="{ row }">{{ row.verifiedAt ? formatDate(row.verifiedAt) : '-' }}</template>
             </el-table-column>
+            <el-table-column label="场合" width="110">
+              <template #default="{ row }">{{ venueLabel(row.venue) }}</template>
+            </el-table-column>
             <el-table-column label="备注" prop="remark" min-width="120">
               <template #default="{ row }">{{ row.remark || '-' }}</template>
             </el-table-column>
@@ -195,6 +209,13 @@ import { ref } from 'vue'
 
 defineOptions({ name: 'TicketOrder' })
 
+const venueOptions = [
+  { code: 'zhongshanling', label: '中山陵' },
+  { code: 'zhaozhao', label: '爪爪' },
+  { code: 'lululand', label: 'lululand' },
+  { code: 'hongshan', label: '红山' }
+]
+
 const page = ref(1)
 const total = ref(0)
 const pageSize = ref(10)
@@ -202,6 +223,12 @@ const tableData = ref([])
 const searchInfo = ref({})
 const detailVisible = ref(false)
 const detail = ref({ order: null, review: null, verifyRecords: [] })
+
+function venueLabel(code) {
+  if (!code) return '—'
+  const hit = venueOptions.find((v) => v.code === code)
+  return hit ? hit.label : code
+}
 
 function formatDate(d) {
   if (!d) return ''

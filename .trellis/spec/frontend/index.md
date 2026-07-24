@@ -32,7 +32,7 @@
 | Axios 封装 | `web/src/utils/request.js` |
 | 插件 API | `web/src/plugin/ticket/api/order.js` |
 | 插件页面 | `web/src/plugin/ticket/view/order.vue`、`web/src/plugin/limitedActivity/view/` |
-| H5 核销 | `web/src/plugin/camping/view/h5Verify.vue`（多 type） |
+| H5 核销 | `web/src/plugin/camping/view/h5Verify.vue`（多 type；门票场合见 backend `ticket-multi-venue-verify`） |
 | Pinia | `web/src/pinia/modules/user.js` |
 | Hooks | `web/src/hooks/useDict.js` |
 

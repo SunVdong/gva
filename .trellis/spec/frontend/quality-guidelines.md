@@ -60,6 +60,13 @@ export const getOrderList = (params) =>
 - 响应 `{code, data, msg}`；错误走 request 拦截与页面提示
 - 字段类型与命名（含 `ID`）前后端一致
 
+### H5 核销（`h5Verify.vue`）
+
+- 按 URL `type` 分支处理；改 ticket 时**禁止**改动 camping / limitedActivity 业务语义
+- 门票多场合：以 `order.supportMultiVenue`（订单快照）决定是否必选场合；`venue` code 须与后端 `server/plugin/ticket/model/venue.go` 白名单一致
+- 公开核销：`code` 走 query，`venue` 走 body（见 `web/src/plugin/ticket/api/order.js`）
+- 契约细节：`.trellis/spec/backend/ticket-multi-venue-verify.md`
+
 ---
 
 ## Forbidden Patterns

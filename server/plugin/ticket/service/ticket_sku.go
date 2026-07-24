@@ -8,7 +8,14 @@ import (
 
 type ticketSku struct{}
 
+func normalizeSkuMultiVenue(m *model.TicketSku) {
+	if m.TicketType != 2 {
+		m.SupportMultiVenue = false
+	}
+}
+
 func (s *ticketSku) Create(m *model.TicketSku) error {
+	normalizeSkuMultiVenue(m)
 	return global.GVA_DB.Create(m).Error
 }
 
@@ -21,6 +28,7 @@ func (s *ticketSku) DeleteByIds(ids []uint) error {
 }
 
 func (s *ticketSku) Update(m model.TicketSku) error {
+	normalizeSkuMultiVenue(&m)
 	return global.GVA_DB.Model(&model.TicketSku{}).Where("id = ?", m.ID).Select("*").Omit("created_at").Updates(&m).Error
 }
 

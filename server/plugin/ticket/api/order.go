@@ -125,6 +125,7 @@ func (a *ticketOrderApi) GetOrderByCodePublic(c *gin.Context) {
 // @Tags TicketOrder
 // @Summary 根据订单号核销门票订单(公开)
 // @Param code query string true "订单号"
+// @Param body body object false "可选：{venue} 多场合订单必填场合 code"
 // @Success 200 {object} response.Response{data=object,msg=string} "核销成功"
 // @Router /ticket/order/verifyOrderByCodePublic [post]
 func (a *ticketOrderApi) VerifyOrderByCodePublic(c *gin.Context) {
@@ -133,7 +134,11 @@ func (a *ticketOrderApi) VerifyOrderByCodePublic(c *gin.Context) {
 		response.FailWithMessage("订单号不能为空", c)
 		return
 	}
-	if err := serviceOrder.VerifyOrderByOrderNoPublic(code); err != nil {
+	var body struct {
+		Venue string `json:"venue"`
+	}
+	_ = c.ShouldBindJSON(&body) // 无 body 的旧客户端兼容
+	if err := serviceOrder.VerifyOrderByOrderNoPublic(code, body.Venue); err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}

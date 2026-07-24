@@ -146,6 +146,15 @@
                 <el-input-number v-model="row.useTimes" :min="1" size="small" style="width:100%" :disabled="row.ticketType !== 2" />
               </template>
             </el-table-column>
+            <el-table-column label="是否支持多场合" width="140" align="center">
+              <template #default="{ row }">
+                <el-checkbox
+                  v-if="row.ticketType === 2"
+                  v-model="row.supportMultiVenue"
+                >支持多场合</el-checkbox>
+                <span v-else class="text-gray-400">—</span>
+              </template>
+            </el-table-column>
             <el-table-column label="限购" width="100">
               <template #default="{ row }">
                 <el-input-number v-model="row.limitBuy" :min="0" size="small" style="width:100%" />
@@ -337,7 +346,7 @@ const openSkuDrawer = async (row) => {
     getSkuList({ productId: row.ID, page: 1, pageSize: 100 }),
     getRuleByProduct({ productId: row.ID })
   ])
-  skuList.value = (skuRes.code === 0 && skuRes.data.list) ? skuRes.data.list.map((s) => ({ ...s, marketPrice: s.marketPrice ?? undefined, ticketType: s.ticketType || 1, useTimes: s.useTimes || 1 })) : []
+  skuList.value = (skuRes.code === 0 && skuRes.data.list) ? skuRes.data.list.map((s) => ({ ...s, marketPrice: s.marketPrice ?? undefined, ticketType: s.ticketType || 1, useTimes: s.useTimes || 1, supportMultiVenue: !!s.supportMultiVenue })) : []
   ruleList.value = (ruleRes.code === 0 && ruleRes.data) ? ruleRes.data.map((r) => ({ ...r })) : []
   activeTab.value = 'sku'
 }
@@ -350,6 +359,7 @@ function addSkuRow() {
     marketPrice: undefined,
     ticketType: 1,
     useTimes: 1,
+    supportMultiVenue: false,
     limitBuy: 0,
     sort: 0,
     status: 1,
@@ -360,6 +370,7 @@ function addSkuRow() {
 function onTicketTypeChange(row) {
   if (row.ticketType === 1) {
     row.useTimes = 1
+    row.supportMultiVenue = false
   }
 }
 
@@ -390,6 +401,7 @@ const saveSkuAndRule = async () => {
       marketPrice: s.marketPrice != null ? Number(s.marketPrice) : null,
       ticketType: s.ticketType ?? 1,
       useTimes: s.ticketType === 2 ? (Number(s.useTimes) || 1) : 1,
+      supportMultiVenue: s.ticketType === 2 ? !!s.supportMultiVenue : false,
       limitBuy: Number(s.limitBuy) || 0,
       sort: Number(s.sort) || 0,
       status: s.status ?? 1,

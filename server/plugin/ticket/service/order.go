@@ -79,6 +79,12 @@ func (s *ticketOrder) GetList(req request.TicketOrderSearch) (list []model.Ticke
 			db = db.Where("status IN (?)", []int{2, 3, 4, 5, 6})
 		}
 	}
+	if req.TicketType != nil {
+		db = db.Where("EXISTS (SELECT 1 FROM ticket_sku s WHERE s.id = orders.sku_id AND s.ticket_type = ? AND s.deleted_at IS NULL)", *req.TicketType)
+	}
+	if req.Venue != "" {
+		db = db.Where("EXISTS (SELECT 1 FROM order_verify_records r WHERE r.order_id = orders.id AND r.venue = ? AND r.deleted_at IS NULL)", req.Venue)
+	}
 	if err = db.Count(&total).Error; err != nil {
 		return
 	}
@@ -343,20 +349,21 @@ func (s *ticketOrder) CreateOrder(userID uint, req request.MiniOrderCreate) (ord
 		}
 		orderNo = fmt.Sprintf("T%s%06d", time.Now().Format("20060102150405"), rand.Intn(1000000))
 		order = model.TicketOrder{
-			OrderNo:       orderNo,
-			UserID:        userID,
-			BookerName:    strings.TrimSpace(req.BookerName),
-			BookerPhone:   phone,
-			SkuID:         req.SkuID,
-			SkuName:       sku.Name,
-			Price:         sku.Price,
-			Quantity:      req.Quantity,
-			VisitDate:     visitDate,
-			TotalAmount:   totalAmount,
-			PayAmount:     totalAmount,
-			Status:        0,
-			TotalUseTimes: useTimes,
-			VerifiedTimes: 0,
+			OrderNo:           orderNo,
+			UserID:            userID,
+			BookerName:        strings.TrimSpace(req.BookerName),
+			BookerPhone:       phone,
+			SkuID:             req.SkuID,
+			SkuName:           sku.Name,
+			Price:             sku.Price,
+			Quantity:          req.Quantity,
+			VisitDate:         visitDate,
+			TotalAmount:       totalAmount,
+			PayAmount:         totalAmount,
+			Status:            0,
+			TotalUseTimes:     useTimes,
+			VerifiedTimes:     0,
+			SupportMultiVenue: sku.TicketType == 2 && sku.SupportMultiVenue,
 		}
 		return tx.Create(&order).Error
 	})
@@ -368,7 +375,8 @@ func (s *ticketOrder) CreateOrder(userID uint, req request.MiniOrderCreate) (ord
 }
 
 // VerifyOrder 核销订单（支持多次票累加核销，由后台或核销端调用）
-func (s *ticketOrder) VerifyOrder(orderID uint) error {
+// venue：支持多场合订单必填且须在白名单；否则忽略，记录为空
+func (s *ticketOrder) VerifyOrder(orderID uint, venue string) error {
 	return global.GVA_DB.Transaction(func(tx *gorm.DB) error {
 		var order model.TicketOrder
 		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
@@ -389,6 +397,14 @@ func (s *ticketOrder) VerifyOrder(orderID uint) error {
 			return fmt.Errorf("该订单已核销完毕")
 		}
 
+		venueCode := ""
+		if order.SupportMultiVenue {
+			if !model.IsValidVenue(venue) {
+				return fmt.Errorf("请选择核销场合")
+			}
+			venueCode = venue
+		}
+
 		newVerified := order.VerifiedTimes + 1
 		now := time.Now()
 
@@ -396,8 +412,10 @@ func (s *ticketOrder) VerifyOrder(orderID uint) error {
 			OrderID:    orderID,
 			VerifyNo:   newVerified,
 			VerifiedAt: now,
+			Venue:      venueCode,
 		}
-		if err := tx.Create(&record).Error; err != nil {
+		// 显式 Select，避免 GORM default 标签导致 venue 未写入
+		if err := tx.Select("OrderID", "VerifyNo", "VerifiedAt", "Venue", "Remark").Create(&record).Error; err != nil {
 			return err
 		}
 
@@ -413,12 +431,12 @@ func (s *ticketOrder) VerifyOrder(orderID uint) error {
 }
 
 // VerifyOrderByOrderNoPublic 根据订单号核销订单（公开给 H5 核销使用）
-func (s *ticketOrder) VerifyOrderByOrderNoPublic(orderNo string) error {
+func (s *ticketOrder) VerifyOrderByOrderNoPublic(orderNo string, venue string) error {
 	var order model.TicketOrder
 	if err := global.GVA_DB.Where("order_no = ?", orderNo).First(&order).Error; err != nil || order.ID == 0 {
 		return fmt.Errorf("订单不存在")
 	}
-	return s.VerifyOrder(order.ID)
+	return s.VerifyOrder(order.ID, venue)
 }
 
 // DeleteMyOrder 小程序端删除本人订单，仅前台隐藏，后台仍保留
