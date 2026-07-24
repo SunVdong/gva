@@ -9,6 +9,8 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
 	userModel "github.com/flipped-aurora/gin-vue-admin/server/model/user"
+	laModel "github.com/flipped-aurora/gin-vue-admin/server/plugin/limitedActivity/model"
+	laService "github.com/flipped-aurora/gin-vue-admin/server/plugin/limitedActivity/service"
 	ticketModel "github.com/flipped-aurora/gin-vue-admin/server/plugin/ticket/model"
 	"github.com/flipped-aurora/gin-vue-admin/server/service/mini"
 	"github.com/gin-gonic/gin"
@@ -40,7 +42,7 @@ func (a *PayApi) Create(c *gin.Context) {
 	}
 
 	var req struct {
-		OrderType string `json:"orderType" binding:"required"` // 订单类型：ticket 景点门票
+		OrderType string `json:"orderType" binding:"required"` // 订单类型：ticket 景点门票 / limitedActivity 限时活动
 		OrderID   uint   `json:"orderId" binding:"required"`   // 订单 ID
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -84,6 +86,29 @@ func (a *PayApi) Create(c *gin.Context) {
 		}
 		response.OkWithData(params, c)
 		return
+	case "limitedActivity":
+		var order laModel.ActivityOrder
+		if err := global.GVA_DB.Where("id = ? AND user_id = ?", req.OrderID, userID).First(&order).Error; err != nil {
+			response.FailWithMessage("订单不存在或无权支付", c)
+			return
+		}
+		if order.Status != 0 {
+			response.FailWithMessage("订单状态不允许支付", c)
+			return
+		}
+		fen := int64(math.Round(order.PayAmount * 100))
+		if fen <= 0 {
+			response.FailWithMessage("订单金额异常", c)
+			return
+		}
+		outTradeNo := fmt.Sprintf("%s_%d", order.OrderNo, time.Now().Unix())
+		params, err := mini.CreateJSAPI(outTradeNo, fen, "限时活动-"+order.OrderNo, openID, c.ClientIP())
+		if err != nil {
+			response.FailWithMessage(err.Error(), c)
+			return
+		}
+		response.OkWithData(params, c)
+		return
 	default:
 		response.FailWithMessage("不支持的订单类型", c)
 	}
@@ -101,9 +126,14 @@ func (a *PayApi) Notify(c *gin.Context) {
 	if idx := strings.Index(orderNo, "_"); idx > 0 {
 		orderNo = orderNo[:idx]
 	}
-	// 根据订单号前缀区分业务：T=门票
+	// 根据订单号前缀区分业务：T=门票 A=限时活动
 	if len(orderNo) >= 1 && orderNo[0] == 'T' {
 		if err := applyTicketOrderPayNotify(orderNo, result); err != nil {
+			c.JSON(200, gin.H{"code": "FAIL", "message": err.Error()})
+			return
+		}
+	} else if len(orderNo) >= 1 && orderNo[0] == 'A' {
+		if err := applyLimitedActivityOrderPayNotify(orderNo, result); err != nil {
 			c.JSON(200, gin.H{"code": "FAIL", "message": err.Error()})
 			return
 		}
@@ -201,10 +231,95 @@ func ticketPayNotifyIdempotentPaid(order *ticketModel.TicketOrder, result *mini.
 	return nil
 }
 
+// applyLimitedActivityOrderPayNotify 限时活动支付回调：验金额、微信订单号，更新或幂等
+func applyLimitedActivityOrderPayNotify(orderNo string, result *mini.PaidNotifyResult) error {
+	if result.TotalFee <= 0 {
+		return fmt.Errorf("回调金额无效")
+	}
+	if result.TransactionID == "" {
+		return fmt.Errorf("缺少微信订单号 transaction_id")
+	}
+	var order laModel.ActivityOrder
+	if err := global.GVA_DB.Where("order_no = ?", orderNo).First(&order).Error; err != nil {
+		return fmt.Errorf("订单不存在")
+	}
+	if err := laPayNotifyAssertAmountAndTx(&order, result); err != nil {
+		return err
+	}
+	switch order.Status {
+	case 1:
+		return laPayNotifyIdempotentPaid(&order, result)
+	case 0:
+		now := time.Now()
+		res := global.GVA_DB.Model(&laModel.ActivityOrder{}).
+			Where("order_no = ? AND status = ?", orderNo, 0).
+			Updates(map[string]interface{}{
+				"status":            1,
+				"pay_time":          now,
+				"wx_transaction_id": result.TransactionID,
+			})
+		if res.Error != nil {
+			return res.Error
+		}
+		if res.RowsAffected > 0 {
+			return nil
+		}
+		if err := global.GVA_DB.Where("order_no = ?", orderNo).First(&order).Error; err != nil {
+			return fmt.Errorf("订单不存在")
+		}
+		return laPayNotifyIdempotentPaid(&order, result)
+	default:
+		return fmt.Errorf("订单状态不允许确认支付: status=%d", order.Status)
+	}
+}
+
+func laPayNotifyAssertAmountAndTx(order *laModel.ActivityOrder, result *mini.PaidNotifyResult) error {
+	expectedFen := int(math.Round(order.PayAmount * 100))
+	if result.TotalFee != expectedFen {
+		return fmt.Errorf("支付金额与订单不一致: 订单应付%d分, 通知%d分", expectedFen, result.TotalFee)
+	}
+	if order.WxTransactionID != "" && order.WxTransactionID != result.TransactionID {
+		return fmt.Errorf("微信订单号与已支付记录不一致")
+	}
+	return nil
+}
+
+func laPayNotifyIdempotentPaid(order *laModel.ActivityOrder, result *mini.PaidNotifyResult) error {
+	if order.Status != 1 {
+		return fmt.Errorf("订单状态异常: status=%d", order.Status)
+	}
+	if err := laPayNotifyAssertAmountAndTx(order, result); err != nil {
+		return err
+	}
+	if order.WxTransactionID == result.TransactionID {
+		return nil
+	}
+	if order.WxTransactionID != "" {
+		return fmt.Errorf("微信订单号与已支付记录不一致")
+	}
+	res := global.GVA_DB.Model(&laModel.ActivityOrder{}).
+		Where("order_no = ? AND status = ? AND wx_transaction_id = ?", order.OrderNo, 1, "").
+		Update("wx_transaction_id", result.TransactionID)
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected > 0 {
+		return nil
+	}
+	var fresh laModel.ActivityOrder
+	if err := global.GVA_DB.Where("order_no = ?", order.OrderNo).First(&fresh).Error; err != nil {
+		return fmt.Errorf("订单不存在")
+	}
+	if fresh.WxTransactionID != result.TransactionID {
+		return fmt.Errorf("微信订单号与已支付记录不一致")
+	}
+	return nil
+}
+
 // Refund 申请退款（仅待核销且 verified_times=0 可退；多次票部分核销后不可退，全额退款）
 // @Tags        小程序
 // @Summary     申请退款
-// @Description 对已支付且待核销、且尚未产生核销次数的门票订单申请全额退款（多次票若已核销过任一次则不可退）。需登录，请求头必带 x-token。
+// @Description 对已支付且待核销、且尚未产生核销次数的门票订单申请全额退款（多次票若已核销过任一次则不可退）。限时活动订单不支持用户自助退款，请联系客服。需登录，请求头必带 x-token。
 // @Accept      json
 // @Produce     json
 // @Param       x-token header string true "小程序登录后返回的 token（必填）"
@@ -287,22 +402,47 @@ func (a *PayApi) RefundNotify(c *gin.Context) {
 		c.JSON(200, gin.H{"code": "FAIL", "message": err.Error()})
 		return
 	}
+	orderNo := orderNoFromOutRefundNo(result.OutRefundNo)
 	status := strings.ToUpper(strings.TrimSpace(result.RefundStatus))
 	switch status {
 	case "SUCCESS":
-		if err := applyTicketOrderRefundSuccessByRefundNo(result.OutRefundNo, result.RefundID, result.SuccessTime); err != nil {
-			c.JSON(200, gin.H{"code": "FAIL", "message": err.Error()})
+		var applyErr error
+		if len(orderNo) >= 1 && orderNo[0] == 'A' {
+			applyErr = laService.Service.Order.ApplyRefundSuccessByRefundNo(result.OutRefundNo, result.RefundID, result.SuccessTime, 0)
+		} else {
+			applyErr = applyTicketOrderRefundSuccessByRefundNo(result.OutRefundNo, result.RefundID, result.SuccessTime)
+		}
+		if applyErr != nil {
+			c.JSON(200, gin.H{"code": "FAIL", "message": applyErr.Error()})
 			return
 		}
 	case "CLOSED", "ABNORMAL":
-		if err := ticketRefundReleaseRequested(result.OutRefundNo); err != nil {
-			c.JSON(200, gin.H{"code": "FAIL", "message": err.Error()})
+		var releaseErr error
+		if len(orderNo) >= 1 && orderNo[0] == 'A' {
+			releaseErr = laService.Service.Order.ReleaseRefundRequested(result.OutRefundNo)
+		} else {
+			releaseErr = ticketRefundReleaseRequested(result.OutRefundNo)
+		}
+		if releaseErr != nil {
+			c.JSON(200, gin.H{"code": "FAIL", "message": releaseErr.Error()})
 			return
 		}
 	default:
 		// PROCESSING 等中间态，保持已受理状态，等待后续通知
 	}
 	c.JSON(200, gin.H{"code": "SUCCESS", "message": "成功"})
+}
+
+// orderNoFromOutRefundNo 从商户退款单号提取业务订单号。格式：R{orderNo}_{unix}
+func orderNoFromOutRefundNo(outRefundNo string) string {
+	s := strings.TrimSpace(outRefundNo)
+	if strings.HasPrefix(s, "R") {
+		s = s[1:]
+	}
+	if idx := strings.LastIndex(s, "_"); idx > 0 {
+		s = s[:idx]
+	}
+	return s
 }
 
 func ticketRefundMarkRequested(orderID uint, refundNo, wxRefundID string) error {

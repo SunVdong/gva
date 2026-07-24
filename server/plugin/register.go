@@ -4,5 +4,6 @@ import (
 	_ "github.com/flipped-aurora/gin-vue-admin/server/plugin/activityGuide"
 	_ "github.com/flipped-aurora/gin-vue-admin/server/plugin/announcement"
 	_ "github.com/flipped-aurora/gin-vue-admin/server/plugin/camping"
+	_ "github.com/flipped-aurora/gin-vue-admin/server/plugin/limitedActivity"
 	_ "github.com/flipped-aurora/gin-vue-admin/server/plugin/ticket"
 )

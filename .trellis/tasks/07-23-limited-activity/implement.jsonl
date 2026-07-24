@@ -1,0 +1,9 @@
+{"file": ".trellis/spec/backend/index.md", "reason": "后端分层与插件黄金路径入口"}
+{"file": ".trellis/spec/backend/directory-structure.md", "reason": "插件目录与 enter.go 约定"}
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "GORM 模型、迁移、事务与命名"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "Service error 与 response 包用法"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "分层禁止项与 Swagger 要求"}
+{"file": ".trellis/spec/frontend/index.md", "reason": "管理端前端规范入口"}
+{"file": ".trellis/spec/frontend/directory-structure.md", "reason": "web 插件目录结构"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Vue SFC 与 Element Plus 约定"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "命名、API 注释与质量条"}

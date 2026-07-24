@@ -1,0 +1,9 @@
+{"file": ".trellis/spec/backend/index.md", "reason": "检查后端分层与插件对齐"}
+{"file": ".trellis/spec/backend/directory-structure.md", "reason": "核对插件目录完整性"}
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "核对模型/事务/名额更新"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "核对错误返回路径"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "核对分层与接口质量"}
+{"file": ".trellis/spec/frontend/index.md", "reason": "检查管理端前端约定"}
+{"file": ".trellis/spec/frontend/directory-structure.md", "reason": "核对插件页面与 api 布局"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "核对页面组件写法"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "核对前端质量条"}

@@ -7,6 +7,7 @@ import (
 	_ "github.com/flipped-aurora/gin-vue-admin/server/api/v1/mini"                   // 供 swag 扫描小程序登录等接口文档
 	_ "github.com/flipped-aurora/gin-vue-admin/server/plugin/activityGuide/api/mini" // 供 swag 扫描活动指南小程序接口文档
 	_ "github.com/flipped-aurora/gin-vue-admin/server/plugin/camping/api/mini"       // 供 swag 扫描露营预约小程序接口文档
+	_ "github.com/flipped-aurora/gin-vue-admin/server/plugin/limitedActivity/api/mini" // 供 swag 扫描限时活动小程序接口文档
 	_ "github.com/flipped-aurora/gin-vue-admin/server/plugin/ticket/api/mini"       // 供 swag 扫描门票小程序接口文档
 	_ "go.uber.org/automaxprocs"
 	"go.uber.org/zap"
@@ -26,6 +27,8 @@ import (
 // @Tag.Description 景点/门票小程序接口（景区、商品、日历、订单）
 // @Tag.Name        小程序-露营
 // @Tag.Description 露营场地预约（场地列表、时段、预约、取消）
+// @Tag.Name        小程序-限时活动
+// @Tag.Description 限时活动（活动列表、报名下单、我的订单）
 // @Tag.Name        Base
 // @Tag.Name        SysUser
 // @Tag.Description 用户

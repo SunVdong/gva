@@ -50,14 +50,25 @@ web/src/plugin/<name>/
 └── config.js      # 可选
 ```
 
-现有插件示例：`ticket`、`camping`、`announcement`、`email`、`activityGuide`。
+现有插件示例：`ticket`、`camping`、`announcement`、`email`、`activityGuide`、`limitedActivity`。
 
 Ticket 现状（精简）：
 
 - `web/src/plugin/ticket/api/{order,product,scenic,user}.js`
 - `web/src/plugin/ticket/view/{order,product,scenic,user,calendar}.vue`
 
+LimitedActivity：
+
+- `web/src/plugin/limitedActivity/api/{activity,order}.js`
+- `web/src/plugin/limitedActivity/view/{activity,order}.vue`
+
 插件一般**不**自建 Pinia；菜单路由多由后端动态下发。硬编码路由例外少见（如 camping H5 在 `web/src/router/index.js`）。
+
+### H5 核销页约定
+
+- 路由：`#/h5/verify?type=<biz>&code=<核销码或订单号>`，组件：`web/src/plugin/camping/view/h5Verify.vue`
+- 已支持 `type`：`reservation` | `ticket` | `limitedActivity`
+- 新增业务：在该页增加分支 + 对应插件 `*Public` API；**勿**破坏既有 type 行为；已鉴权后 query 变化应重新加载详情
 
 ---
 

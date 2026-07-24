@@ -21,6 +21,7 @@
 | [Error Handling](./error-handling.md) | Service error → response 包 | Filled |
 | [Logging Guidelines](./logging-guidelines.md) | `global.GVA_LOG` / zap | Filled |
 | [Quality Guidelines](./quality-guidelines.md) | 分层、Swagger、禁止项 | Filled |
+| [Mini Pay Integration](./mini-pay-integration.md) | 插件接入 `/mini/pay`、订单前缀、退款边界 | Filled |
 
 ---
 
@@ -31,8 +32,9 @@
 | 基础模型 | `server/global/model.go` |
 | 统一响应 | `server/model/common/response/response.go` |
 | 核心 ApiGroup | `server/api/v1/enter.go`、`server/api/v1/system/enter.go` |
-| 插件样板 | `server/plugin/announcement/`、`server/plugin/ticket/` |
-| 事务与业务 | `server/plugin/ticket/service/order.go` |
+| 插件样板 | `server/plugin/announcement/`、`server/plugin/ticket/`、`server/plugin/limitedActivity/` |
+| 事务与业务 | `server/plugin/ticket/service/order.go`、`server/plugin/limitedActivity/service/order.go` |
+| 公共支付分发 | `server/api/v1/mini/pay.go` |
 
 ---
 

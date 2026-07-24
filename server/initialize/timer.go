@@ -2,13 +2,14 @@ package initialize
 
 import (
 	"fmt"
-	"github.com/flipped-aurora/gin-vue-admin/server/task"
-	ticketService "github.com/flipped-aurora/gin-vue-admin/server/plugin/ticket/service"
 	"time"
 
-	"github.com/robfig/cron/v3"
-
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
+	laService "github.com/flipped-aurora/gin-vue-admin/server/plugin/limitedActivity/service"
+	ticketService "github.com/flipped-aurora/gin-vue-admin/server/plugin/ticket/service"
+	"github.com/flipped-aurora/gin-vue-admin/server/task"
+
+	"github.com/robfig/cron/v3"
 )
 
 func Timer() {
@@ -36,6 +37,20 @@ func Timer() {
 				fmt.Printf("ticket timeout close success, closed=%d\n", closed)
 			}
 		}, "门票订单超时未支付自动关闭")
+		if err != nil {
+			fmt.Println("add timer error:", err)
+		}
+
+		_, err = global.GVA_Timer.AddTaskByFuncWithSecond("LimitedActivityOrderTimeoutClose", "0 */1 * * * *", func() {
+			closed, closeErr := laService.Service.Order.CloseTimeoutUnpaidOrders(15*time.Minute, 200)
+			if closeErr != nil {
+				fmt.Println("limitedActivity timeout close error:", closeErr)
+				return
+			}
+			if closed > 0 {
+				fmt.Printf("limitedActivity timeout close success, closed=%d\n", closed)
+			}
+		}, "限时活动订单超时未支付自动关闭")
 		if err != nil {
 			fmt.Println("add timer error:", err)
 		}

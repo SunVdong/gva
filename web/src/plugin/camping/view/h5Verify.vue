@@ -20,7 +20,7 @@
       <button class="btn primary" :disabled="loading" @click="doAuth">验证</button>
     </div>
 
-    <!-- 内容：按 type 区分预约 / 门票订单 -->
+    <!-- 内容：按 type 区分预约 / 门票订单 / 限时活动 -->
     <div v-else class="content">
       <template v-if="loadError">
         <p class="error">{{ loadError }}</p>
@@ -90,6 +90,44 @@
         </div>
       </template>
 
+      <!-- 限时活动订单详情 -->
+      <template v-else-if="typeFromUrl === 'limitedActivity' && activityOrder">
+        <h2>限时活动订单</h2>
+        <ul class="detail-list">
+          <li><span>订单号</span>{{ activityOrder.orderNo }}</li>
+          <li><span>活动</span>{{ activityOrder.activityName || '—' }}</li>
+          <li><span>联系人</span>{{ activityOrder.contactName }}</li>
+          <li><span>手机号</span>{{ activityOrder.contactPhone }}</li>
+          <li><span>人次</span>{{ activityOrder.quantity }}</li>
+          <li><span>支付金额</span>{{ activityOrder.payAmount }}</li>
+          <li>
+            <span>状态</span>
+            <span :class="['status', ticketOrderStatusClass(activityOrder)]">{{ ticketOrderStatusText(activityOrder) }}</span>
+          </li>
+          <li>
+            <span>核销进度</span>
+            <span>已核销 {{ activityOrder.verifiedTimes || 0 }}/{{ activityOrder.totalUseTimes || 0 }} 次，剩余 {{ activityRemainingTimes }} 次</span>
+          </li>
+        </ul>
+        <div v-if="activityOrder.status === 1 && activityRemainingTimes > 0" class="actions">
+          <button class="btn primary" :disabled="verifyLoading" @click="doVerify">确认核销</button>
+        </div>
+        <div v-else-if="activityOrder.status === 2" class="msg success">该订单已全部核销完毕</div>
+        <div v-else-if="activityOrder.status === 6 || activityOrder.status === 7" class="msg info">该订单已退款或退款中，不可核销</div>
+        <div v-else-if="activityOrder.status === 1 && activityRemainingTimes <= 0" class="msg success">该订单已核销完毕</div>
+        <div v-else class="msg info">该订单当前状态不支持核销</div>
+
+        <div v-if="activityVerifyRecords.length" class="verify-records">
+          <h3>核销记录</h3>
+          <ul class="detail-list">
+            <li v-for="r in activityVerifyRecords" :key="r.ID">
+              <span>第 {{ r.verifyNo }} 次</span>
+              <span>{{ formatDateTime(r.verifiedAt) }}</span>
+            </li>
+          </ul>
+        </div>
+      </template>
+
       <div v-else-if="loading" class="loading">加载中…</div>
       <div v-else class="loading">暂无数据</div>
     </div>
@@ -102,6 +140,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { validateRedeemCode } from '@/api/sysParams'
 import { getReservationByVerifyCodePublic, verifyReservationByCodePublic } from '@/plugin/camping/api/reservation'
 import { getTicketOrderByCodePublic, verifyTicketOrderByCodePublic } from '@/plugin/ticket/api/order'
+import { getActivityOrderByCodePublic, verifyActivityOrderByCodePublic } from '@/plugin/limitedActivity/api/order'
 import { getSiteDetailPublic } from '@/plugin/camping/api/site'
 import { getTimeSlotsByVenuePublic } from '@/plugin/camping/api/timeSlot'
 
@@ -123,6 +162,9 @@ const detail = ref(null)
 const ticketOrder = ref(null)
 const ticketRemainingTimes = ref(0)
 const ticketVerifyRecords = ref([])
+const activityOrder = ref(null)
+const activityRemainingTimes = ref(0)
+const activityVerifyRecords = ref([])
 const venueName = ref('')
 const timeslotLabel = ref('')
 const verifyLoading = ref(false)
@@ -134,16 +176,18 @@ function ticketStatusText(status) {
     2: '已核销',
     3: '已取消',
     4: '已过期',
-    5: '已关闭'
+    5: '已关闭',
+    6: '已退款',
+    7: '退款中'
   }
   return m[status] ?? ''
 }
 
 function ticketStatusClass(status) {
   const s = Number(status)
-  if (s === 0 || s === 1) return 'pending'
+  if (s === 0 || s === 1 || s === 7) return 'pending'
   if (s === 2) return 'done'
-  if (s === 3 || s === 5) return 'cancel'
+  if (s === 3 || s === 5 || s === 6) return 'cancel'
   if (s === 4) return 'expired'
   return ''
 }
@@ -185,6 +229,16 @@ function checkSavedAuth() {
   } catch (_) {}
 }
 
+async function loadByType() {
+  if (typeFromUrl.value === 'ticket') {
+    await loadTicketOrder()
+  } else if (typeFromUrl.value === 'limitedActivity') {
+    await loadActivityOrder()
+  } else {
+    await loadReservation()
+  }
+}
+
 async function doAuth() {
   const code = (redeemInput.value || '').trim()
   if (!code) {
@@ -198,12 +252,7 @@ async function doAuth() {
     if (res.code === 0 && res.data && res.data.valid) {
       localStorage.setItem(STORAGE_KEY, String(Date.now() + ONE_MONTH_MS))
       passedAuth.value = true
-      // 校验成功后，根据 type 自动加载对应内容
-      if (typeFromUrl.value === 'ticket') {
-        await loadTicketOrder()
-      } else {
-        await loadReservation()
-      }
+      await loadByType()
     } else {
       authError.value = '密码错误，请重试'
     }
@@ -280,6 +329,29 @@ async function loadTicketOrder() {
   }
 }
 
+async function loadActivityOrder() {
+  if (!codeFromUrl.value || typeFromUrl.value !== 'limitedActivity') return
+  loadError.value = ''
+  loading.value = true
+  activityOrder.value = null
+  activityRemainingTimes.value = 0
+  activityVerifyRecords.value = []
+  try {
+    const res = await getActivityOrderByCodePublic({ code: codeFromUrl.value })
+    if (res.code === 0 && res.data) {
+      activityOrder.value = res.data.order
+      activityRemainingTimes.value = res.data.remainingTimes ?? 0
+      activityVerifyRecords.value = res.data.verifyRecords || []
+    } else {
+      loadError.value = res.msg || '订单不存在或已失效'
+    }
+  } catch (_) {
+    loadError.value = '加载失败，请检查网络'
+  } finally {
+    loading.value = false
+  }
+}
+
 function formatDateTime(d) {
   if (!d) return '-'
   if (typeof d === 'string') return d.slice(0, 19).replace('T', ' ')
@@ -309,6 +381,16 @@ async function doVerify() {
       } else {
         loadError.value = res.msg || '核销失败'
       }
+    } else if (typeFromUrl.value === 'limitedActivity') {
+      if (!activityOrder.value || activityOrder.value.status !== 1 || activityRemainingTimes.value <= 0) return
+      const res = await verifyActivityOrderByCodePublic({ code: codeFromUrl.value })
+      if (res.code === 0 && res.data) {
+        activityOrder.value = res.data.order || activityOrder.value
+        activityRemainingTimes.value = res.data.remainingTimes ?? 0
+        activityVerifyRecords.value = res.data.verifyRecords || []
+      } else {
+        loadError.value = res.msg || '核销失败'
+      }
     }
   } catch (_) {
     loadError.value = '核销请求失败，请重试'
@@ -319,8 +401,14 @@ async function doVerify() {
 
 function applyQueryFromRoute() {
   const q = route.query || {}
-  codeFromUrl.value = (q.code && String(q.code).trim()) || ''
-  typeFromUrl.value = (q.type && String(q.type).trim()) || 'reservation'
+  const nextCode = (q.code && String(q.code).trim()) || ''
+  const nextType = (q.type && String(q.type).trim()) || 'reservation'
+  const changed = nextCode !== codeFromUrl.value || nextType !== typeFromUrl.value
+  codeFromUrl.value = nextCode
+  typeFromUrl.value = nextType
+  if (changed && nextCode && passedAuth.value) {
+    loadByType()
+  }
 }
 
 watch(() => route.query, () => applyQueryFromRoute(), { deep: true })
@@ -329,11 +417,7 @@ onMounted(() => {
   applyQueryFromRoute()
   checkSavedAuth()
   if (codeFromUrl.value && passedAuth.value) {
-    if (typeFromUrl.value === 'ticket') {
-      loadTicketOrder()
-    } else {
-      loadReservation()
-    }
+    loadByType()
   }
 })
 </script>

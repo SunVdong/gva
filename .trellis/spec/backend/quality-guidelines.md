@@ -40,7 +40,9 @@
 3. AutoMigrate 覆盖本插件全部表模型
 4. 菜单/API 权限初始化与路由分组（public/private）正确
 
-推荐对照：`server/plugin/announcement/`（完整）、`server/plugin/ticket/`（精简但生产在用）。
+推荐对照：`server/plugin/announcement/`（完整）、`server/plugin/ticket/`（精简但生产在用）、`server/plugin/limitedActivity/`（活动报名+按比例退款）。
+
+若插件需要微信支付：必须按 [Mini Pay Integration](./mini-pay-integration.md) 扩展 `orderType` 与订单号前缀，勿在插件内另起一套支付客户端。
 
 ---
 

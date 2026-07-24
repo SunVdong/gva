@@ -893,6 +893,90 @@ definitions:
         description: 收件人:多个以英文逗号分隔 例：a@qq.com b@qq.com 正式开发中请把此项目作为参数使用
         type: string
     type: object
+  github_com_flipped-aurora_gin-vue-admin_server_plugin_limitedActivity_model_request.MiniOrderCreate:
+    properties:
+      activityId:
+        type: integer
+      contactName:
+        type: string
+      contactPhone:
+        type: string
+      quantity:
+        minimum: 1
+        type: integer
+    required:
+    - activityId
+    - contactName
+    - contactPhone
+    - quantity
+    type: object
+  github_com_flipped-aurora_gin-vue-admin_server_plugin_ticket_model_request.MiniOrderCreate:
+    properties:
+      bookerName:
+        type: string
+      bookerPhone:
+        type: string
+      quantity:
+        minimum: 1
+        type: integer
+      skuId:
+        type: integer
+      visitDate:
+        description: YYYY-MM-DD
+        type: string
+    required:
+    - bookerName
+    - bookerPhone
+    - quantity
+    - skuId
+    - visitDate
+    type: object
+  model.Activity:
+    properties:
+      ID:
+        description: 主键ID
+        type: integer
+      canSignup:
+        description: 虚拟字段：当前是否可报名（显示中且在时间窗内且有余量）
+        type: boolean
+      coverImage:
+        type: string
+      createdAt:
+        description: 创建时间
+        type: string
+      createdBy:
+        type: integer
+      detail:
+        type: string
+      endTime:
+        type: string
+      groupQr:
+        type: string
+      marketPrice:
+        type: number
+      name:
+        type: string
+      price:
+        type: number
+      quota:
+        type: integer
+      remaining:
+        description: 虚拟字段：剩余可报名名额
+        type: integer
+      serviceQr:
+        type: string
+      sold:
+        type: integer
+      startTime:
+        type: string
+      status:
+        type: integer
+      updatedAt:
+        description: 更新时间
+        type: string
+      updatedBy:
+        type: integer
+    type: object
   model.Info:
     properties:
       ID:
@@ -1532,27 +1616,6 @@ definitions:
       username:
         description: 用户名
         type: string
-    type: object
-  request.MiniOrderCreate:
-    properties:
-      bookerName:
-        type: string
-      bookerPhone:
-        type: string
-      quantity:
-        minimum: 1
-        type: integer
-      skuId:
-        type: integer
-      visitDate:
-        description: YYYY-MM-DD
-        type: string
-    required:
-    - bookerName
-    - bookerPhone
-    - quantity
-    - skuId
-    - visitDate
     type: object
   request.PageInfo:
     properties:
@@ -5751,6 +5814,504 @@ paths:
       summary: jwt加入黑名单
       tags:
       - Jwt
+  /limitedActivity/activity/createActivity:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 活动信息
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/model.Activity'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 创建成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 创建限时活动
+      tags:
+      - LimitedActivity
+  /limitedActivity/activity/deleteActivity:
+    delete:
+      parameters:
+      - description: 活动ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 删除限时活动
+      tags:
+      - LimitedActivity
+  /limitedActivity/activity/deleteActivityByIds:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID列表
+        in: body
+        name: data
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 批量删除限时活动
+      tags:
+      - LimitedActivity
+  /limitedActivity/activity/findActivity:
+    get:
+      parameters:
+      - description: 活动ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 查询成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.Activity'
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 查询限时活动
+      tags:
+      - LimitedActivity
+  /limitedActivity/activity/getActivityList:
+    get:
+      parameters:
+      - description: 关键字
+        in: query
+        name: keyword
+        type: string
+      - in: query
+        name: name
+        type: string
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页大小
+        in: query
+        name: pageSize
+        type: integer
+      - in: query
+        name: status
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.PageResult'
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 限时活动列表
+      tags:
+      - LimitedActivity
+  /limitedActivity/activity/updateActivity:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 活动信息
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/model.Activity'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 更新限时活动
+      tags:
+      - LimitedActivity
+  /limitedActivity/mini/activity/detail:
+    get:
+      consumes:
+      - application/json
+      description: 仅返回显示中的活动详情
+      parameters:
+      - description: 活动ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: object
+                msg:
+                  type: string
+              type: object
+      summary: 活动详情
+      tags:
+      - 小程序-限时活动
+  /limitedActivity/mini/activity/list:
+    get:
+      consumes:
+      - application/json
+      description: 返回显示中的限时活动，含剩余名额与是否可报名
+      parameters:
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页条数
+        in: query
+        name: pageSize
+        type: integer
+      - description: 活动名称
+        in: query
+        name: name
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.PageResult'
+                msg:
+                  type: string
+              type: object
+      summary: 活动列表
+      tags:
+      - 小程序-限时活动
+  /limitedActivity/mini/order/create:
+    post:
+      consumes:
+      - application/json
+      description: 提交人次、联系人姓名与手机号创建待支付订单并占用名额。支付请调用 POST /mini/pay/create，body 传 {"orderType":"limitedActivity","orderId":订单ID}
+      parameters:
+      - description: 小程序登录 token
+        in: header
+        name: x-token
+        required: true
+        type: string
+      - description: 报名信息
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_flipped-aurora_gin-vue-admin_server_plugin_limitedActivity_model_request.MiniOrderCreate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: object
+                msg:
+                  type: string
+              type: object
+      summary: 报名创建订单
+      tags:
+      - 小程序-限时活动
+  /limitedActivity/mini/order/detail:
+    get:
+      consumes:
+      - application/json
+      description: 含核销进度、群二维码、客服二维码；用户不可自助退款
+      parameters:
+      - description: 小程序登录 token
+        in: header
+        name: x-token
+        required: true
+        type: string
+      - description: 订单ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: object
+                msg:
+                  type: string
+              type: object
+      summary: 活动订单详情
+      tags:
+      - 小程序-限时活动
+  /limitedActivity/mini/order/myList:
+    get:
+      consumes:
+      - application/json
+      description: 'orderType: pending_payment|pending_verify|completed；不传返回全部'
+      parameters:
+      - description: 小程序登录 token
+        in: header
+        name: x-token
+        required: true
+        type: string
+      - description: pending_payment|pending_verify|completed
+        in: query
+        name: orderType
+        type: string
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页条数
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.PageResult'
+                msg:
+                  type: string
+              type: object
+      summary: 我的活动订单列表
+      tags:
+      - 小程序-限时活动
+  /limitedActivity/order/findOrder:
+    get:
+      parameters:
+      - description: 订单ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 查询成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: object
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 活动订单详情
+      tags:
+      - LimitedActivityOrder
+  /limitedActivity/order/getOrderByCodePublic:
+    get:
+      parameters:
+      - description: 订单号
+        in: query
+        name: code
+        required: true
+        type: string
+      responses:
+        "200":
+          description: 查询成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: object
+                msg:
+                  type: string
+              type: object
+      summary: 根据订单号查询活动订单(公开)
+      tags:
+      - LimitedActivityOrder
+  /limitedActivity/order/getOrderList:
+    get:
+      parameters:
+      - in: query
+        name: activityId
+        type: integer
+      - in: query
+        name: contactPhone
+        type: string
+      - description: 关键字
+        in: query
+        name: keyword
+        type: string
+      - in: query
+        name: orderNo
+        type: string
+      - in: query
+        name: orderType
+        type: string
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页大小
+        in: query
+        name: pageSize
+        type: integer
+      - in: query
+        name: status
+        type: integer
+      - in: query
+        name: userId
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.PageResult'
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 活动订单列表
+      tags:
+      - LimitedActivityOrder
+  /limitedActivity/order/refundOrder:
+    post:
+      parameters:
+      - description: 订单ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 退款成功或已受理
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 活动订单退款(按未核销比例)
+      tags:
+      - LimitedActivityOrder
+  /limitedActivity/order/verifyOrderByCodePublic:
+    post:
+      parameters:
+      - description: 订单号
+        in: query
+        name: code
+        required: true
+        type: string
+      responses:
+        "200":
+          description: 核销成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: object
+                msg:
+                  type: string
+              type: object
+      summary: 根据订单号核销活动订单(公开)
+      tags:
+      - LimitedActivityOrder
   /menu/addBaseMenu:
     post:
       consumes:
@@ -6164,7 +6725,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: 对已支付且待核销、且尚未产生核销次数的门票订单申请全额退款（多次票若已核销过任一次则不可退）。需登录，请求头必带 x-token。
+      description: 对已支付且待核销、且尚未产生核销次数的门票订单申请全额退款（多次票若已核销过任一次则不可退）。限时活动订单不支持用户自助退款，请联系客服。需登录，请求头必带
+        x-token。
       parameters:
       - description: 小程序登录后返回的 token（必填）
         in: header
@@ -8372,7 +8934,7 @@ paths:
         name: data
         required: true
         schema:
-          $ref: '#/definitions/request.MiniOrderCreate'
+          $ref: '#/definitions/github_com_flipped-aurora_gin-vue-admin_server_plugin_ticket_model_request.MiniOrderCreate'
       produces:
       - application/json
       responses:
@@ -9048,6 +9610,8 @@ tags:
   name: 小程序-景点
 - description: 露营场地预约（场地列表、时段、预约、取消）
   name: 小程序-露营
+- description: 限时活动（活动列表、报名下单、我的订单）
+  name: 小程序-限时活动
 - name: Base
 - description: 用户
   name: SysUser
