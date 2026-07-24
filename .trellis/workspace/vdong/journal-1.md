@@ -45,3 +45,37 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 2: 限时活动模块收尾
+
+**Date**: 2026-07-24
+**Task**: 限时活动模块收尾
+**Branch**: `main`
+
+### Summary
+
+确认 limited-activity（含 Banner）交付完成；提交 Banner Swagger 文档并归档任务。
+
+### Main Changes
+
+- Detailed change bullets were not supplied; see the summary above.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `69a76b2` | (see git log) |
+| `96ee5d5` | (see git log) |
+
+### Testing
+
+- Validation was not recorded for this session.
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
