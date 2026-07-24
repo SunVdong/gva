@@ -19,7 +19,6 @@ type Activity struct {
 	Quota       int       `json:"quota" form:"quota" gorm:"column:quota;comment:总名额(人次);default:0;"`
 	Sold        int       `json:"sold" form:"sold" gorm:"column:sold;comment:已占用名额(含待支付);default:0;"`
 	CoverImage  string    `json:"coverImage" form:"coverImage" gorm:"column:cover_image;comment:封面图;size:512;"`
-	LongImage   string    `json:"longImage" form:"longImage" gorm:"column:long_image;comment:长图(点击封面跳转);size:512;"`
 	GroupQr     string    `json:"groupQr" form:"groupQr" gorm:"column:group_qr;comment:群二维码;size:512;"`
 	ServiceQr   string    `json:"serviceQr" form:"serviceQr" gorm:"column:service_qr;comment:客服二维码;size:512;"`
 	Status      int       `json:"status" form:"status" gorm:"column:status;comment:显示状态1显示0隐藏;default:1;"`

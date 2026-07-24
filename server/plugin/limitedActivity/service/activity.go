@@ -80,7 +80,6 @@ func (s *activity) Update(m model.Activity) error {
 		"price":        m.Price,
 		"quota":        m.Quota,
 		"cover_image":  m.CoverImage,
-		"long_image":   m.LongImage,
 		"group_qr":     m.GroupQr,
 		"service_qr":   m.ServiceQr,
 		"status":       m.Status,

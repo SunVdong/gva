@@ -133,11 +133,10 @@ func (s *activityOrder) fillActivityExtra(order *model.ActivityOrder) {
 		return
 	}
 	var act model.Activity
-	if e := global.GVA_DB.Select("group_qr, service_qr, cover_image, long_image").Where("id = ?", order.ActivityID).First(&act).Error; e == nil {
+	if e := global.GVA_DB.Select("group_qr, service_qr, cover_image").Where("id = ?", order.ActivityID).First(&act).Error; e == nil {
 		order.GroupQr = act.GroupQr
 		order.ServiceQr = act.ServiceQr
 		order.CoverImage = act.CoverImage
-		order.LongImage = act.LongImage
 	}
 }
 
@@ -158,7 +157,7 @@ func (s *activityOrder) fillActivityExtras(list []model.ActivityOrder) {
 		return
 	}
 	var acts []model.Activity
-	if err := global.GVA_DB.Select("id, group_qr, service_qr, cover_image, long_image").Where("id IN ?", ids).Find(&acts).Error; err != nil {
+	if err := global.GVA_DB.Select("id, group_qr, service_qr, cover_image").Where("id IN ?", ids).Find(&acts).Error; err != nil {
 		return
 	}
 	m := make(map[uint]model.Activity, len(acts))
@@ -170,7 +169,6 @@ func (s *activityOrder) fillActivityExtras(list []model.ActivityOrder) {
 			list[i].GroupQr = a.GroupQr
 			list[i].ServiceQr = a.ServiceQr
 			list[i].CoverImage = a.CoverImage
-			list[i].LongImage = a.LongImage
 		}
 	}
 }

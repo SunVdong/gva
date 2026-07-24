@@ -107,7 +107,6 @@ func (a *miniOrderApi) MyList(c *gin.Context) {
 			"createdAt":      o.CreatedAt,
 			"statusLabel":    svcOrder.OrderStatusLabel(&o),
 			"coverImage":     o.CoverImage,
-			"longImage":      o.LongImage,
 			"groupQr":        o.GroupQr,
 			"serviceQr":      o.ServiceQr,
 		})

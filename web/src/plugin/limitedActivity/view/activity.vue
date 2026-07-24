@@ -136,11 +136,6 @@
         </el-form-item>
         <el-form-item label="封面" prop="coverImage">
           <SelectImage v-model="formData.coverImage" :multiple="false" />
-          <div class="text-gray-500 text-xs mt-1">列表展示用；点击后跳转查看长图</div>
-        </el-form-item>
-        <el-form-item label="长图" prop="longImage">
-          <SelectImage v-model="formData.longImage" :multiple="false" />
-          <div class="text-gray-500 text-xs mt-1">前台点击封面后展示/跳转的详情长图</div>
         </el-form-item>
         <el-row :gutter="16">
           <el-col :span="12">
@@ -203,7 +198,6 @@ const formData = ref({
   quota: 0,
   sold: 0,
   coverImage: '',
-  longImage: '',
   groupQr: '',
   serviceQr: '',
   status: 1
@@ -253,7 +247,6 @@ const openDialog = () => {
     quota: 0,
     sold: 0,
     coverImage: '',
-    longImage: '',
     groupQr: '',
     serviceQr: '',
     status: 1
@@ -280,7 +273,6 @@ const updateFunc = async (row) => {
     quota: d.quota ?? 0,
     sold: d.sold ?? 0,
     coverImage: d.coverImage || '',
-    longImage: d.longImage || '',
     groupQr: d.groupQr || '',
     serviceQr: d.serviceQr || '',
     status: d.status ?? 1
@@ -302,7 +294,6 @@ const enterDialog = async () => {
       price: formData.value.price,
       quota: formData.value.quota,
       coverImage: formData.value.coverImage,
-      longImage: formData.value.longImage,
       groupQr: formData.value.groupQr,
       serviceQr: formData.value.serviceQr,
       status: formData.value.status

@@ -32,9 +32,8 @@ type ActivityOrder struct {
 	// 虚拟：活动群二维码 / 客服二维码（详情填充）
 	GroupQr   string `json:"groupQr" gorm:"-"`
 	ServiceQr string `json:"serviceQr" gorm:"-"`
-	// 虚拟：活动封面 / 长图
+	// 虚拟：活动封面
 	CoverImage string `json:"coverImage" gorm:"-"`
-	LongImage  string `json:"longImage" gorm:"-"`
 }
 
 // TableName 表名

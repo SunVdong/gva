@@ -24,7 +24,7 @@
 | start_time / end_time | 活动时间窗（报名与「进行中」判断） |
 | market_price / price | 市场价、实际价 |
 | quota / sold | 总名额、已占用（含待支付占用） |
-| cover_image / long_image / group_qr / service_qr | 封面、长图（点击封面跳转）、群二维码、客服二维码 |
+| cover_image / group_qr / service_qr | 封面、群二维码、客服二维码 |
 | status | 显示状态（如 1 显示 / 0 隐藏） |
 | 审计 | 复用 `GVA_MODEL`（含 CreatedAt/UpdatedAt）；创建人/更新人按项目惯例字段写入 |
 
