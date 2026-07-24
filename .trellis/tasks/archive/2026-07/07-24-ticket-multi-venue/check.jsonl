@@ -1,0 +1,8 @@
+{"file": ".trellis/spec/backend/index.md", "reason": "核对后端分层与 ticket 样板"}
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "核对新增字段与查询写法"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "核对公开核销 API 与错误返回"}
+{"file": ".trellis/spec/frontend/index.md", "reason": "核对插件页与 h5Verify 改动范围"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "核对表单/表格交互"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "核对前后端字段一致性"}
+{"file": ".trellis/tasks/07-24-ticket-multi-venue/prd.md", "reason": "对照 AC1–AC8 验收"}
+{"file": ".trellis/tasks/07-24-ticket-multi-venue/design.md", "reason": "对照场合枚举与快照/筛选契约"}

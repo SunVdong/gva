@@ -1,0 +1,8 @@
+{"file": ".trellis/spec/backend/index.md", "reason": "后端分层与插件样板入口"}
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "GORM 字段/迁移/事务约定"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "API/Service 边界与禁止项"}
+{"file": ".trellis/spec/frontend/index.md", "reason": "前端插件与 H5 核销样板入口"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Vue SFC / Element Plus 约定"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "命名、API 封装与页面质量"}
+{"file": ".trellis/tasks/07-24-ticket-multi-venue/design.md", "reason": "本任务数据模型与核销契约"}
+{"file": ".trellis/tasks/07-24-ticket-multi-venue/prd.md", "reason": "验收标准与范围边界"}
