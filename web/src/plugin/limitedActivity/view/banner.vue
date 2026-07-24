@@ -34,6 +34,8 @@
               style="width:48px;height:48px"
               fit="cover"
               :preview-src-list="[getUrl(row.image)]"
+              :preview-teleported="true"
+              :z-index="9999"
             />
             <span v-else class="text-gray-400">-</span>
           </template>
@@ -46,6 +48,8 @@
               style="width:48px;height:48px"
               fit="cover"
               :preview-src-list="[getUrl(row.detailImage)]"
+              :preview-teleported="true"
+              :z-index="9999"
             />
             <span v-else class="text-gray-400">-</span>
           </template>
