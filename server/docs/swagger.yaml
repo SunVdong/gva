@@ -936,6 +936,8 @@ definitions:
       ID:
         description: 主键ID
         type: integer
+      address:
+        type: string
       canSignup:
         description: 虚拟字段：当前是否可报名（显示中且在时间窗内且有余量）
         type: boolean
@@ -9500,6 +9502,11 @@ paths:
         name: code
         required: true
         type: string
+      - description: 可选：{venue} 多场合订单必填场合 code
+        in: body
+        name: body
+        schema:
+          type: object
       responses:
         "200":
           description: 核销成功

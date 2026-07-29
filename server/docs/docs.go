@@ -11947,6 +11947,14 @@ const docTemplate = `{
                         "name": "code",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "description": "可选：{venue} 多场合订单必填场合 code",
+                        "name": "body",
+                        "in": "body",
+                        "schema": {
+                            "type": "object"
+                        }
                     }
                 ],
                 "responses": {
@@ -13859,6 +13867,9 @@ const docTemplate = `{
                 "ID": {
                     "description": "主键ID",
                     "type": "integer"
+                },
+                "address": {
+                    "type": "string"
                 },
                 "canSignup": {
                     "description": "虚拟字段：当前是否可报名（显示中且在时间窗内且有余量）",
