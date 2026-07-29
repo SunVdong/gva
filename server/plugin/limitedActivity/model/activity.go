@@ -11,6 +11,7 @@ import (
 type Activity struct {
 	global.GVA_MODEL
 	Name        string    `json:"name" form:"name" gorm:"column:name;comment:活动名称;size:128;"`
+	Address     string    `json:"address" form:"address" gorm:"column:address;comment:活动地点;size:256;"`
 	Detail      string    `json:"detail" form:"detail" gorm:"column:detail;comment:活动详情;type:text;"`
 	StartTime   time.Time `json:"startTime" form:"startTime" gorm:"column:start_time;comment:活动开始时间;index;"`
 	EndTime     time.Time `json:"endTime" form:"endTime" gorm:"column:end_time;comment:活动结束时间;index;"`

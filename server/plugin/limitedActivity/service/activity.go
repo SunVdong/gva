@@ -14,6 +14,7 @@ type activity struct{}
 
 func (s *activity) Create(m *model.Activity) error {
 	m.Name = strings.TrimSpace(m.Name)
+	m.Address = strings.TrimSpace(m.Address)
 	if m.Name == "" {
 		return fmt.Errorf("活动名称不能为空")
 	}
@@ -58,6 +59,7 @@ func (s *activity) Update(m model.Activity) error {
 		return fmt.Errorf("活动不存在")
 	}
 	m.Name = strings.TrimSpace(m.Name)
+	m.Address = strings.TrimSpace(m.Address)
 	if m.Name == "" {
 		return fmt.Errorf("活动名称不能为空")
 	}
@@ -73,6 +75,7 @@ func (s *activity) Update(m model.Activity) error {
 	// 不允许通过更新接口直接改 sold
 	updates := map[string]any{
 		"name":         m.Name,
+		"address":      m.Address,
 		"detail":       m.Detail,
 		"start_time":   m.StartTime,
 		"end_time":     m.EndTime,

@@ -26,6 +26,11 @@
         <el-table-column type="selection" width="55" />
         <el-table-column align="left" label="ID" prop="ID" width="80" />
         <el-table-column align="left" label="活动名称" prop="name" min-width="140" show-overflow-tooltip />
+        <el-table-column align="left" label="活动地点" min-width="140" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ row.address || '-' }}
+          </template>
+        </el-table-column>
         <el-table-column align="left" label="封面" width="80">
           <template #default="{ row }">
             <el-image
@@ -106,6 +111,9 @@
       <el-form ref="formRef" :model="formData" label-position="top" :rules="rules" label-width="100px">
         <el-form-item label="活动名称" prop="name">
           <el-input v-model="formData.name" placeholder="请输入活动名称" clearable />
+        </el-form-item>
+        <el-form-item label="活动地点" prop="address">
+          <el-input v-model="formData.address" placeholder="请输入活动地点" clearable />
         </el-form-item>
         <el-form-item label="活动时间" prop="timeRange">
           <el-date-picker
@@ -193,6 +201,7 @@ const formRef = ref()
 
 const formData = ref({
   name: '',
+  address: '',
   detail: '',
   timeRange: null,
   marketPrice: 0,
@@ -242,6 +251,7 @@ const openDialog = () => {
   type.value = 'create'
   formData.value = {
     name: '',
+    address: '',
     detail: '',
     timeRange: null,
     marketPrice: 0,
@@ -268,6 +278,7 @@ const updateFunc = async (row) => {
   formData.value = {
     ID: d.ID,
     name: d.name || '',
+    address: d.address || '',
     detail: d.detail || '',
     timeRange: d.startTime && d.endTime ? [d.startTime, d.endTime] : null,
     marketPrice: d.marketPrice ?? 0,
@@ -289,6 +300,7 @@ const enterDialog = async () => {
     const payload = {
       ID: formData.value.ID,
       name: formData.value.name,
+      address: formData.value.address,
       detail: formData.value.detail,
       startTime: range[0],
       endTime: range[1],
