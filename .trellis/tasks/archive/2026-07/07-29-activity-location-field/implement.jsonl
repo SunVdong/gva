@@ -1,0 +1,5 @@
+{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file": ".trellis/spec/backend/index.md", "reason": "后端分层与插件约定入口"}
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "GORM 字段与 AutoMigrate 约定"}
+{"file": ".trellis/spec/frontend/index.md", "reason": "前端插件页面约定入口"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Vue SFC 与 Element Plus 表单约定"}
