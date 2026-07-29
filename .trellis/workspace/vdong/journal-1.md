@@ -79,3 +79,36 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 3: 限时活动 address 字段
+
+**Date**: 2026-07-30
+**Task**: 限时活动 address 字段
+**Branch**: `main`
+
+### Summary
+
+为限时活动增加选填活动地点字段 address：模型/服务/管理端表单与列表已接通；不入订单快照；补充 backend code-spec limited-activity-address.md。质量检查 PASS。
+
+### Main Changes
+
+- Detailed change bullets were not supplied; see the summary above.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `8f3accc` | (see git log) |
+
+### Testing
+
+- Validation was not recorded for this session.
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

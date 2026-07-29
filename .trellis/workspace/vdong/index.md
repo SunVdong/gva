@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 2
-- **Last Active**: 2026-07-24
+- **Total Sessions**: 3
+- **Last Active**: 2026-07-30
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~81 | Active |
+| `journal-1.md` | ~114 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 3 | 2026-07-30 | 限时活动 address 字段 | `8f3accc` | `main` |
 | 2 | 2026-07-24 | 限时活动模块收尾 | `69a76b2`, `96ee5d5` | `main` |
 | 1 | 2026-07-24 | 门票多次票多场合核销 | `5ed652a` | `main` |
 <!-- @@@/auto:session-history -->
