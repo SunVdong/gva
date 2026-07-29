@@ -473,8 +473,11 @@ onMounted(() => {
   padding: 24px 16px;
   box-sizing: border-box;
   background: #f5f5f5;
+  color: #303133;
   font-size: 14px;
   overflow: auto;
+  /* 页面按浅色设计；避免手机系统深色模式改写原生控件回显色 */
+  color-scheme: light;
 }
 .app-title {
   text-align: center;
@@ -512,6 +515,12 @@ onMounted(() => {
   border-radius: 8px;
   font-size: 16px;
   box-sizing: border-box;
+  color: #303133;
+  background-color: #fff;
+}
+.input option {
+  color: #303133;
+  background-color: #fff;
 }
 .error {
   color: #f56c6c;
