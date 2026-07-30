@@ -145,3 +145,37 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 5: 门票订单按核销场合月度统计
+
+**Date**: 2026-07-30
+**Task**: 门票订单按核销场合月度统计
+**Branch**: `main`
+
+### Summary
+
+订单管理页增加按核销场合的月度核销次数汇总；新增 getVenueVerifyStats 接口；沉淀场合统计契约到 ticket-multi-venue-verify spec。
+
+### Main Changes
+
+- Detailed change bullets were not supplied; see the summary above.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `c8bb770` | (see git log) |
+| `2d4ae2a` | (see git log) |
+
+### Testing
+
+- Validation was not recorded for this session.
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
