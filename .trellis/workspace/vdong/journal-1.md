@@ -112,3 +112,36 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 4: 限时活动订单评价
+
+**Date**: 2026-07-30
+**Task**: 限时活动订单评价
+**Branch**: `main`
+
+### Summary
+
+为限时活动订单补齐与门票一致的评价/删除评价；独立表 limited_activity_order_reviews；小程序 create/delete + 详情/后台展示；Swagger 已同步；删除评价用硬删以支持删后重评。
+
+### Main Changes
+
+- Detailed change bullets were not supplied; see the summary above.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `63cf79a` | (see git log) |
+
+### Testing
+
+- Validation was not recorded for this session.
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
