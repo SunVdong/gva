@@ -44,6 +44,32 @@ func (a *ticketOrderApi) GetList(c *gin.Context) {
 	}, "获取成功", c)
 }
 
+// GetVenueVerifyStats 按核销月份汇总各场合核销次数
+// @Tags TicketOrder
+// @Summary 核销场合按月统计
+// @Security ApiKeyAuth
+// @accept application/json
+// @Produce application/json
+// @Param month query string false "月份 YYYY-MM，缺省当前月"
+// @Success 200 {object} response.Response{data=object,msg=string} "获取成功"
+// @Router /ticket/order/getVenueVerifyStats [get]
+func (a *ticketOrderApi) GetVenueVerifyStats(c *gin.Context) {
+	var req ticketRequest.TicketVenueVerifyStatsReq
+	if err := c.ShouldBindQuery(&req); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	monthOut, items, err := serviceOrder.GetVenueVerifyStats(req.Month)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithData(gin.H{
+		"month": monthOut,
+		"items": items,
+	}, c)
+}
+
 func (a *ticketOrderApi) Find(c *gin.Context) {
 	var idReq struct {
 		ID uint `form:"id" binding:"required"`

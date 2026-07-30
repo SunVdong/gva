@@ -40,6 +40,28 @@
         </el-form-item>
       </el-form>
     </div>
+    <div class="gva-search-box flex flex-wrap items-center gap-x-8 gap-y-2">
+      <div class="flex items-center gap-2">
+        <span class="text-sm text-gray-600">核销月份</span>
+        <el-date-picker
+          v-model="statsMonth"
+          type="month"
+          placeholder="选择月份"
+          value-format="YYYY-MM"
+          :clearable="false"
+          style="width: 140px"
+          @change="loadVenueVerifyStats"
+        />
+      </div>
+      <div
+        v-for="item in venueVerifyStats"
+        :key="item.venue"
+        class="text-sm"
+      >
+        <span class="text-gray-600">{{ item.label }}</span>
+        <span class="ml-2 font-medium">{{ item.count ?? 0 }}</span>
+      </div>
+    </div>
     <div class="gva-table-box">
       <el-table :data="tableData" row-key="ID">
         <el-table-column align="left" label="ID" prop="ID" width="80" />
@@ -203,9 +225,9 @@
 </template>
 
 <script setup>
-import { findOrder, getOrderList, refundOrder } from '@/plugin/ticket/api/order'
+import { findOrder, getOrderList, getVenueVerifyStats, refundOrder } from '@/plugin/ticket/api/order'
 import { ElMessage } from 'element-plus'
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 
 defineOptions({ name: 'TicketOrder' })
 
@@ -216,6 +238,12 @@ const venueOptions = [
   { code: 'hongshan', label: '红山' }
 ]
 
+function currentMonthStr() {
+  const d = new Date()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  return `${d.getFullYear()}-${m}`
+}
+
 const page = ref(1)
 const total = ref(0)
 const pageSize = ref(10)
@@ -223,6 +251,10 @@ const tableData = ref([])
 const searchInfo = ref({})
 const detailVisible = ref(false)
 const detail = ref({ order: null, review: null, verifyRecords: [] })
+const statsMonth = ref(currentMonthStr())
+const venueVerifyStats = ref(
+  venueOptions.map((v) => ({ venue: v.code, label: v.label, count: 0 }))
+)
 
 function venueLabel(code) {
   if (!code) return '—'
@@ -256,6 +288,16 @@ const getTableData = async () => {
   }
 }
 
+const loadVenueVerifyStats = async () => {
+  const res = await getVenueVerifyStats({ month: statsMonth.value || undefined })
+  if (res.code === 0 && res.data) {
+    venueVerifyStats.value = res.data.items || []
+    if (res.data.month) {
+      statsMonth.value = res.data.month
+    }
+  }
+}
+
 const onSubmit = () => { page.value = 1; getTableData() }
 const onReset = () => { searchInfo.value = {}; getTableData() }
 const handleCurrentChange = (val) => { page.value = val; getTableData() }
@@ -280,5 +322,8 @@ const handleRefund = async (row) => {
   }
 }
 
-getTableData()
+onMounted(() => {
+  getTableData()
+  loadVenueVerifyStats()
+})
 </script>

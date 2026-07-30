@@ -246,6 +246,59 @@ func (s *ticketOrder) GetVerifyRecords(orderID uint) (records []model.OrderVerif
 	return
 }
 
+// GetVenueVerifyStats 按核销月份汇总白名单场合的核销次数；month 为空取当前自然月，非法格式返回错误
+func (s *ticketOrder) GetVenueVerifyStats(month string) (monthOut string, items []request.TicketVenueVerifyStatsItem, err error) {
+	now := time.Now()
+	var monthStart time.Time
+	if strings.TrimSpace(month) == "" {
+		monthStart = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	} else {
+		monthStart, err = time.ParseInLocation("2006-01", strings.TrimSpace(month), now.Location())
+		if err != nil {
+			return "", nil, fmt.Errorf("月份格式错误，应为 YYYY-MM")
+		}
+	}
+	nextMonthStart := monthStart.AddDate(0, 1, 0)
+	monthOut = monthStart.Format("2006-01")
+
+	options := model.VenueOptions()
+	venueCodes := make([]string, 0, len(options))
+	for _, opt := range options {
+		venueCodes = append(venueCodes, opt["code"])
+	}
+
+	type venueCountRow struct {
+		Venue string
+		Count int64
+	}
+	var rows []venueCountRow
+	err = global.GVA_DB.Model(&model.OrderVerifyRecord{}).
+		Select("venue, COUNT(*) as count").
+		Where("verified_at >= ? AND verified_at < ?", monthStart, nextMonthStart).
+		Where("venue <> '' AND venue IN ?", venueCodes).
+		Group("venue").
+		Scan(&rows).Error
+	if err != nil {
+		return
+	}
+
+	countMap := make(map[string]int64, len(rows))
+	for _, r := range rows {
+		countMap[r.Venue] = r.Count
+	}
+
+	items = make([]request.TicketVenueVerifyStatsItem, 0, len(options))
+	for _, opt := range options {
+		code := opt["code"]
+		items = append(items, request.TicketVenueVerifyStatsItem{
+			Venue: code,
+			Label: opt["label"],
+			Count: countMap[code],
+		})
+	}
+	return
+}
+
 func (s *ticketOrder) GetByID(id uint) (order model.TicketOrder, err error) {
 	if err = global.GVA_DB.Where("id = ?", id).First(&order).Error; err != nil {
 		return

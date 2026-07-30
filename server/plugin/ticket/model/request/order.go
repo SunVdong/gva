@@ -16,3 +16,15 @@ type TicketOrderSearch struct {
 	Venue       string  `json:"venue" form:"venue"`           // 核销场合 code：至少一次匹配
 	request.PageInfo
 }
+
+// TicketVenueVerifyStatsReq 核销场合按月统计
+type TicketVenueVerifyStatsReq struct {
+	Month string `json:"month" form:"month"` // YYYY-MM，空则当前月
+}
+
+// TicketVenueVerifyStatsItem 单场合核销次数
+type TicketVenueVerifyStatsItem struct {
+	Venue string `json:"venue"`
+	Label string `json:"label"`
+	Count int64  `json:"count"`
+}

@@ -105,3 +105,64 @@ if order.SupportMultiVenue {
 ### 场合存 code 不存中文
 
 **Decision**：稳定枚举；label 仅展示。扩展场合时先改 `venue.go`，再对齐管理端 / H5 常量。
+
+---
+
+## Scenario: 管理端按核销场合月度统计
+
+> `ticket-venue-stats` 任务落地。复用 `order_verify_records`，无新表。
+
+### 1. Scope / Trigger
+
+- Trigger: 订单管理页需要按场合看某月核销次数
+- 改动面：`server/plugin/ticket/` + `web/src/plugin/ticket/view/order.vue`（列表上方汇总条）
+- 与订单列表筛选解耦；勿统计空 `venue`
+
+### 2. Signatures
+
+| 层 | 签名 |
+|----|------|
+| Service | `GetVenueVerifyStats(month string) (monthOut string, items []TicketVenueVerifyStatsItem, err error)` |
+| API | `GET /ticket/order/getVenueVerifyStats?month=YYYY-MM` |
+| Request | `month` query 可选；空 → 当前自然月 |
+| Response item | `{ venue, label, count }`；顺序 = `VenueOptions()` |
+
+### 3. Contracts
+
+- 时间：`verified_at >= monthStart AND verified_at < nextMonthStart`（半开区间）
+- 过滤：`venue <> '' AND venue IN (白名单)`；软删不计
+- 缺项补 `count=0`；不返回「未指定场合」
+- 前端：月份选择器默认当前月、不可清空；与列表 `searchInfo` 独立
+
+### 4. Validation & Error Matrix
+
+| 条件 | 行为 |
+|------|------|
+| `month` 空 | 用当前自然月 |
+| `month` 非法（非 `YYYY-MM`） | 错误「月份格式错误，应为 YYYY-MM」，不静默回退 |
+
+### 5. Good / Base / Bad Cases
+
+- **Good**：当月有 `hongshan` 核销 → items 中红山 count>0，其它场合可为 0
+- **Base**：某月无任何白名单核销 → 四场合均为 0
+- **Bad**：传 `2026-13` → 接口失败，不返回空统计冒充成功
+
+### 6. Tests Required
+
+- 手工：默认当前月；切换月份数字变化；空 venue 记录不计入
+- 改列表筛选时汇总不变（直至改月份）
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```go
+// 闭区间月末 23:59:59，易漏跨秒 / 时区边界
+db.Where("verified_at BETWEEN ? AND ?", start, endOfMonth)
+```
+
+#### Correct
+
+```go
+db.Where("verified_at >= ? AND verified_at < ?", monthStart, monthStart.AddDate(0, 1, 0))
+```

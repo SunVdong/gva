@@ -86,6 +86,7 @@ func (r *orderRouter) Init(public, private *gin.RouterGroup) {
 	g.Use(middleware.OperationRecord()).POST("refundOrder", apiOrder.Refund)
 	g.GET("getOrderList", apiOrder.GetList)
 	g.GET("findOrder", apiOrder.Find)
+	g.GET("getVenueVerifyStats", apiOrder.GetVenueVerifyStats)
 
 	// H5 核销公开接口（根据订单号查询与核销）
 	pg := public.Group("ticket").Group("order")
