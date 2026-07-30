@@ -28,7 +28,7 @@ import (
 // @Tag.Name        小程序-露营
 // @Tag.Description 露营场地预约（场地列表、时段、预约、取消）
 // @Tag.Name        小程序-限时活动
-// @Tag.Description 限时活动（活动列表、报名下单、我的订单）
+// @Tag.Description 限时活动（活动列表、报名下单、我的订单、订单评价）
 // @Tag.Name        Base
 // @Tag.Name        SysUser
 // @Tag.Description 用户

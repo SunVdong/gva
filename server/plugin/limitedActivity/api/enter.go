@@ -5,10 +5,11 @@ import (
 )
 
 var (
-	Api             = new(api)
-	serviceActivity = service.Service.Activity
-	serviceOrder    = service.Service.Order
-	serviceBanner   = service.Service.Banner
+	Api                = new(api)
+	serviceActivity    = service.Service.Activity
+	serviceOrder       = service.Service.Order
+	serviceOrderReview = service.Service.OrderReview
+	serviceBanner      = service.Service.Banner
 )
 
 type api struct {

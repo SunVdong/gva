@@ -73,14 +73,28 @@ func (a *activityOrderApi) Find(c *gin.Context) {
 			canRefund = false
 		}
 	}
-	response.OkWithData(gin.H{
+	data := gin.H{
 		"order":           order,
 		"remainingTimes":  remaining,
 		"verifyRecords":   verifyRecords,
 		"canRefund":       canRefund,
 		"refundAmountFen": refundFen,
 		"refundAmount":    float64(refundFen) / 100.0,
-	}, c)
+	}
+	if order.Status == 2 && order.VerifiedAt != nil {
+		review, _ := serviceOrderReview.GetByOrderID(order.ID)
+		if review.ID != 0 {
+			data["review"] = gin.H{
+				"ID":        review.ID,
+				"rating":    review.Rating,
+				"content":   review.Content,
+				"createdAt": review.CreatedAt,
+			}
+		} else {
+			data["review"] = nil
+		}
+	}
+	response.OkWithData(data, c)
 }
 
 // Refund 后台按未核销比例退款

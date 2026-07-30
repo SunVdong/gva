@@ -15,6 +15,7 @@ func Gorm(ctx context.Context) {
 		new(model.Activity),
 		new(model.ActivityOrder),
 		new(model.ActivityOrderVerifyRecord),
+		new(model.OrderReview),
 		new(model.Banner),
 	)
 	if err != nil {

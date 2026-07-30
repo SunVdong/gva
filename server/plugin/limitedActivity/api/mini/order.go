@@ -156,11 +156,88 @@ func (a *miniOrderApi) Detail(c *gin.Context) {
 		remaining = 0
 	}
 	verifyRecords, _ := svcOrder.GetVerifyRecords(order.ID)
-	response.OkWithData(gin.H{
+	data := gin.H{
 		"order":          order,
 		"remainingTimes": remaining,
 		"verifyRecords":  verifyRecords,
 		"canRefund":      false, // 活动订单不支持用户自助退款，请联系客服
 		"statusLabel":    svcOrder.OrderStatusLabel(&order),
-	}, c)
+	}
+	if order.Status == 2 && order.VerifiedAt != nil {
+		review, _ := svcOrderReview.GetByOrderID(order.ID)
+		if review.ID != 0 {
+			data["review"] = gin.H{
+				"ID":        review.ID,
+				"rating":    review.Rating,
+				"content":   review.Content,
+				"createdAt": review.CreatedAt,
+			}
+		} else {
+			data["review"] = nil
+		}
+	}
+	response.OkWithData(data, c)
+}
+
+// CreateReview 小程序-发布活动订单评价（仅核销后的订单，一单一评）
+// @Tags        小程序-限时活动
+// @Summary     发布活动订单评价
+// @Description 对已核销的限时活动订单进行评价（评分1-5、50字内内容），每个订单只能评价一次
+// @Accept      json
+// @Produce     json
+// @Param       x-token header string true "小程序登录 token"
+// @Param       data body request.CreateOrderReviewRequest true "评价内容"
+// @Success     200 {object} response.Response{data=object,msg=string}
+// @Router      /limitedActivity/mini/order/review/create [post]
+func (a *miniOrderApi) CreateReview(c *gin.Context) {
+	userID := utils.GetUserID(c)
+	if userID == 0 {
+		response.FailWithMessage("请先登录", c)
+		return
+	}
+	var req request.CreateOrderReviewRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	review, err := svcOrderReview.CreateReview(req, userID)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithData(review, c)
+}
+
+// DeleteReview 小程序-删除活动订单评价（仅本人）
+// @Tags        小程序-限时活动
+// @Summary     删除活动订单评价
+// @Description 删除自己对该订单的评价
+// @Accept      json
+// @Produce     json
+// @Param       x-token header string true "小程序登录 token"
+// @Param       id query int true "评价ID"
+// @Success     200 {object} response.Response{msg=string}
+// @Router      /limitedActivity/mini/order/review/delete [post]
+func (a *miniOrderApi) DeleteReview(c *gin.Context) {
+	userID := utils.GetUserID(c)
+	if userID == 0 {
+		response.FailWithMessage("请先登录", c)
+		return
+	}
+	var idReq struct {
+		ID uint `form:"id" json:"id" binding:"required"`
+	}
+	_ = c.ShouldBindJSON(&idReq)
+	if idReq.ID == 0 {
+		_ = c.ShouldBindQuery(&idReq)
+	}
+	if idReq.ID == 0 {
+		response.FailWithMessage("请传入评价 id", c)
+		return
+	}
+	if err := svcOrderReview.DeleteReview(idReq.ID, userID); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithMessage("删除成功", c)
 }

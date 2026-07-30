@@ -893,6 +893,24 @@ definitions:
         description: 收件人:多个以英文逗号分隔 例：a@qq.com b@qq.com 正式开发中请把此项目作为参数使用
         type: string
     type: object
+  github_com_flipped-aurora_gin-vue-admin_server_plugin_limitedActivity_model_request.CreateOrderReviewRequest:
+    properties:
+      content:
+        description: 评价内容，50字内
+        maxLength: 50
+        type: string
+      orderId:
+        description: 订单ID
+        type: integer
+      rating:
+        description: 评分 1-5
+        maximum: 5
+        minimum: 1
+        type: integer
+    required:
+    - orderId
+    - rating
+    type: object
   github_com_flipped-aurora_gin-vue-admin_server_plugin_limitedActivity_model_request.MiniOrderCreate:
     properties:
       activityId:
@@ -909,6 +927,24 @@ definitions:
     - contactName
     - contactPhone
     - quantity
+    type: object
+  github_com_flipped-aurora_gin-vue-admin_server_plugin_ticket_model_request.CreateOrderReviewRequest:
+    properties:
+      content:
+        description: 评价内容，50字内
+        maxLength: 50
+        type: string
+      orderId:
+        description: 订单ID
+        type: integer
+      rating:
+        description: 评分 1-5
+        maximum: 5
+        minimum: 1
+        type: integer
+    required:
+    - orderId
+    - rating
     type: object
   github_com_flipped-aurora_gin-vue-admin_server_plugin_ticket_model_request.MiniOrderCreate:
     properties:
@@ -1029,26 +1065,6 @@ definitions:
         type: string
       userID:
         description: 作者
-        type: integer
-    type: object
-  model.OrderReview:
-    properties:
-      ID:
-        description: 主键ID
-        type: integer
-      content:
-        type: string
-      createdAt:
-        description: 创建时间
-        type: string
-      orderId:
-        type: integer
-      rating:
-        type: integer
-      updatedAt:
-        description: 更新时间
-        type: string
-      userId:
         type: integer
     type: object
   model.Venue:
@@ -1402,24 +1418,6 @@ definitions:
       password:
         description: 密码
         type: string
-    type: object
-  request.CreateOrderReviewRequest:
-    properties:
-      content:
-        description: 评价内容，50字内
-        maxLength: 50
-        type: string
-      orderId:
-        description: 订单ID
-        type: integer
-      rating:
-        description: 评分 1-5
-        maximum: 5
-        minimum: 1
-        type: integer
-    required:
-    - orderId
-    - rating
     type: object
   request.CreateReservationReviewRequest:
     properties:
@@ -6392,6 +6390,71 @@ paths:
       summary: 我的活动订单列表
       tags:
       - 小程序-限时活动
+  /limitedActivity/mini/order/review/create:
+    post:
+      consumes:
+      - application/json
+      description: 对已核销的限时活动订单进行评价（评分1-5、50字内内容），每个订单只能评价一次
+      parameters:
+      - description: 小程序登录 token
+        in: header
+        name: x-token
+        required: true
+        type: string
+      - description: 评价内容
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_flipped-aurora_gin-vue-admin_server_plugin_limitedActivity_model_request.CreateOrderReviewRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: object
+                msg:
+                  type: string
+              type: object
+      summary: 发布活动订单评价
+      tags:
+      - 小程序-限时活动
+  /limitedActivity/mini/order/review/delete:
+    post:
+      consumes:
+      - application/json
+      description: 删除自己对该订单的评价
+      parameters:
+      - description: 小程序登录 token
+        in: header
+        name: x-token
+        required: true
+        type: string
+      - description: 评价ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      summary: 删除活动订单评价
+      tags:
+      - 小程序-限时活动
   /limitedActivity/order/findOrder:
     get:
       parameters:
@@ -9300,7 +9363,7 @@ paths:
         name: data
         required: true
         schema:
-          $ref: '#/definitions/request.CreateOrderReviewRequest'
+          $ref: '#/definitions/github_com_flipped-aurora_gin-vue-admin_server_plugin_ticket_model_request.CreateOrderReviewRequest'
       produces:
       - application/json
       responses:
@@ -9311,7 +9374,7 @@ paths:
             - $ref: '#/definitions/response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/model.OrderReview'
+                  type: object
                 msg:
                   type: string
               type: object
@@ -9845,7 +9908,7 @@ tags:
   name: 小程序-景点
 - description: 露营场地预约（场地列表、时段、预约、取消）
   name: 小程序-露营
-- description: 限时活动（活动列表、报名下单、我的订单）
+- description: 限时活动（活动列表、报名下单、我的订单、订单评价）
   name: 小程序-限时活动
 - name: Base
 - description: 用户

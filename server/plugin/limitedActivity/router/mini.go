@@ -18,4 +18,6 @@ func (r *miniRouter) Init(public, private *gin.RouterGroup) {
 	auth.POST("order/create", mini.Order.Create)
 	auth.GET("order/myList", mini.Order.MyList)
 	auth.GET("order/detail", mini.Order.Detail)
+	auth.POST("order/review/create", mini.Order.CreateReview)
+	auth.POST("order/review/delete", mini.Order.DeleteReview)
 }

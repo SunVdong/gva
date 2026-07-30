@@ -5,7 +5,8 @@ import (
 )
 
 var (
-	svcActivity = service.Service.Activity
-	svcOrder    = service.Service.Order
-	svcBanner   = service.Service.Banner
+	svcActivity    = service.Service.Activity
+	svcOrder       = service.Service.Order
+	svcOrderReview = service.Service.OrderReview
+	svcBanner      = service.Service.Banner
 )

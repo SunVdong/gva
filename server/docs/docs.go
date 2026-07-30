@@ -6660,6 +6660,113 @@ const docTemplate = `{
                 }
             }
         },
+        "/limitedActivity/mini/order/review/create": {
+            "post": {
+                "description": "对已核销的限时活动订单进行评价（评分1-5、50字内内容），每个订单只能评价一次",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "小程序-限时活动"
+                ],
+                "summary": "发布活动订单评价",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "小程序登录 token",
+                        "name": "x-token",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "评价内容",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_flipped-aurora_gin-vue-admin_server_plugin_limitedActivity_model_request.CreateOrderReviewRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "msg": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/limitedActivity/mini/order/review/delete": {
+            "post": {
+                "description": "删除自己对该订单的评价",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "小程序-限时活动"
+                ],
+                "summary": "删除活动订单评价",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "小程序登录 token",
+                        "name": "x-token",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "评价ID",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "msg": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/limitedActivity/order/findOrder": {
             "get": {
                 "security": [
@@ -11610,7 +11717,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/request.CreateOrderReviewRequest"
+                            "$ref": "#/definitions/github_com_flipped-aurora_gin-vue-admin_server_plugin_ticket_model_request.CreateOrderReviewRequest"
                         }
                     }
                 ],
@@ -11626,7 +11733,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/model.OrderReview"
+                                            "type": "object"
                                         },
                                         "msg": {
                                             "type": "string"
@@ -13808,6 +13915,30 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_flipped-aurora_gin-vue-admin_server_plugin_limitedActivity_model_request.CreateOrderReviewRequest": {
+            "type": "object",
+            "required": [
+                "orderId",
+                "rating"
+            ],
+            "properties": {
+                "content": {
+                    "description": "评价内容，50字内",
+                    "type": "string",
+                    "maxLength": 50
+                },
+                "orderId": {
+                    "description": "订单ID",
+                    "type": "integer"
+                },
+                "rating": {
+                    "description": "评分 1-5",
+                    "type": "integer",
+                    "maximum": 5,
+                    "minimum": 1
+                }
+            }
+        },
         "github_com_flipped-aurora_gin-vue-admin_server_plugin_limitedActivity_model_request.MiniOrderCreate": {
             "type": "object",
             "required": [
@@ -13828,6 +13959,30 @@ const docTemplate = `{
                 },
                 "quantity": {
                     "type": "integer",
+                    "minimum": 1
+                }
+            }
+        },
+        "github_com_flipped-aurora_gin-vue-admin_server_plugin_ticket_model_request.CreateOrderReviewRequest": {
+            "type": "object",
+            "required": [
+                "orderId",
+                "rating"
+            ],
+            "properties": {
+                "content": {
+                    "description": "评价内容，50字内",
+                    "type": "string",
+                    "maxLength": 50
+                },
+                "orderId": {
+                    "description": "订单ID",
+                    "type": "integer"
+                },
+                "rating": {
+                    "description": "评分 1-5",
+                    "type": "integer",
+                    "maximum": 5,
                     "minimum": 1
                 }
             }
@@ -14001,35 +14156,6 @@ const docTemplate = `{
                 },
                 "userID": {
                     "description": "作者",
-                    "type": "integer"
-                }
-            }
-        },
-        "model.OrderReview": {
-            "type": "object",
-            "properties": {
-                "ID": {
-                    "description": "主键ID",
-                    "type": "integer"
-                },
-                "content": {
-                    "type": "string"
-                },
-                "createdAt": {
-                    "description": "创建时间",
-                    "type": "string"
-                },
-                "orderId": {
-                    "type": "integer"
-                },
-                "rating": {
-                    "type": "integer"
-                },
-                "updatedAt": {
-                    "description": "更新时间",
-                    "type": "string"
-                },
-                "userId": {
                     "type": "integer"
                 }
             }
@@ -14525,30 +14651,6 @@ const docTemplate = `{
                 "password": {
                     "description": "密码",
                     "type": "string"
-                }
-            }
-        },
-        "request.CreateOrderReviewRequest": {
-            "type": "object",
-            "required": [
-                "orderId",
-                "rating"
-            ],
-            "properties": {
-                "content": {
-                    "description": "评价内容，50字内",
-                    "type": "string",
-                    "maxLength": 50
-                },
-                "orderId": {
-                    "description": "订单ID",
-                    "type": "integer"
-                },
-                "rating": {
-                    "description": "评分 1-5",
-                    "type": "integer",
-                    "maximum": 5,
-                    "minimum": 1
                 }
             }
         },
@@ -16245,7 +16347,7 @@ const docTemplate = `{
             "name": "小程序-露营"
         },
         {
-            "description": "限时活动（活动列表、报名下单、我的订单）",
+            "description": "限时活动（活动列表、报名下单、我的订单、订单评价）",
             "name": "小程序-限时活动"
         },
         {

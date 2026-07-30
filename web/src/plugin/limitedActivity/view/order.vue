@@ -146,6 +146,15 @@
           </el-table>
         </div>
 
+        <div v-if="detail.order.status === 2" class="mt-4">
+          <div class="text-sm font-medium mb-2">评价信息</div>
+          <el-descriptions :column="1" border>
+            <el-descriptions-item label="评分">{{ detail.review?.rating ?? '-' }}</el-descriptions-item>
+            <el-descriptions-item label="内容">{{ detail.review?.content || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="评价时间">{{ detail.review?.createdAt ? formatDate(detail.review.createdAt) : '-' }}</el-descriptions-item>
+          </el-descriptions>
+        </div>
+
         <div v-if="detail.canRefund" class="mt-4">
           <el-popconfirm :title="refundConfirmTitle(detail.order)" @confirm="handleRefund(detail.order)">
             <template #reference>
@@ -171,7 +180,7 @@ const pageSize = ref(10)
 const tableData = ref([])
 const searchInfo = ref({})
 const detailVisible = ref(false)
-const detail = ref({ order: null, verifyRecords: [], remainingTimes: 0, canRefund: false, refundAmount: 0 })
+const detail = ref({ order: null, review: null, verifyRecords: [], remainingTimes: 0, canRefund: false, refundAmount: 0 })
 
 function formatDate(d) {
   if (!d) return ''
@@ -218,6 +227,7 @@ const showDetail = async (row) => {
   if (res.code === 0 && res.data) {
     detail.value = {
       order: res.data.order,
+      review: res.data.review || null,
       verifyRecords: res.data.verifyRecords || [],
       remainingTimes: res.data.remainingTimes ?? 0,
       canRefund: !!res.data.canRefund,
