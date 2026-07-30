@@ -24,6 +24,7 @@
 | [Mini Pay Integration](./mini-pay-integration.md) | 插件接入 `/mini/pay`、订单前缀、退款边界 | Filled |
 | [Ticket Multi-Venue Verify](./ticket-multi-venue-verify.md) | 多次票多场合快照、公开核销 venue、列表筛选 | Filled |
 | [Limited Activity Address](./limited-activity-address.md) | 活动选填 `address`、AutoMigrate、不入订单快照 | Filled |
+| [Limited Activity Order Review](./limited-activity-order-review.md) | 活动订单评价 create/delete、独立表、硬删重评 | Filled |
 
 ---
 
