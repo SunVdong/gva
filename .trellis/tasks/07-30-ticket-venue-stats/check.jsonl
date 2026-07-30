@@ -1,0 +1,9 @@
+{"file": ".trellis/spec/backend/index.md", "reason": "核对后端分层与 ticket 样板"}
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "核对查询与软删写法"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "核对 API 错误与分层"}
+{"file": ".trellis/spec/backend/ticket-multi-venue-verify.md", "reason": "核对场合白名单与记录语义"}
+{"file": ".trellis/spec/frontend/index.md", "reason": "核对插件页改动范围"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "核对月份选择与汇总展示"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "核对前后端字段一致性"}
+{"file": ".trellis/tasks/07-30-ticket-venue-stats/prd.md", "reason": "对照 AC1–AC6 验收"}
+{"file": ".trellis/tasks/07-30-ticket-venue-stats/design.md", "reason": "对照接口契约与补齐 0"}
