@@ -85,6 +85,7 @@ func (s *activity) Update(m model.Activity) error {
 		"cover_image":  m.CoverImage,
 		"group_qr":     m.GroupQr,
 		"service_qr":   m.ServiceQr,
+		"sort":         m.Sort,
 		"status":       m.Status,
 		"updated_by":   m.UpdatedBy,
 	}
@@ -116,14 +117,14 @@ func (s *activity) GetList(req request.ActivitySearch) (list []model.Activity, t
 	if limit != 0 {
 		db = db.Limit(limit).Offset(offset)
 	}
-	err = db.Order("id DESC").Find(&list).Error
+	err = db.Order("sort ASC, id ASC").Find(&list).Error
 	for i := range list {
 		s.fillVirtual(&list[i])
 	}
 	return
 }
 
-// GetMiniList 小程序可见活动列表（仅显示中）
+// GetMiniList 小程序可见活动列表（仅显示中，按 sort ASC, id ASC）
 func (s *activity) GetMiniList(req request.ActivitySearch) (list []model.Activity, total int64, err error) {
 	db := global.GVA_DB.Model(&model.Activity{}).Where("status = ?", 1)
 	if req.Name != "" {
@@ -137,7 +138,7 @@ func (s *activity) GetMiniList(req request.ActivitySearch) (list []model.Activit
 	if limit != 0 {
 		db = db.Limit(limit).Offset(offset)
 	}
-	err = db.Order("start_time ASC, id DESC").Find(&list).Error
+	err = db.Order("sort ASC, id ASC").Find(&list).Error
 	for i := range list {
 		s.fillVirtual(&list[i])
 	}

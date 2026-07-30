@@ -61,6 +61,7 @@
             {{ row.sold ?? 0 }}/{{ row.quota ?? 0 }}
           </template>
         </el-table-column>
+        <el-table-column align="left" label="排序" prop="sort" width="80" />
         <el-table-column align="left" label="显示" width="80">
           <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : 'info'">{{ row.status === 1 ? '显示' : '隐藏' }}</el-tag>
@@ -162,6 +163,10 @@
         <el-form-item label="活动详情" prop="detail">
           <el-input v-model="formData.detail" type="textarea" :rows="5" placeholder="活动详情" />
         </el-form-item>
+        <el-form-item label="排序" prop="sort">
+          <el-input-number v-model="formData.sort" :min="0" style="width: 100%" />
+          <div class="text-gray-500 text-xs mt-1">数值越小越靠前</div>
+        </el-form-item>
         <el-form-item label="显示状态" prop="status">
           <el-radio-group v-model="formData.status">
             <el-radio :value="1">显示</el-radio>
@@ -211,6 +216,7 @@ const formData = ref({
   coverImage: '',
   groupQr: '',
   serviceQr: '',
+  sort: 0,
   status: 1
 })
 
@@ -261,6 +267,7 @@ const openDialog = () => {
     coverImage: '',
     groupQr: '',
     serviceQr: '',
+    sort: 0,
     status: 1
   }
   dialogVisible.value = true
@@ -288,6 +295,7 @@ const updateFunc = async (row) => {
     coverImage: d.coverImage || '',
     groupQr: d.groupQr || '',
     serviceQr: d.serviceQr || '',
+    sort: d.sort ?? 0,
     status: d.status ?? 1
   }
   dialogVisible.value = true
@@ -310,6 +318,7 @@ const enterDialog = async () => {
       coverImage: formData.value.coverImage,
       groupQr: formData.value.groupQr,
       serviceQr: formData.value.serviceQr,
+      sort: formData.value.sort,
       status: formData.value.status
     }
     let res

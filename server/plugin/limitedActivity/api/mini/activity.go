@@ -13,7 +13,7 @@ type miniActivityApi struct{}
 // List 小程序-活动列表（仅显示中）
 // @Tags        小程序-限时活动
 // @Summary     活动列表
-// @Description 返回显示中的限时活动，含剩余名额与是否可报名
+// @Description 返回显示中的限时活动，含剩余名额与是否可报名，按 sort 升序
 // @Accept      json
 // @Produce     json
 // @Param       page query int false "页码"

@@ -22,6 +22,7 @@ type Activity struct {
 	CoverImage  string    `json:"coverImage" form:"coverImage" gorm:"column:cover_image;comment:封面图;size:512;"`
 	GroupQr     string    `json:"groupQr" form:"groupQr" gorm:"column:group_qr;comment:群二维码;size:512;"`
 	ServiceQr   string    `json:"serviceQr" form:"serviceQr" gorm:"column:service_qr;comment:客服二维码;size:512;"`
+	Sort        int       `json:"sort" form:"sort" gorm:"column:sort;comment:排序越小越靠前;default:0;"`
 	Status      int       `json:"status" form:"status" gorm:"column:status;comment:显示状态1显示0隐藏;default:1;"`
 	CreatedBy   int       `json:"createdBy" form:"createdBy" gorm:"column:created_by;default:0;"`
 	UpdatedBy   int       `json:"updatedBy" form:"updatedBy" gorm:"column:updated_by;default:0;"`
