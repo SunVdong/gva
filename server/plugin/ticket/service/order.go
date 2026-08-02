@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"math/rand"
 	"regexp"
 	"strings"
@@ -11,6 +12,7 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/ticket/model"
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/ticket/model/request"
+	miniPay "github.com/flipped-aurora/gin-vue-admin/server/service/mini"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -22,34 +24,237 @@ func orderListToday() string {
 	return time.Now().Format("2006-01-02")
 }
 
-// RefundPendingVerifyMultiTicket 后台退款：仅多次票订单(ticket_type=2)且状态为待核销(status=1)可操作
-func (s *ticketOrder) RefundPendingVerifyMultiTicket(orderID uint) error {
-	return global.GVA_DB.Transaction(func(tx *gorm.DB) error {
-		var order model.TicketOrder
-		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
-			Where("id = ?", orderID).
-			First(&order).Error; err != nil || order.ID == 0 {
+// orderPaidUseTimes 付费次数 A；老单缺快照时按 totalUseTimes 兼容
+func orderPaidUseTimes(order *model.TicketOrder) int {
+	if order.PaidUseTimes > 0 {
+		return order.PaidUseTimes
+	}
+	if order.TotalUseTimes > 0 {
+		return order.TotalUseTimes
+	}
+	return 1
+}
+
+// RemainingPaidUseTimes 剩余付费可核销次数
+func (s *ticketOrder) RemainingPaidUseTimes(order *model.TicketOrder) int {
+	a := orderPaidUseTimes(order)
+	paidConsumed := order.VerifiedTimes
+	if paidConsumed > a {
+		paidConsumed = a
+	}
+	remaining := a - paidConsumed
+	if remaining < 0 {
+		return 0
+	}
+	return remaining
+}
+
+// CalcRefundFen 按剩余付费次数比例计算退款分：Round(payAmount*100*remainingPaid/A)
+func (s *ticketOrder) CalcRefundFen(order *model.TicketOrder) (refundFen, totalFen, remainingPaid int, err error) {
+	a := orderPaidUseTimes(order)
+	if a <= 0 {
+		return 0, 0, 0, fmt.Errorf("订单付费次数异常")
+	}
+	remainingPaid = s.RemainingPaidUseTimes(order)
+	if remainingPaid <= 0 {
+		return 0, 0, 0, fmt.Errorf("付费次数已用尽，不可退款")
+	}
+	totalFen = int(math.Round(order.PayAmount * 100))
+	if totalFen <= 0 {
+		return 0, 0, 0, fmt.Errorf("订单金额异常")
+	}
+	refundFen = int(math.Round(order.PayAmount * 100 * float64(remainingPaid) / float64(a)))
+	if refundFen <= 0 {
+		return 0, 0, 0, fmt.Errorf("退款金额异常")
+	}
+	if refundFen > totalFen {
+		refundFen = totalFen
+	}
+	return
+}
+
+// AdminRefund 后台按付费次数剩余比例发起微信退款
+func (s *ticketOrder) AdminRefund(orderID uint) error {
+	return s.RequestRefund(orderID, 0)
+}
+
+// RequestRefund 发起退款。userID>0 时校验本人订单；先落库 status=7 再调微信。
+func (s *ticketOrder) RequestRefund(orderID uint, userID uint) error {
+	var order model.TicketOrder
+	var refundFen, totalFen int
+	var refundNo string
+
+	err := global.GVA_DB.Transaction(func(tx *gorm.DB) error {
+		if e := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			Where("id = ?", orderID).First(&order).Error; e != nil || order.ID == 0 {
 			return fmt.Errorf("订单不存在")
+		}
+		if userID > 0 && order.UserID != userID {
+			return fmt.Errorf("订单不存在或无权操作")
 		}
 		if order.Status != 1 {
 			return fmt.Errorf("仅待核销订单可退款")
 		}
-		if order.SkuID == 0 {
-			return fmt.Errorf("订单SKU信息缺失")
+		if order.WxTransactionID == "" {
+			return fmt.Errorf("订单缺少微信支付信息，无法退款")
 		}
+		if order.RefundNo != "" {
+			return fmt.Errorf("退款处理中或已退款，请勿重复申请")
+		}
+		var calcErr error
+		refundFen, totalFen, _, calcErr = s.CalcRefundFen(&order)
+		if calcErr != nil {
+			return calcErr
+		}
+		refundNo = fmt.Sprintf("R%s_%d", order.OrderNo, time.Now().Unix())
+		res := tx.Model(&model.TicketOrder{}).
+			Where("id = ? AND status = ? AND (refund_no = '' OR refund_no IS NULL)", orderID, 1).
+			Updates(map[string]interface{}{
+				"status":    7,
+				"refund_no": refundNo,
+			})
+		if res.Error != nil {
+			return res.Error
+		}
+		if res.RowsAffected == 0 {
+			return fmt.Errorf("订单状态已变更，请刷新后重试")
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	result, err := miniPay.CreateRefund(order.WxTransactionID, refundNo, totalFen, refundFen, "门票按付费次数剩余比例退款")
+	if err != nil {
+		_ = s.ReleaseRefundRequested(refundNo)
+		return err
+	}
+	if result.RefundID != "" {
+		_ = global.GVA_DB.Model(&model.TicketOrder{}).
+			Where("id = ? AND refund_no = ?", order.ID, refundNo).
+			Update("wx_refund_id", result.RefundID).Error
+	}
+	if strings.ToUpper(result.Status) == "SUCCESS" {
+		return s.ApplyRefundSuccessByRefundNo(refundNo, result.RefundID, "", refundFen)
+	}
+	return nil
+}
+
+// ReleaseRefundRequested 微信退款失败/关闭时释放退款中状态
+func (s *ticketOrder) ReleaseRefundRequested(refundNo string) error {
+	if strings.TrimSpace(refundNo) == "" {
+		return fmt.Errorf("缺少商户退款单号 out_refund_no")
+	}
+	return global.GVA_DB.Model(&model.TicketOrder{}).
+		Where("refund_no = ? AND status = ?", refundNo, 7).
+		Updates(map[string]interface{}{
+			"status":       1,
+			"refund_no":    "",
+			"wx_refund_id": "",
+		}).Error
+}
+
+// ApplyRefundSuccessByRefundNo 退款成功：写实退金额、按 R5 回退日历 sold
+func (s *ticketOrder) ApplyRefundSuccessByRefundNo(refundNo, refundID, successTime string, refundFenHint int) error {
+	if strings.TrimSpace(refundNo) == "" {
+		return fmt.Errorf("缺少商户退款单号 out_refund_no")
+	}
+	var order model.TicketOrder
+	if err := global.GVA_DB.Where("refund_no = ?", refundNo).First(&order).Error; err != nil {
+		return fmt.Errorf("退款对应订单不存在")
+	}
+
+	refundAt := time.Now()
+	if t, err := time.Parse(time.RFC3339, successTime); err == nil {
+		refundAt = t
+	}
+
+	if order.Status == 6 {
+		if order.WxRefundID != "" && refundID != "" && order.WxRefundID != refundID {
+			return fmt.Errorf("微信退款单号与已退款记录不一致")
+		}
+		if order.WxRefundID == "" && refundID != "" {
+			_ = global.GVA_DB.Model(&model.TicketOrder{}).Where("id = ?", order.ID).Update("wx_refund_id", refundID).Error
+		}
+		return nil
+	}
+	if order.Status != 1 && order.Status != 7 {
+		return fmt.Errorf("订单状态不允许确认退款: status=%d", order.Status)
+	}
+
+	remainingPaid := s.RemainingPaidUseTimes(&order)
+	refundFen := refundFenHint
+	if refundFen <= 0 {
+		rf, _, _, calcErr := s.CalcRefundFen(&order)
+		if calcErr != nil {
+			refundFen = 0
+		} else {
+			refundFen = rf
+		}
+	}
+	refundAmount := float64(refundFen) / 100.0
+
+	return global.GVA_DB.Transaction(func(tx *gorm.DB) error {
+		updateRes := tx.Model(&model.TicketOrder{}).
+			Where("id = ? AND status IN ? AND refund_no = ?", order.ID, []int{1, 7}, refundNo).
+			Updates(map[string]interface{}{
+				"status":        6,
+				"wx_refund_id":  refundID,
+				"refund_time":   refundAt,
+				"refund_amount": refundAmount,
+			})
+		if updateRes.Error != nil {
+			return updateRes.Error
+		}
+		if updateRes.RowsAffected == 0 {
+			var fresh model.TicketOrder
+			if err := tx.Where("id = ?", order.ID).First(&fresh).Error; err != nil {
+				return fmt.Errorf("订单不存在")
+			}
+			if fresh.Status == 6 {
+				return nil
+			}
+			return fmt.Errorf("订单状态已变更，请刷新后重试")
+		}
+
+		if remainingPaid <= 0 {
+			return nil
+		}
+		// R5：多次票每单 1 张 sold-=1；单次票 sold-=remainingPaid（且不超过 quantity）
+		isMulti := false
 		var sku model.TicketSku
-		if err := tx.Where("id = ?", order.SkuID).First(&sku).Error; err != nil || sku.ID == 0 {
-			return fmt.Errorf("门票SKU不存在")
+		if e := tx.Where("id = ?", order.SkuID).First(&sku).Error; e == nil {
+			isMulti = sku.TicketType == 2
+		} else if order.Quantity == 1 && orderPaidUseTimes(&order) > 1 {
+			// SKU 缺失时：quantity=1 且 A>1 视为多次票
+			isMulti = true
 		}
-		if sku.TicketType != 2 {
-			return fmt.Errorf("仅多次票订单可退款")
+		release := remainingPaid
+		if isMulti {
+			release = 1
 		}
-		now := time.Now()
-		updates := map[string]any{
-			"status":      6,
-			"refund_time": &now,
+		if order.Quantity > 0 && release > order.Quantity {
+			release = order.Quantity
 		}
-		return tx.Model(&model.TicketOrder{}).Where("id = ?", orderID).Updates(updates).Error
+		if release <= 0 {
+			return nil
+		}
+		calendarRes := tx.Model(&model.TicketCalendar{}).
+			Where("sku_id = ? AND visit_date = ? AND sold >= ?", order.SkuID, order.VisitDate, release).
+			UpdateColumn("sold", gorm.Expr("sold - ?", release))
+		if calendarRes.Error != nil {
+			return calendarRes.Error
+		}
+		if calendarRes.RowsAffected == 0 {
+			global.GVA_LOG.Warn("ticket refund sold rollback skipped",
+				zap.Uint("order_id", order.ID),
+				zap.Uint("sku_id", order.SkuID),
+				zap.Time("visit_date", order.VisitDate),
+				zap.Int("release", release),
+			)
+		}
+		return nil
 	})
 }
 
@@ -377,6 +582,12 @@ func (s *ticketOrder) CreateOrder(userID uint, req request.MiniOrderCreate) (ord
 				return fmt.Errorf("游玩日期不能早于今天")
 			}
 		}
+		if req.Quantity <= 0 {
+			return fmt.Errorf("购买数量必须大于 0")
+		}
+		if sku.TicketType == 2 && req.Quantity != 1 {
+			return fmt.Errorf("多次票每单限购 1 张")
+		}
 		if sku.LimitBuy > 0 && req.Quantity > sku.LimitBuy {
 			return fmt.Errorf("门票 %s 每单限购 %d 张", sku.Name, sku.LimitBuy)
 		}
@@ -396,10 +607,16 @@ func (s *ticketOrder) CreateOrder(userID uint, req request.MiniOrderCreate) (ord
 			return fmt.Errorf("门票 %s 所选日期库存不足", sku.Name)
 		}
 		totalAmount := sku.Price * float64(req.Quantity)
-		useTimes := sku.UseTimes
-		if useTimes <= 0 {
-			useTimes = 1
+		m := sku.UseTimes
+		if m <= 0 {
+			m = 1
 		}
+		p := sku.GiftUseTimes
+		if sku.TicketType != 2 || p < 0 {
+			p = 0
+		}
+		paidUse := req.Quantity * m
+		giftUse := req.Quantity * p
 		orderNo = fmt.Sprintf("T%s%06d", time.Now().Format("20060102150405"), rand.Intn(1000000))
 		order = model.TicketOrder{
 			OrderNo:           orderNo,
@@ -414,7 +631,9 @@ func (s *ticketOrder) CreateOrder(userID uint, req request.MiniOrderCreate) (ord
 			TotalAmount:       totalAmount,
 			PayAmount:         totalAmount,
 			Status:            0,
-			TotalUseTimes:     useTimes,
+			PaidUseTimes:      paidUse,
+			GiftUseTimes:      giftUse,
+			TotalUseTimes:     paidUse + giftUse,
 			VerifiedTimes:     0,
 			SupportMultiVenue: sku.TicketType == 2 && sku.SupportMultiVenue,
 		}

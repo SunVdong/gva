@@ -15,6 +15,7 @@ type TicketSku struct {
 	LimitBuy    int     `json:"limitBuy" form:"limitBuy" gorm:"column:limit_buy;default:0;comment:每人限购数量;"`
 	TicketType         int  `json:"ticketType" form:"ticketType" gorm:"column:ticket_type;default:1;comment:票种类型1单次票2多次票;"`
 	UseTimes           int  `json:"useTimes" form:"useTimes" gorm:"column:use_times;default:1;comment:可核销次数;"`
+	GiftUseTimes       int  `json:"giftUseTimes" form:"giftUseTimes" gorm:"column:gift_use_times;default:0;comment:单张赠送核销次数仅多次票有意义;"`
 	SupportMultiVenue  bool `json:"supportMultiVenue" form:"supportMultiVenue" gorm:"column:support_multi_venue;default:false;comment:是否支持多场合核销仅多次票有意义;"`
 	Sort               int  `json:"sort" form:"sort" gorm:"column:sort;default:0;comment:排序值越小越靠前;"`
 	Status        int     `json:"status" form:"status" gorm:"column:status;comment:状态1启用0禁用;default:1;"`

@@ -97,15 +97,17 @@ default:
 
 ## Design Decision: 用户自助退 vs 后台退
 
-**Context**：限时活动要求加客服后由后台退，且支持按未核销比例退款。
+**Context**：限时活动要求加客服后由后台退；门票支持用户自助退，且次数语义含赠送。
 
 **Decision**：
 
-- ticket：可走 `/mini/pay/refund`（有核销次数则拒）
+- ticket：可走 `/mini/pay/refund`；**用户端与后台共用**插件 `RequestRefund`。  
+  按**付费次数 A**剩余比例退：`refundFen = Round(payAmount*100 * remainingPaid/A)`（赠送次数不进分母）。  
+  明细见 [Ticket Gift Times & Proportional Refund](./ticket-gift-proportional-refund.md)。
 - limitedActivity：**不**在 `/mini/pay/refund` 增加分支；仅管理端按  
-  `refundFen = Round(payAmount*100 * remaining/total)` 调 `mini.CreateRefund`，退款回调仍接入 `RefundNotify`
+  `refundFen = Round(payAmount*100 * remaining/totalUseTimes)` 调 `mini.CreateRefund`，退款回调仍接入 `RefundNotify`
 
-**Why**：避免用户自助全额退与业务规则冲突；比例退款只在后台可控。
+**Why**：门票自助退与后台必须同公式，避免双轨；活动仍只后台可控。金额/库存逻辑放在插件 Service，`pay.go` 只做委托与回调分发。
 
 ---
 
@@ -114,3 +116,4 @@ default:
 1. **先标退款中再调微信**：否则核销可插队，导致退款比例/名额回退不一致。
 2. **`sold` 含待支付占用**：超时关单必须释放名额（见 `server/initialize/timer.go`）。
 3. **`pay.go` 直接查库**是历史公共入口模式；新业务优先把入账/退款成功逻辑放在插件 Service，API 薄封装调用。
+4. **ticket 与 limitedActivity 退款分母不同**：门票用付费次数 A；活动用 `totalUseTimes`。改一侧公式时勿混用。

@@ -1,0 +1,8 @@
+{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file": ".trellis/spec/backend/index.md", "reason": "后端分层与门票/支付锚定"}
+{"file": ".trellis/spec/backend/mini-pay-integration.md", "reason": "公共支付与退款接入边界"}
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "GORM字段与事务约定"}
+{"file": ".trellis/spec/backend/ticket-multi-venue-verify.md", "reason": "多次票核销与场合约束"}
+{"file": ".trellis/spec/frontend/index.md", "reason": "管理端与H5前端约定"}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "下单核销退款跨层一致性"}
+{"file": ".trellis/spec/backend/ticket-gift-proportional-refund.md", "reason": "本任务沉淀的赠送次数与比例退合约"}

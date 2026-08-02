@@ -18,11 +18,11 @@ func (a *ticketOrderApi) Refund(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	if err := serviceOrder.RefundPendingVerifyMultiTicket(idReq.ID); err != nil {
+	if err := serviceOrder.AdminRefund(idReq.ID); err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithMessage("退款成功", c)
+	response.OkWithMessage("退款成功或已受理", c)
 }
 
 func (a *ticketOrderApi) GetList(c *gin.Context) {
@@ -91,9 +91,24 @@ func (a *ticketOrderApi) Find(c *gin.Context) {
 	if remaining < 0 {
 		remaining = 0
 	}
+	remainingPaid := serviceOrder.RemainingPaidUseTimes(&order)
+	canRefund := order.Status == 1 && remainingPaid > 0 && order.WxTransactionID != ""
+	refundFen := 0
+	if canRefund {
+		if rf, _, _, calcErr := serviceOrder.CalcRefundFen(&order); calcErr == nil {
+			refundFen = rf
+		} else {
+			canRefund = false
+		}
+	}
 	data := gin.H{
-		"order":          order,
-		"remainingTimes": remaining,
+		"order":           order,
+		"remainingTimes":  remaining,
+		"paidUseTimes":    order.PaidUseTimes,
+		"giftUseTimes":    order.GiftUseTimes,
+		"canRefund":       canRefund,
+		"refundAmountFen": refundFen,
+		"refundAmount":    float64(refundFen) / 100.0,
 	}
 	verifyRecords, _ := serviceOrder.GetVerifyRecords(order.ID)
 	data["verifyRecords"] = verifyRecords
@@ -143,6 +158,8 @@ func (a *ticketOrderApi) GetOrderByCodePublic(c *gin.Context) {
 	response.OkWithData(gin.H{
 		"order":          order,
 		"remainingTimes": remaining,
+		"paidUseTimes":   order.PaidUseTimes,
+		"giftUseTimes":   order.GiftUseTimes,
 		"verifyRecords":  verifyRecords,
 	}, c)
 }
@@ -181,6 +198,8 @@ func (a *ticketOrderApi) VerifyOrderByCodePublic(c *gin.Context) {
 	response.OkWithData(gin.H{
 		"order":          order,
 		"remainingTimes": remaining,
+		"paidUseTimes":   order.PaidUseTimes,
+		"giftUseTimes":   order.GiftUseTimes,
 		"verifyRecords":  verifyRecords,
 	}, c)
 }

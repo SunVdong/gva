@@ -63,7 +63,12 @@
           </li>
           <li v-if="(ticketOrder.totalUseTimes || 1) > 1">
             <span>核销进度</span>
-            <span>已核销 {{ ticketOrder.verifiedTimes || 0 }}/{{ ticketOrder.totalUseTimes }} 次，剩余 {{ ticketRemainingTimes }} 次</span>
+            <span>
+              已核销 {{ ticketOrder.verifiedTimes || 0 }}/{{ ticketOrder.totalUseTimes }} 次，剩余 {{ ticketRemainingTimes }} 次
+              <template v-if="(ticketOrder.giftUseTimes || 0) > 0">
+                （付费 {{ ticketOrder.paidUseTimes || 0 }} + 赠送 {{ ticketOrder.giftUseTimes }}）
+              </template>
+            </span>
           </li>
         </ul>
         <ul class="detail-list" v-if="ticketOrder.skuName">

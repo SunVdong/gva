@@ -22,13 +22,16 @@ type TicketOrder struct {
 	TotalAmount float64    `json:"totalAmount" gorm:"column:total_amount;type:decimal(10,2);comment:订单总金额;"`
 	PayAmount   float64    `json:"payAmount" gorm:"column:pay_amount;type:decimal(10,2);comment:支付金额;"`
 	Status            int        `json:"status" gorm:"column:status;comment:订单状态0待支付1待核销2已核销3已取消4已过期5已关闭6已退款7退款中;default:0;"`
-	TotalUseTimes     int        `json:"totalUseTimes" gorm:"column:total_use_times;default:0;comment:总可核销次数;"`
+	TotalUseTimes     int        `json:"totalUseTimes" gorm:"column:total_use_times;default:0;comment:总可核销次数A+B;"`
+	PaidUseTimes      int        `json:"paidUseTimes" gorm:"column:paid_use_times;default:0;comment:付费可核销次数A快照;"`
+	GiftUseTimes      int        `json:"giftUseTimes" gorm:"column:gift_use_times;default:0;comment:赠送可核销次数B快照;"`
 	VerifiedTimes     int        `json:"verifiedTimes" gorm:"column:verified_times;default:0;comment:已核销次数;"`
 	SupportMultiVenue bool       `json:"supportMultiVenue" gorm:"column:support_multi_venue;default:false;comment:是否支持多场合核销下单快照;"`
 	PayTime           *time.Time `json:"payTime" gorm:"column:pay_time;comment:支付时间;"`
 	WxTransactionID   string     `json:"wxTransactionId" gorm:"column:wx_transaction_id;size:64;index;comment:微信支付订单号transaction_id;"`
 	RefundNo          string     `json:"refundNo" gorm:"column:refund_no;size:64;index;comment:商户退款单号;"`
 	WxRefundID        string     `json:"wxRefundId" gorm:"column:wx_refund_id;size:64;comment:微信退款单号;"`
+	RefundAmount      float64    `json:"refundAmount" gorm:"column:refund_amount;type:decimal(10,2);comment:实退金额元;default:0;"`
 	RefundTime        *time.Time `json:"refundTime" gorm:"column:refund_time;comment:退款时间;"`
 	VerifiedAt        *time.Time `json:"verifiedAt" gorm:"column:verified_at;comment:核销时间;"`
 	UserDeletedAt     *time.Time `json:"userDeletedAt" gorm:"column:user_deleted_at;comment:用户前台删除时间;"`

@@ -109,6 +109,8 @@ func (a *miniOrderApi) MyList(c *gin.Context) {
 			"payAmount":       o.PayAmount,
 			"status":          o.Status,
 			"totalUseTimes":   totalUse,
+			"paidUseTimes":    o.PaidUseTimes,
+			"giftUseTimes":    o.GiftUseTimes,
 			"verifiedTimes":   o.VerifiedTimes,
 			"remainingTimes":  remaining,
 			"payTime":         o.PayTime,
@@ -165,14 +167,26 @@ func (a *miniOrderApi) Detail(c *gin.Context) {
 		remaining = 0
 	}
 	verifyRecords, _ := svcOrder.GetVerifyRecords(order.ID)
-	data := gin.H{
-		"order":          order,
-		"remainingTimes": remaining,
-		"verifyRecords":  verifyRecords,
+	remainingPaid := svcOrder.RemainingPaidUseTimes(&order)
+	canRefund := order.Status == 1 && remainingPaid > 0 && order.WxTransactionID != ""
+	refundFen := 0
+	if canRefund {
+		if rf, _, _, calcErr := svcOrder.CalcRefundFen(&order); calcErr == nil {
+			refundFen = rf
+		} else {
+			canRefund = false
+		}
 	}
-
-	// 与 POST /mini/pay/refund 一致：待核销且未产生核销次数才可申请退款（多次票部分核销后 status 仍为 1）
-	data["canRefund"] = order.Status == 1 && order.VerifiedTimes == 0
+	data := gin.H{
+		"order":           order,
+		"remainingTimes":  remaining,
+		"paidUseTimes":    order.PaidUseTimes,
+		"giftUseTimes":    order.GiftUseTimes,
+		"verifyRecords":   verifyRecords,
+		"canRefund":       canRefund,
+		"refundAmountFen": refundFen,
+		"refundAmount":    float64(refundFen) / 100.0,
+	}
 
 	if order.Status == 2 && order.VerifiedAt != nil {
 		review, _ := svcOrderReview.GetByOrderID(order.ID)

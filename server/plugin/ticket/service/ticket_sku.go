@@ -11,6 +11,11 @@ type ticketSku struct{}
 func normalizeSkuMultiVenue(m *model.TicketSku) {
 	if m.TicketType != 2 {
 		m.SupportMultiVenue = false
+		m.GiftUseTimes = 0
+		return
+	}
+	if m.GiftUseTimes < 0 {
+		m.GiftUseTimes = 0
 	}
 }
 

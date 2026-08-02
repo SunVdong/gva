@@ -325,3 +325,15 @@ state correctly, but several commands still re-parsed event payload fields with
 local casts. The fix was to make the core event layer own `ThreadChannelEvent`
 and `isThreadEvent`, make `reduceChannelMetadata` the only channel metadata
 projection, and make `reduceThreads` the only thread replay reducer.
+
+---
+
+## Checklist: Ticket / Mini Pay 退款改动
+
+涉及门票次数、赠送或 `/mini/pay/refund` 时：
+
+- [ ] 退款金额公式只在插件 Service（如 `CalcRefundFen`），`pay.go` 不重写一套
+- [ ] 用户自助退与后台退是否共用同一入口（门票应为 `RequestRefund`）
+- [ ] 门票分母是付费次数 A，不是 `totalUseTimes`（含赠送）；活动仍用 total
+- [ ] 前端确认金额用分单位四舍五入，与后端一致
+- [ ] 对照 spec：`.trellis/spec/backend/ticket-gift-proportional-refund.md`、`mini-pay-integration.md`
