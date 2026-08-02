@@ -179,3 +179,36 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 6: 门票多次票赠送与比例退款
+
+**Date**: 2026-08-02
+**Task**: 门票多次票赠送与比例退款
+**Branch**: `main`
+
+### Summary
+
+实现多次票赠送次数、次数×数量快照、整单按付费次数A比例微信退款（用户端=后台）；不拆码；多次票每单限购一张；沉淀 ticket-gift-proportional-refund 等 spec。
+
+### Main Changes
+
+- Detailed change bullets were not supplied; see the summary above.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `baca92d` | (see git log) |
+
+### Testing
+
+- Validation was not recorded for this session.
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
