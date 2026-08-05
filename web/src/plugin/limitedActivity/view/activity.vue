@@ -99,7 +99,7 @@
       </div>
     </div>
 
-    <el-drawer v-model="dialogVisible" destroy-on-close size="720" :show-close="false" :before-close="closeDialog">
+    <el-drawer v-model="dialogVisible" destroy-on-close size="800" :show-close="false" :before-close="closeDialog">
       <template #header>
         <div class="flex justify-between items-center">
           <span class="text-lg">{{ type === 'create' ? '新增限时活动' : '编辑限时活动' }}</span>
@@ -139,14 +139,27 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item label="总名额(人次)" prop="quota">
-          <el-input-number v-model="formData.quota" :min="0" style="width: 100%" />
-          <div v-if="type === 'update'" class="text-gray-500 text-xs mt-1">
-            已占用 {{ formData.sold ?? 0 }}，名额不可小于已占用
-          </div>
-        </el-form-item>
+        <el-row :gutter="16">
+          <el-col :span="12">
+            <el-form-item label="总名额(人次)" prop="quota">
+              <el-input-number v-model="formData.quota" :min="0" style="width: 100%" />
+              <div v-if="type === 'update'" class="text-gray-500 text-xs mt-1">
+                已占用 {{ formData.sold ?? 0 }}，名额不可小于已占用
+              </div>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="排序" prop="sort">
+              <el-input-number v-model="formData.sort" :min="0" style="width: 100%" />
+              <div class="text-gray-500 text-xs mt-1">数值越小越靠前</div>
+            </el-form-item>
+          </el-col>
+        </el-row>
         <el-form-item label="封面" prop="coverImage">
           <SelectImage v-model="formData.coverImage" :multiple="false" />
+        </el-form-item>
+        <el-form-item label="活动详情" prop="detail">
+          <RichEdit v-model="formData.detail" />
         </el-form-item>
         <el-row :gutter="16">
           <el-col :span="12">
@@ -160,13 +173,6 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item label="活动详情" prop="detail">
-          <el-input v-model="formData.detail" type="textarea" :rows="5" placeholder="活动详情" />
-        </el-form-item>
-        <el-form-item label="排序" prop="sort">
-          <el-input-number v-model="formData.sort" :min="0" style="width: 100%" />
-          <div class="text-gray-500 text-xs mt-1">数值越小越靠前</div>
-        </el-form-item>
         <el-form-item label="显示状态" prop="status">
           <el-radio-group v-model="formData.status">
             <el-radio :value="1">显示</el-radio>
@@ -191,6 +197,7 @@ import { getUrl } from '@/utils/image'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ref } from 'vue'
 import SelectImage from '@/components/selectImage/selectImage.vue'
+import RichEdit from '@/components/richtext/rich-edit.vue'
 
 defineOptions({ name: 'LimitedActivityManage' })
 
