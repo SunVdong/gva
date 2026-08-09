@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 6
-- **Last Active**: 2026-08-02
+- **Total Sessions**: 7
+- **Last Active**: 2026-08-09
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~214 | Active |
+| `journal-1.md` | ~248 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 7 | 2026-08-09 | 门票退款仅小程序 + 核销场合中文名 | `353d7fc`, `e406cda` | `main` |
 | 6 | 2026-08-02 | 门票多次票赠送与比例退款 | `baca92d` | `main` |
 | 5 | 2026-07-30 | 门票订单按核销场合月度统计 | `c8bb770`, `2d4ae2a` | `main` |
 | 4 | 2026-07-30 | 限时活动订单评价 | `63cf79a` | `main` |

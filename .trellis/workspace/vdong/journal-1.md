@@ -212,3 +212,37 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 7: 门票退款仅小程序 + 核销场合中文名
+
+**Date**: 2026-08-09
+**Task**: 门票退款仅小程序 + 核销场合中文名
+**Branch**: `main`
+
+### Summary
+
+移除后台门票退款入口，仅小程序本人按付费次数比例退；详情核销记录增加 venueLabel。讨论了懒过期风险后决定暂不做。
+
+### Main Changes
+
+- Detailed change bullets were not supplied; see the summary above.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `353d7fc` | (see git log) |
+| `e406cda` | (see git log) |
+
+### Testing
+
+- Validation was not recorded for this session.
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
