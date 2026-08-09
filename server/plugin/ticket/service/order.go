@@ -440,9 +440,15 @@ func (s *ticketOrder) OrderStatusLabel(order *model.TicketOrder) string {
 	}
 }
 
-// GetVerifyRecords 查询订单的核销记录列表
+// GetVerifyRecords 查询订单的核销记录列表（填充 venueLabel）
 func (s *ticketOrder) GetVerifyRecords(orderID uint) (records []model.OrderVerifyRecord, err error) {
 	err = global.GVA_DB.Where("order_id = ?", orderID).Order("verify_no ASC").Find(&records).Error
+	if err != nil {
+		return
+	}
+	for i := range records {
+		records[i].VenueLabel = model.VenueLabel(records[i].Venue)
+	}
 	return
 }
 

@@ -46,7 +46,7 @@ SupportMultiVenue: sku.TicketType == 2 && sku.SupportMultiVenue
 
 **公开查询**：`GET getOrderByCodePublic` 返回的 `order.supportMultiVenue` 驱动 H5 是否展示场合选择。
 
-**管理端展示**：详情 `verifyRecords` 展示场合；列表**不加**场合列，仅筛选项。
+**管理端 / 小程序详情**：`verifyRecords` 含 `venue`（code）与 `venueLabel`（中文名，`GetVerifyRecords` 填充）；列表**不加**场合列，仅筛选项。
 
 **前端场合 options**：可与后端重复常量，但 **code 必须与 `venue.go` 一致**。
 

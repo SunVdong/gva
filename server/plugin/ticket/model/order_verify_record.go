@@ -13,6 +13,7 @@ type OrderVerifyRecord struct {
 	VerifyNo   int       `json:"verifyNo" gorm:"column:verify_no;comment:第几次核销;"`
 	VerifiedAt time.Time `json:"verifiedAt" gorm:"column:verified_at;comment:核销时间;"`
 	Venue      string    `json:"venue" gorm:"column:venue;size:32;comment:核销场合code不支持多场合时为空;"`
+	VenueLabel string    `json:"venueLabel" gorm:"-"` // 场合中文名，由查询后填充
 	Remark     string    `json:"remark" gorm:"column:remark;comment:备注;size:200;"`
 }
 
