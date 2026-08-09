@@ -97,17 +97,17 @@ default:
 
 ## Design Decision: 用户自助退 vs 后台退
 
-**Context**：限时活动要求加客服后由后台退；门票支持用户自助退，且次数语义含赠送。
+**Context**：限时活动要求加客服后由后台退；门票仅小程序本人自助退，且次数语义含赠送。
 
 **Decision**：
 
-- ticket：可走 `/mini/pay/refund`；**用户端与后台共用**插件 `RequestRefund`。  
-  按**付费次数 A**剩余比例退：`refundFen = Round(payAmount*100 * remainingPaid/A)`（赠送次数不进分母）。  
+- ticket：唯一发起入口 `/mini/pay/refund` → 插件 `RequestRefund(orderID, userID)`（**强制 userID>0** 且归属本人；无管理端 `refundOrder`/`AdminRefund`）。  
+  按**付费次数 A**剩余比例退：`refundFen = Round(payAmount*100 * remainingPaid/A)`（赠送次数不进分母；部分核销仍可退）。  
   明细见 [Ticket Gift Times & Proportional Refund](./ticket-gift-proportional-refund.md)。
 - limitedActivity：**不**在 `/mini/pay/refund` 增加分支；仅管理端按  
   `refundFen = Round(payAmount*100 * remaining/totalUseTimes)` 调 `mini.CreateRefund`，退款回调仍接入 `RefundNotify`
 
-**Why**：门票自助退与后台必须同公式，避免双轨；活动仍只后台可控。金额/库存逻辑放在插件 Service，`pay.go` 只做委托与回调分发。
+**Why**：门票只保留用户自助退，避免管理端旁路；活动仍只后台可控。金额/库存逻辑放在插件 Service，`pay.go` 只做委托与回调分发。
 
 ---
 

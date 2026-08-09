@@ -123,18 +123,9 @@
             {{ row.userDeletedAt ? formatDate(row.userDeletedAt) : '-' }}
           </template>
         </el-table-column>
-        <el-table-column align="left" label="操作" fixed="right" width="140">
+        <el-table-column align="left" label="操作" fixed="right" width="100">
           <template #default="{ row }">
             <el-button type="primary" link @click="showDetail(row)">详情</el-button>
-            <el-popconfirm
-              v-if="canShowRefund(row)"
-              :title="refundConfirmTitle(row)"
-              @confirm="handleRefund(row)"
-            >
-              <template #reference>
-                <el-button type="warning" link>退款</el-button>
-              </template>
-            </el-popconfirm>
           </template>
         </el-table-column>
       </el-table>
@@ -179,9 +170,6 @@
           </el-descriptions-item>
           <el-descriptions-item label="付费次数">{{ detail.order.paidUseTimes ?? 0 }}</el-descriptions-item>
           <el-descriptions-item label="赠送次数">{{ detail.order.giftUseTimes ?? 0 }}</el-descriptions-item>
-          <el-descriptions-item v-if="detail.canRefund" label="预计退款">
-            ¥{{ (detail.refundAmount ?? 0).toFixed(2) }}（按付费次数剩余比例）
-          </el-descriptions-item>
           <el-descriptions-item v-if="detail.order.status === 6" label="实退金额">
             ¥{{ (detail.order.refundAmount ?? 0).toFixed(2) }}
           </el-descriptions-item>
@@ -228,22 +216,13 @@
             <el-descriptions-item label="评价时间">{{ detail.review?.createdAt ? formatDate(detail.review.createdAt) : '-' }}</el-descriptions-item>
           </el-descriptions>
         </div>
-
-        <div v-if="detail.canRefund" class="mt-4">
-          <el-popconfirm :title="refundConfirmTitle(detail.order)" @confirm="handleRefund(detail.order)">
-            <template #reference>
-              <el-button type="warning">按付费次数剩余比例退款</el-button>
-            </template>
-          </el-popconfirm>
-        </div>
       </div>
     </el-drawer>
   </div>
 </template>
 
 <script setup>
-import { findOrder, getOrderList, getVenueVerifyStats, refundOrder } from '@/plugin/ticket/api/order'
-import { ElMessage } from 'element-plus'
+import { findOrder, getOrderList, getVenueVerifyStats } from '@/plugin/ticket/api/order'
 import { onMounted, ref } from 'vue'
 
 defineOptions({ name: 'TicketOrder' })
@@ -267,7 +246,7 @@ const pageSize = ref(10)
 const tableData = ref([])
 const searchInfo = ref({})
 const detailVisible = ref(false)
-const detail = ref({ order: null, review: null, verifyRecords: [], remainingTimes: 0, canRefund: false, refundAmount: 0 })
+const detail = ref({ order: null, review: null, verifyRecords: [], remainingTimes: 0 })
 const statsMonth = ref(currentMonthStr())
 const venueVerifyStats = ref(
   venueOptions.map((v) => ({ venue: v.code, label: v.label, count: 0 }))
@@ -277,33 +256,6 @@ function venueLabel(code) {
   if (!code) return '—'
   const hit = venueOptions.find((v) => v.code === code)
   return hit ? hit.label : code
-}
-
-function paidUseOf(row) {
-  if (!row) return 0
-  if ((row.paidUseTimes || 0) > 0) return row.paidUseTimes
-  return row.totalUseTimes || 1
-}
-
-function remainingPaidOf(row) {
-  const a = paidUseOf(row)
-  const verified = row?.verifiedTimes || 0
-  return Math.max(0, a - Math.min(verified, a))
-}
-
-function canShowRefund(row) {
-  if (!row || row.status !== 1 || !row.wxTransactionId) return false
-  return remainingPaidOf(row) > 0
-}
-
-function refundConfirmTitle(row) {
-  if (!row) return '确定退款吗？'
-  const a = paidUseOf(row)
-  const remaining = remainingPaidOf(row)
-  // 与后端 CalcRefundFen：Round(payAmount*100*remainingPaid/A) 对齐
-  const fen = Math.round((row.payAmount || 0) * 100 * remaining / a)
-  const amount = (fen / 100).toFixed(2)
-  return `按剩余付费次数 ${remaining}/${a} 退款约 ¥${amount}，确定继续？`
 }
 
 function formatDate(d) {
@@ -354,22 +306,9 @@ const showDetail = async (row) => {
       order: res.data.order,
       review: res.data.review || null,
       verifyRecords: res.data.verifyRecords || [],
-      remainingTimes: res.data.remainingTimes ?? 0,
-      canRefund: !!res.data.canRefund,
-      refundAmount: res.data.refundAmount ?? 0
+      remainingTimes: res.data.remainingTimes ?? 0
     }
     detailVisible.value = true
-  }
-}
-
-const handleRefund = async (row) => {
-  const res = await refundOrder({ id: row.ID })
-  if (res.code === 0) {
-    ElMessage.success(res.msg || '退款成功或已受理')
-    if (detailVisible.value && detail.value.order?.ID === row.ID) {
-      await showDetail(row)
-    }
-    await getTableData()
   }
 }
 

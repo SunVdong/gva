@@ -73,12 +73,7 @@ func (s *ticketOrder) CalcRefundFen(order *model.TicketOrder) (refundFen, totalF
 	return
 }
 
-// AdminRefund 后台按付费次数剩余比例发起微信退款
-func (s *ticketOrder) AdminRefund(orderID uint) error {
-	return s.RequestRefund(orderID, 0)
-}
-
-// RequestRefund 发起退款。userID>0 时校验本人订单；先落库 status=7 再调微信。
+// RequestRefund 发起退款（仅小程序本人）。强制 userID>0 且校验订单归属；先落库 status=7 再调微信。
 func (s *ticketOrder) RequestRefund(orderID uint, userID uint) error {
 	var order model.TicketOrder
 	var refundFen, totalFen int
@@ -89,7 +84,7 @@ func (s *ticketOrder) RequestRefund(orderID uint, userID uint) error {
 			Where("id = ?", orderID).First(&order).Error; e != nil || order.ID == 0 {
 			return fmt.Errorf("订单不存在")
 		}
-		if userID > 0 && order.UserID != userID {
+		if userID == 0 || order.UserID != userID {
 			return fmt.Errorf("订单不存在或无权操作")
 		}
 		if order.Status != 1 {

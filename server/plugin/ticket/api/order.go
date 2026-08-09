@@ -10,21 +10,6 @@ var Order = new(ticketOrderApi)
 
 type ticketOrderApi struct{}
 
-func (a *ticketOrderApi) Refund(c *gin.Context) {
-	var idReq struct {
-		ID uint `form:"id" binding:"required"`
-	}
-	if err := c.ShouldBindQuery(&idReq); err != nil {
-		response.FailWithMessage(err.Error(), c)
-		return
-	}
-	if err := serviceOrder.AdminRefund(idReq.ID); err != nil {
-		response.FailWithMessage(err.Error(), c)
-		return
-	}
-	response.OkWithMessage("退款成功或已受理", c)
-}
-
 func (a *ticketOrderApi) GetList(c *gin.Context) {
 	var req ticketRequest.TicketOrderSearch
 	if err := c.ShouldBindQuery(&req); err != nil {
@@ -91,24 +76,11 @@ func (a *ticketOrderApi) Find(c *gin.Context) {
 	if remaining < 0 {
 		remaining = 0
 	}
-	remainingPaid := serviceOrder.RemainingPaidUseTimes(&order)
-	canRefund := order.Status == 1 && remainingPaid > 0 && order.WxTransactionID != ""
-	refundFen := 0
-	if canRefund {
-		if rf, _, _, calcErr := serviceOrder.CalcRefundFen(&order); calcErr == nil {
-			refundFen = rf
-		} else {
-			canRefund = false
-		}
-	}
 	data := gin.H{
-		"order":           order,
-		"remainingTimes":  remaining,
-		"paidUseTimes":    order.PaidUseTimes,
-		"giftUseTimes":    order.GiftUseTimes,
-		"canRefund":       canRefund,
-		"refundAmountFen": refundFen,
-		"refundAmount":    float64(refundFen) / 100.0,
+		"order":          order,
+		"remainingTimes": remaining,
+		"paidUseTimes":   order.PaidUseTimes,
+		"giftUseTimes":   order.GiftUseTimes,
 	}
 	verifyRecords, _ := serviceOrder.GetVerifyRecords(order.ID)
 	data["verifyRecords"] = verifyRecords

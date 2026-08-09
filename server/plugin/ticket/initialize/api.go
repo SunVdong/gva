@@ -38,7 +38,6 @@ func Api(ctx context.Context) {
 		{Path: "/ticket/order/getOrderList", Description: "订单列表", ApiGroup: "景点门票", Method: "GET"},
 		{Path: "/ticket/order/findOrder", Description: "订单详情", ApiGroup: "景点门票", Method: "GET"},
 		{Path: "/ticket/order/getVenueVerifyStats", Description: "核销场合按月统计", ApiGroup: "景点门票", Method: "GET"},
-		{Path: "/ticket/order/refundOrder", Description: "订单退款", ApiGroup: "景点门票", Method: "POST"},
 	}
 	utils.RegisterApis(entities...)
 }
