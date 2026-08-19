@@ -22,7 +22,8 @@
 | Service | `VerifyOrder(orderID uint, venue string) error` |
 | Service | `VerifyOrderByOrderNoPublic(orderNo, venue string) error` |
 | API | `POST /ticket/order/verifyOrderByCodePublic?code=` + body `{ "venue": "<code>" }` |
-| 场合白名单 | `model/venue.go`：`zhongshanling` / `zhaozhao` / `lululand` / `hongshan` |
+| 场合白名单 | `model/venue.go`：`changshengluyuan` / `zhaozhaomuchang` / `jiangxinzhoulululand` / `daniandongwucun` |
+| API | `GET /ticket/order/getVenueOptionsPublic`（管理端 / H5 共用） |
 
 下单快照（`CreateOrder`）：
 
@@ -48,7 +49,7 @@ SupportMultiVenue: sku.TicketType == 2 && sku.SupportMultiVenue
 
 **管理端 / 小程序详情**：`verifyRecords` 含 `venue`（code）与 `venueLabel`（中文名，`GetVerifyRecords` 填充）；列表**不加**场合列，仅筛选项。
 
-**前端场合 options**：可与后端重复常量，但 **code 必须与 `venue.go` 一致**。
+**前端场合 options**：不得本地硬编码；统一 `GET getVenueOptionsPublic`，来自 `model.VenueOptions()`。
 
 ### 4. Validation & Error Matrix
 
@@ -62,7 +63,7 @@ SupportMultiVenue: sku.TicketType == 2 && sku.SupportMultiVenue
 
 ### 5. Good / Base / Bad Cases
 
-- **Good**：多次票开多场合 → 下单快照 true → H5 选 `hongshan` 核销成功 → 记录含 venue；二次可选其他场合
+- **Good**：多次票开多场合 → 下单快照 true → H5 选 `daniandongwucun` 核销成功 → 记录含 venue；二次可选其他场合
 - **Base**：多次票未开 / 单次票 → H5 无场合控件；不传 venue 可核销
 - **Bad**：多场合订单不传 venue / 传未知 code → 核销失败；改 SKU 开关不应改变已下单订单的必选行为
 
@@ -70,7 +71,7 @@ SupportMultiVenue: sku.TicketType == 2 && sku.SupportMultiVenue
 
 - 单测/手工：快照 true 无 venue 失败；合法 venue 写入记录
 - 快照 false 传入脏 venue → 记录仍为空
-- 列表：`ticketType=2`、`venue=hongshan` 仅命中至少一次该场合的订单
+- 列表：`ticketType=2`、`venue=daniandongwucun` 仅命中至少一次该场合的订单
 - H5：确认 camping / limitedActivity 分支不受影响
 
 ### 7. Wrong vs Correct
@@ -143,7 +144,7 @@ if order.SupportMultiVenue {
 
 ### 5. Good / Base / Bad Cases
 
-- **Good**：当月有 `hongshan` 核销 → items 中红山 count>0，其它场合可为 0
+- **Good**：当月有 `daniandongwucun` 核销 → items 中大埝动物村 count>0，其它场合可为 0
 - **Base**：某月无任何白名单核销 → 四场合均为 0
 - **Bad**：传 `2026-13` → 接口失败，不返回空统计冒充成功
 

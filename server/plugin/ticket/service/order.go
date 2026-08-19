@@ -452,6 +452,11 @@ func (s *ticketOrder) GetVerifyRecords(orderID uint) (records []model.OrderVerif
 	return
 }
 
+// GetVenueOptions 返回核销场合白名单（code + label）
+func (s *ticketOrder) GetVenueOptions() []map[string]string {
+	return model.VenueOptions()
+}
+
 // GetVenueVerifyStats 按核销月份汇总白名单场合的核销次数；month 为空取当前自然月，非法格式返回错误
 func (s *ticketOrder) GetVenueVerifyStats(month string) (monthOut string, items []request.TicketVenueVerifyStatsItem, err error) {
 	now := time.Now()

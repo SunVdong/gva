@@ -89,6 +89,7 @@ func (r *orderRouter) Init(public, private *gin.RouterGroup) {
 
 	// H5 核销公开接口（根据订单号查询与核销）
 	pg := public.Group("ticket").Group("order")
+	pg.GET("getVenueOptionsPublic", apiOrder.GetVenueOptionsPublic)
 	pg.GET("getOrderByCodePublic", apiOrder.GetOrderByCodePublic)
 	pg.POST("verifyOrderByCodePublic", apiOrder.VerifyOrderByCodePublic)
 }

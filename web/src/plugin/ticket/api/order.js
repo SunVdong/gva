@@ -3,6 +3,9 @@ import service from '@/utils/request'
 /** 订单管理 */
 export const getOrderList = (params) => service({ url: '/ticket/order/getOrderList', method: 'get', params })
 export const findOrder = (params) => service({ url: '/ticket/order/findOrder', method: 'get', params })
+/** 核销场合白名单（公开，后端唯一来源） */
+export const getVenueOptions = () =>
+  service({ url: '/ticket/order/getVenueOptionsPublic', method: 'get' })
 /** 核销场合按月统计 */
 export const getVenueVerifyStats = (params) =>
   service({ url: '/ticket/order/getVenueVerifyStats', method: 'get', params })

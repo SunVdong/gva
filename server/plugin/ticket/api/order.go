@@ -29,6 +29,16 @@ func (a *ticketOrderApi) GetList(c *gin.Context) {
 	}, "获取成功", c)
 }
 
+// GetVenueOptionsPublic 公开：核销场合白名单（管理端 / H5 共用）
+// @Tags TicketOrder
+// @Summary 核销场合列表(公开)
+// @Produce application/json
+// @Success 200 {object} response.Response{data=[]object,msg=string} "获取成功"
+// @Router /ticket/order/getVenueOptionsPublic [get]
+func (a *ticketOrderApi) GetVenueOptionsPublic(c *gin.Context) {
+	response.OkWithData(serviceOrder.GetVenueOptions(), c)
+}
+
 // GetVenueVerifyStats 按核销月份汇总各场合核销次数
 // @Tags TicketOrder
 // @Summary 核销场合按月统计

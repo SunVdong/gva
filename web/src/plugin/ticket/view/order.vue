@@ -199,8 +199,8 @@
             <el-table-column label="核销时间" min-width="170">
               <template #default="{ row }">{{ row.verifiedAt ? formatDate(row.verifiedAt) : '-' }}</template>
             </el-table-column>
-            <el-table-column label="场合" width="110">
-              <template #default="{ row }">{{ venueLabel(row.venue) }}</template>
+            <el-table-column label="场合" width="140">
+              <template #default="{ row }">{{ row.venueLabel || venueLabel(row.venue) }}</template>
             </el-table-column>
             <el-table-column label="备注" prop="remark" min-width="120">
               <template #default="{ row }">{{ row.remark || '-' }}</template>
@@ -222,17 +222,12 @@
 </template>
 
 <script setup>
-import { findOrder, getOrderList, getVenueVerifyStats } from '@/plugin/ticket/api/order'
+import { findOrder, getOrderList, getVenueOptions, getVenueVerifyStats } from '@/plugin/ticket/api/order'
 import { onMounted, ref } from 'vue'
 
 defineOptions({ name: 'TicketOrder' })
 
-const venueOptions = [
-  { code: 'zhongshanling', label: '中山陵' },
-  { code: 'zhaozhao', label: '爪爪' },
-  { code: 'lululand', label: 'lululand' },
-  { code: 'hongshan', label: '红山' }
-]
+const venueOptions = ref([])
 
 function currentMonthStr() {
   const d = new Date()
@@ -248,13 +243,11 @@ const searchInfo = ref({})
 const detailVisible = ref(false)
 const detail = ref({ order: null, review: null, verifyRecords: [], remainingTimes: 0 })
 const statsMonth = ref(currentMonthStr())
-const venueVerifyStats = ref(
-  venueOptions.map((v) => ({ venue: v.code, label: v.label, count: 0 }))
-)
+const venueVerifyStats = ref([])
 
 function venueLabel(code) {
   if (!code) return '—'
-  const hit = venueOptions.find((v) => v.code === code)
+  const hit = venueOptions.value.find((v) => v.code === code)
   return hit ? hit.label : code
 }
 
@@ -281,6 +274,13 @@ const getTableData = async () => {
     total.value = res.data.total || 0
     page.value = res.data.page || page.value
     pageSize.value = res.data.pageSize || pageSize.value
+  }
+}
+
+const loadVenueOptions = async () => {
+  const res = await getVenueOptions()
+  if (res.code === 0) {
+    venueOptions.value = res.data || []
   }
 }
 
@@ -313,6 +313,7 @@ const showDetail = async (row) => {
 }
 
 onMounted(() => {
+  loadVenueOptions()
   getTableData()
   loadVenueVerifyStats()
 })

@@ -99,7 +99,7 @@
               <span>第 {{ r.verifyNo }} 次</span>
               <span>
                 {{ formatDateTime(r.verifiedAt) }}
-                <template v-if="ticketOrder.supportMultiVenue"> · {{ ticketVenueLabel(r.venue) || '—' }}</template>
+                <template v-if="ticketOrder.supportMultiVenue"> · {{ r.venueLabel || ticketVenueLabel(r.venue) || '—' }}</template>
               </span>
             </li>
           </ul>
@@ -155,7 +155,7 @@ import { useRoute } from 'vue-router'
 import { ref, computed, onMounted, watch } from 'vue'
 import { validateRedeemCode } from '@/api/sysParams'
 import { getReservationByVerifyCodePublic, verifyReservationByCodePublic } from '@/plugin/camping/api/reservation'
-import { getTicketOrderByCodePublic, verifyTicketOrderByCodePublic } from '@/plugin/ticket/api/order'
+import { getTicketOrderByCodePublic, getVenueOptions, verifyTicketOrderByCodePublic } from '@/plugin/ticket/api/order'
 import { getActivityOrderByCodePublic, verifyActivityOrderByCodePublic } from '@/plugin/limitedActivity/api/order'
 import { getSiteDetailPublic } from '@/plugin/camping/api/site'
 import { getTimeSlotsByVenuePublic } from '@/plugin/camping/api/timeSlot'
@@ -180,12 +180,7 @@ const ticketRemainingTimes = ref(0)
 const ticketVerifyRecords = ref([])
 const ticketVenue = ref('')
 const ticketVerifyError = ref('')
-const ticketVenueOptions = [
-  { code: 'zhongshanling', label: '中山陵' },
-  { code: 'zhaozhao', label: '爪爪' },
-  { code: 'lululand', label: 'lululand' },
-  { code: 'hongshan', label: '红山' }
-]
+const ticketVenueOptions = ref([])
 const activityOrder = ref(null)
 const activityRemainingTimes = ref(0)
 const activityVerifyRecords = ref([])
@@ -230,7 +225,7 @@ function ticketOrderStatusClass(order) {
 
 function ticketVenueLabel(code) {
   if (!code) return ''
-  const hit = ticketVenueOptions.find((v) => v.code === code)
+  const hit = ticketVenueOptions.value.find((v) => v.code === code)
   return hit ? hit.label : code
 }
 
@@ -346,7 +341,13 @@ async function loadTicketOrder() {
   ticketVenue.value = ''
   ticketVerifyError.value = ''
   try {
-    const res = await getTicketOrderByCodePublic({ code: codeFromUrl.value })
+    const [res, venueRes] = await Promise.all([
+      getTicketOrderByCodePublic({ code: codeFromUrl.value }),
+      getVenueOptions()
+    ])
+    if (venueRes.code === 0) {
+      ticketVenueOptions.value = venueRes.data || []
+    }
     if (res.code === 0 && res.data) {
       ticketOrder.value = res.data.order
       ticketRemainingTimes.value = res.data.remainingTimes ?? 0
