@@ -268,13 +268,11 @@ func (s *ticketOrder) GetList(req request.TicketOrderSearch) (list []model.Ticke
 		db = db.Where("status = ?", *req.Status)
 	}
 	if req.OrderType != nil {
-		today := orderListToday()
 		switch *req.OrderType {
 		case "pending_payment", "待支付":
 			db = db.Where("status = ?", 0)
 		case "pending_verify", "待核销":
-			db = db.Where("status IN (?)", []int{1, 7}).
-				Where("visit_date >= ?", today)
+			db = db.Where("status IN (?)", []int{1, 7})
 		case "completed", "已完成":
 			db = db.Where("status IN (?)", []int{2, 3, 4, 5, 6})
 		}
@@ -318,13 +316,11 @@ func (s *ticketOrder) GetMyList(req request.TicketOrderSearch) (list []model.Tic
 		db = db.Where("status = ?", *req.Status)
 	}
 	if req.OrderType != nil {
-		today := orderListToday()
 		switch *req.OrderType {
 		case "pending_payment", "待支付":
 			db = db.Where("status = ?", 0)
 		case "pending_verify", "待核销":
-			db = db.Where("status IN (?)", []int{1, 7}).
-				Where("visit_date >= ?", today)
+			db = db.Where("status IN (?)", []int{1, 7})
 		case "completed", "已完成":
 			db = db.Where("status IN (?)", []int{2, 3, 4, 5, 6})
 		}
